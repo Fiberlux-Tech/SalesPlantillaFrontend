@@ -97,25 +97,43 @@ export default function App() {
     }
   };
 
-  const handleConfirmSubmission = () => {
-      // This will be connected to the "submit" API endpoint later.
-      // For now, it just adds the data to the local state for demonstration.
-      if(uploadedData && uploadedData.transactions) {
-          const newTxData = uploadedData.transactions;
-          const newTransactionForTable = {
-            id: newTxData.orderID || `TXN-${Date.now()}`,
-            client: newTxData.clientName,
-            totalValue: newTxData.totalRevenue,
-            totalExpenses: newTxData.totalExpense,
-            submissionDate: new Date().toISOString().split('T')[0],
-            npv: newTxData.VAN,
-            payback: newTxData.payback,
-            status: newTxData.ApprovalStatus,
-          };
-          setTransactions([newTransactionForTable, ...transactions]);
+  const handleConfirmSubmission = async () => {
+      if (!uploadedData) return;
+      setApiError(null);
+
+      try {
+          const response = await fetch('http://127.0.0.1:5000/api/submit-transaction', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(uploadedData),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+              // Add the new transaction to the table for immediate feedback
+              const newTxData = uploadedData.transactions;
+              const newTransactionForTable = {
+                id: newTxData.orderID || `TXN-${Date.now()}`,
+                client: newTxData.clientName,
+                totalValue: newTxData.totalRevenue,
+                totalExpenses: newTxData.totalExpense,
+                submissionDate: new Date().toISOString().split('T')[0],
+                npv: newTxData.VAN,
+                payback: newTxData.payback,
+                status: newTxData.ApprovalStatus,
+              };
+              setTransactions([newTransactionForTable, ...transactions]);
+              setIsPreviewModalOpen(false);
+              setUploadedData(null);
+          } else {
+              setApiError(result.error || 'An unknown error occurred.');
+          }
+      } catch (error) {
+          setApiError('Failed to connect to the server. Please ensure the backend is running.');
       }
-      setIsPreviewModalOpen(false);
-      setUploadedData(null);
   };
 
   return (
