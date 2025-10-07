@@ -6,7 +6,7 @@ import { CloseIcon, WarningIcon, CheckCircleIcon } from './Icons';
 import FixedCostsTable from './FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data }) {
+function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false }) {
     const [openSections, setOpenSections] = useState({});
 
     const toggleSection = (section) => {
@@ -41,13 +41,15 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data }) {
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon /></button>
                 </div>
                 <div className="p-6 bg-gray-50 max-h-[75vh] overflow-y-auto">
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex">
-                        <WarningIcon />
-                        <div className="ml-3">
-                            <p className="font-semibold text-yellow-800">Please review all data carefully</p>
-                            <p className="text-sm text-yellow-700">Ensure all information is correct before submitting.</p>
+                    {!isFinanceView && (
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex">
+                            <WarningIcon />
+                            <div className="ml-3">
+                                <p className="font-semibold text-yellow-800">Please review all data carefully</p>
+                                <p className="text-sm text-yellow-700">Ensure all information is correct before submitting.</p>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Transaction Overview</h3>
@@ -75,18 +77,18 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data }) {
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Cost Breakdown</h3>
                         <div className="space-y-3">
-                            <CostBreakdownRow 
-                                title="Fixed Costs" 
-                                items={data.fixed_costs.length} 
+                            <CostBreakdownRow
+                                title="Fixed Costs"
+                                items={data.fixed_costs.length}
                                 total={totalFixedCosts}
                                 isOpen={openSections['fixedCosts']}
                                 onToggle={() => toggleSection('fixedCosts')}
                             >
                                 <FixedCostsTable data={data.fixed_costs} />
                             </CostBreakdownRow>
-                            <CostBreakdownRow 
-                                title="Total Recurring Costs" 
-                                items={data.recurring_services.length} 
+                            <CostBreakdownRow
+                                title="Total Recurring Costs"
+                                items={data.recurring_services.length}
                                 total={totalRecurringCosts}
                                 isOpen={openSections['recurringCosts']}
                                 onToggle={() => toggleSection('recurringCosts')}
@@ -96,16 +98,18 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data }) {
                         </div>
                     </div>
                 </div>
-                <div className="flex justify-between items-center p-5 border-t bg-white">
-                    <div className="flex items-center text-sm text-gray-600">
-                        <CheckCircleIcon />
-                        <span className="ml-2">All data extracted from Excel file</span>
+                {!isFinanceView && (
+                    <div className="flex justify-between items-center p-5 border-t bg-white">
+                        <div className="flex items-center text-sm text-gray-600">
+                            <CheckCircleIcon />
+                            <span className="ml-2">All data extracted from Excel file</span>
+                        </div>
+                        <div className="space-x-3">
+                            <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                            <button onClick={onConfirm} className="px-5 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800">Confirm & Submit</button>
+                        </div>
                     </div>
-                    <div className="space-x-3">
-                        <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                        <button onClick={onConfirm} className="px-5 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800">Confirm & Submit</button>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );
