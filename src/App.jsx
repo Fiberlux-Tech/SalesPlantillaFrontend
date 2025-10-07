@@ -38,36 +38,36 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(true);
 
     // --- Fetch Transactions from the Backend ---
-    useEffect(() => {
-        const fetchTransactions = async () => {
-            setIsLoading(true);
-            setApiError(null);
-            try {
-                const response = await fetch(`http://127.0.0.1:5000/api/transactions?page=${currentPage}&per_page=30`);
-                const result = await response.json();
-                if (result.success) {
-                    // --- 1. UPDATED DATA MAPPING ---
-                    const formattedTransactions = result.data.transactions.map(tx => ({
-                        id: tx.id,
-                        client: tx.clientName,
-                        salesman: tx.salesman,
-                        grossMarginRatio: tx.grossMarginRatio,
-                        payback: tx.payback,
-                        submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
-                        approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : 'N/A',
-                        status: tx.ApprovalStatus,
-                    }));
-                    setTransactions(formattedTransactions);
-                    setTotalPages(result.data.pages);
-                } else {
-                    setApiError(result.error || 'Failed to fetch transactions.');
-                }
-            } catch (error) {
-                setApiError('Failed to connect to the server. Please ensure the backend is running.');
+    const fetchTransactions = async () => {
+        setIsLoading(true);
+        setApiError(null);
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/api/transactions?page=${currentPage}&per_page=30`);
+            const result = await response.json();
+            if (result.success) {
+                // --- 1. UPDATED DATA MAPPING ---
+                const formattedTransactions = result.data.transactions.map(tx => ({
+                    id: tx.id, // Use the new unique ID from the backend
+                    client: tx.clientName,
+                    salesman: tx.salesman,
+                    grossMarginRatio: tx.grossMarginRatio,
+                    payback: tx.payback,
+                    submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
+                    approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : 'N/A',
+                    status: tx.ApprovalStatus,
+                }));
+                setTransactions(formattedTransactions);
+                setTotalPages(result.data.pages);
+            } else {
+                setApiError(result.error || 'Failed to fetch transactions.');
             }
-            setIsLoading(false);
-        };
+        } catch (error) {
+            setApiError('Failed to connect to the server. Please ensure the backend is running.');
+        }
+        setIsLoading(false);
+    };
 
+    useEffect(() => {
         fetchTransactions();
     }, [currentPage]);
 
@@ -147,7 +147,7 @@ export default function App() {
             const result = await response.json();
             if (result.success) {
                 // Refresh the table by fetching the latest data from the server
-                setCurrentPage(1); // Go back to the first page to see the new entry
+                fetchTransactions(); // Use the existing fetch function
                 setIsPreviewModalOpen(false);
                 setUploadedData(null);
             } else {

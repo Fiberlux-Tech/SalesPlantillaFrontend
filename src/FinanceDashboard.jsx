@@ -33,7 +33,6 @@ export default function FinanceDashboard() {
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
 
-    // --- Fetch Transactions from the Backend ---
     const fetchTransactions = async () => {
         setIsLoading(true);
         setApiError(null);
@@ -43,12 +42,14 @@ export default function FinanceDashboard() {
             if (result.success) {
                 const formattedTransactions = result.data.transactions.map(tx => ({
                     id: tx.id,
-                    client: tx.clientName,
+                    unidadNegocio: tx.unidadNegocio,
+                    clientName: tx.clientName,
                     salesman: tx.salesman,
+                    MRC: tx.MRC,
+                    plazoContrato: tx.plazoContrato,
                     grossMarginRatio: tx.grossMarginRatio,
                     payback: tx.payback,
                     submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
-                    approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : 'N/A',
                     status: tx.ApprovalStatus,
                 }));
                 setTransactions(formattedTransactions);
@@ -62,6 +63,7 @@ export default function FinanceDashboard() {
         setIsLoading(false);
     };
 
+    // --- Fetch Transactions from the Backend ---
     useEffect(() => {
         fetchTransactions();
     }, [currentPage]);
@@ -94,7 +96,7 @@ export default function FinanceDashboard() {
 
     const filteredTransactions = useMemo(() => {
         return transactions.filter(t => {
-            const clientMatch = t.client.toLowerCase().includes(filter.toLowerCase());
+            const clientMatch = t.clientName.toLowerCase().includes(filter.toLowerCase());
             if (!selectedDate) return clientMatch;
             const transactionDate = new Date(t.submissionDate + 'T00:00:00');
             return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
@@ -189,33 +191,37 @@ export default function FinanceDashboard() {
                         </div>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-gray-500">
+                        <table className="w-full text-sm text-gray-500">
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3">Transaction ID</th>
-                                    <th scope="col" className="px-6 py-3">Client</th>
-                                    <th scope="col" className="px-6 py-3">Salesman</th>
-                                    <th scope="col" className="px-6 py-3">Margin %</th>
-                                    <th scope="col" className="px-6 py-3">Payback (Months)</th>
-                                    <th scope="col" className="px-6 py-3">Submission Date</th>
-                                    <th scope="col" className="px-6 py-3">Approval Date</th>
-                                    <th scope="col" className="px-6 py-3">Status</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Transaction ID</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Business Unit</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Client</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Salesman</th>
+                                    <th scope="col" className="px-6 py-3 text-center">MRC</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Contract Term</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Margin %</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Payback (Months)</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Submission Date</th>
+                                    <th scope="col" className="px-6 py-3 text-center">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {isLoading ? (
-                                    <tr><td colSpan="8" className="text-center py-4">Loading transactions...</td></tr>
+                                    <tr><td colSpan="10" className="text-center py-4">Loading transactions...</td></tr>
                                 ) : (
                                     filteredTransactions.map((tx) => (
                                         <tr key={tx.id} className="bg-white border-b hover:bg-gray-50 cursor-pointer" onClick={() => handleRowClick(tx)}>
-                                            <td className="px-6 py-4 font-medium text-gray-900">{tx.id}</td>
-                                            <td className="px-6 py-4 font-bold text-gray-900">{tx.client}</td>
-                                            <td className="px-6 py-4">{tx.salesman}</td>
-                                            <td className="px-6 py-4 font-medium text-blue-600">{`${(tx.grossMarginRatio * 100).toFixed(2)}%`}</td>
-                                            <td className="px-6 py-4">{tx.payback}</td>
-                                            <td className="px-6 py-4">{tx.submissionDate}</td>
-                                            <td className="px-6 py-4">{tx.approvalDate}</td>
-                                            <td className="px-6 py-4"><StatusBadge status={tx.status} /></td>
+                                            <td className="px-6 py-4 font-medium text-gray-900 text-center">{tx.id}</td>
+                                            <td className="px-6 py-4 text-center">{tx.unidadNegocio}</td>
+                                            <td className="px-6 py-4 font-bold text-gray-900 text-center">{tx.clientName}</td>
+                                            <td className="px-6 py-4 text-center">{tx.salesman}</td>
+                                            <td className="px-6 py-4 text-center">${tx.MRC.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-center">{tx.plazoContrato}</td>
+                                            <td className="px-6 py-4 font-medium text-blue-600 text-center">{`${(tx.grossMarginRatio * 100).toFixed(2)}%`}</td>
+                                            <td className="px-6 py-4 text-center">{tx.payback}</td>
+                                            <td className="px-6 py-4 text-center">{tx.submissionDate}</td>
+                                            <td className="px-6 py-4 text-center"><StatusBadge status={tx.status} /></td>
                                         </tr>
                                     ))
                                 )}
