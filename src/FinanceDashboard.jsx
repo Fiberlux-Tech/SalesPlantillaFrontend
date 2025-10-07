@@ -34,35 +34,35 @@ export default function FinanceDashboard() {
     const [isLoading, setIsLoading] = useState(true);
 
     // --- Fetch Transactions from the Backend ---
-    useEffect(() => {
-        const fetchTransactions = async () => {
-            setIsLoading(true);
-            setApiError(null);
-            try {
-                const response = await fetch(`http://127.0.0.1:5000/api/transactions?page=${currentPage}&per_page=30`);
-                const result = await response.json();
-                if (result.success) {
-                    const formattedTransactions = result.data.transactions.map(tx => ({
-                        id: tx.orderID,
-                        client: tx.clientName,
-                        salesman: tx.salesman,
-                        grossMarginRatio: tx.grossMarginRatio,
-                        payback: tx.payback,
-                        submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
-                        approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : 'N/A',
-                        status: tx.ApprovalStatus,
-                    }));
-                    setTransactions(formattedTransactions);
-                    setTotalPages(result.data.pages);
-                } else {
-                    setApiError(result.error || 'Failed to fetch transactions.');
-                }
-            } catch (error) {
-                setApiError('Failed to connect to the server. Please ensure the backend is running.');
+    const fetchTransactions = async () => {
+        setIsLoading(true);
+        setApiError(null);
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/api/transactions?page=${currentPage}&per_page=30`);
+            const result = await response.json();
+            if (result.success) {
+                const formattedTransactions = result.data.transactions.map(tx => ({
+                    id: tx.id,
+                    client: tx.clientName,
+                    salesman: tx.salesman,
+                    grossMarginRatio: tx.grossMarginRatio,
+                    payback: tx.payback,
+                    submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
+                    approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : 'N/A',
+                    status: tx.ApprovalStatus,
+                }));
+                setTransactions(formattedTransactions);
+                setTotalPages(result.data.pages);
+            } else {
+                setApiError(result.error || 'Failed to fetch transactions.');
             }
-            setIsLoading(false);
-        };
+        } catch (error) {
+            setApiError('Failed to connect to the server. Please ensure the backend is running.');
+        }
+        setIsLoading(false);
+    };
 
+    useEffect(() => {
         fetchTransactions();
     }, [currentPage]);
 
@@ -128,6 +128,32 @@ export default function FinanceDashboard() {
         } catch (error) {
             setApiError('Failed to connect to the server.');
         }
+    };
+
+    const handleUpdateStatus = async (transactionId, status) => {
+        const endpoint = status === 'approve' ? 'approve' : 'reject';
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/api/transaction/${endpoint}/${transactionId}`, {
+                method: 'POST',
+            });
+            const result = await response.json();
+            if (result.success) {
+                setIsDetailModalOpen(false);
+                fetchTransactions(); // Refresh the table
+            } else {
+                setApiError(result.error || `Failed to ${status} transaction.`);
+            }
+        } catch (error) {
+            setApiError('Failed to connect to the server.');
+        }
+    };
+
+    const handleApprove = (transactionId) => {
+        handleUpdateStatus(transactionId, 'approve');
+    };
+
+    const handleReject = (transactionId) => {
+        handleUpdateStatus(transactionId, 'reject');
     };
 
     return (
@@ -219,7 +245,15 @@ export default function FinanceDashboard() {
                 </div>
             </div>
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
-            <DataPreviewModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} data={selectedTransaction} isFinanceView={true} />
+            
+            <DataPreviewModal 
+                isOpen={isDetailModalOpen} 
+                onClose={() => setIsDetailModalOpen(false)} 
+                data={selectedTransaction} 
+                isFinanceView={true}
+                onApprove={handleApprove}
+                onReject={handleReject}
+            />
         </div>
     );
 }

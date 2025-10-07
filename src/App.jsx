@@ -48,7 +48,7 @@ export default function App() {
                 if (result.success) {
                     // --- 1. UPDATED DATA MAPPING ---
                     const formattedTransactions = result.data.transactions.map(tx => ({
-                        id: tx.orderID,
+                        id: tx.id,
                         client: tx.clientName,
                         salesman: tx.salesman,
                         grossMarginRatio: tx.grossMarginRatio,

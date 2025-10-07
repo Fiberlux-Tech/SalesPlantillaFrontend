@@ -6,7 +6,7 @@ import { CloseIcon, WarningIcon, CheckCircleIcon } from './Icons';
 import FixedCostsTable from './FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false }) {
+function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject }) {
     const [openSections, setOpenSections] = useState({});
 
     const toggleSection = (section) => {
@@ -29,6 +29,18 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
 
     const totalFixedCosts = data.fixed_costs.reduce((acc, item) => acc + (item.total || 0), 0);
     const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0) * tx.plazoContrato;
+
+    const handleApproveClick = () => {
+        if (window.confirm('Are you sure you want to approve this transaction?')) {
+            onApprove(tx.id);
+        }
+    };
+
+    const handleRejectClick = () => {
+        if (window.confirm('Are you sure you want to reject this transaction?')) {
+            onReject(tx.id);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -98,18 +110,29 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                         </div>
                     </div>
                 </div>
-                {!isFinanceView && (
-                    <div className="flex justify-between items-center p-5 border-t bg-white">
-                        <div className="flex items-center text-sm text-gray-600">
-                            <CheckCircleIcon />
-                            <span className="ml-2">All data extracted from Excel file</span>
-                        </div>
-                        <div className="space-x-3">
+
+                {/* --- MODIFIED FOOTER --- */}
+                <div className="flex justify-end items-center p-5 border-t bg-white space-x-3">
+                    {isFinanceView ? (
+                        <>
+                            <button onClick={handleRejectClick} className="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                                Reject
+                            </button>
+                            <button onClick={handleApproveClick} className="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
+                                Approve
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex-grow flex items-center text-sm text-gray-600">
+                                <CheckCircleIcon />
+                                <span className="ml-2">All data extracted from Excel file</span>
+                            </div>
                             <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
                             <button onClick={onConfirm} className="px-5 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800">Confirm & Submit</button>
-                        </div>
-                    </div>
-                )}
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );
