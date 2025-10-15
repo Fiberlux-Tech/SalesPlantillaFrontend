@@ -37,7 +37,7 @@ export default function FinanceDashboard() {
         setIsLoading(true);
         setApiError(null);
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/transactions?page=${currentPage}&per_page=30`);
+            const response = await fetch(`/api/transactions?page=${currentPage}&per_page=30`);
             const result = await response.json();
             if (result.success) {
                 const formattedTransactions = result.data.transactions.map(tx => ({
@@ -118,7 +118,7 @@ export default function FinanceDashboard() {
 
     const handleRowClick = async (transaction) => {
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/transaction/${transaction.id}`);
+            const response = await fetch(`/api/transaction/${transaction.id}`);
             const result = await response.json();
 
             if (result.success) {
@@ -135,7 +135,7 @@ export default function FinanceDashboard() {
     const handleUpdateStatus = async (transactionId, status) => {
         const endpoint = status === 'approve' ? 'approve' : 'reject';
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/transaction/${endpoint}/${transactionId}`, {
+            const response = await fetch(`/api/transaction/${endpoint}/${transactionId}`, {
                 method: 'POST',
             });
             const result = await response.json();
