@@ -42,7 +42,8 @@ export default function App() {
         setIsLoading(true);
         setApiError(null);
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/transactions?page=${currentPage}&per_page=30`);
+            // CORRECTED LINE 1: URL is now relative
+            const response = await fetch(`/api/transactions?page=${currentPage}&per_page=30`);
             const result = await response.json();
             if (result.success) {
                 // --- 1. UPDATED DATA MAPPING ---
@@ -115,7 +116,8 @@ export default function App() {
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/process-excel', {
+            // CORRECTED LINE 2: URL is now relative
+            const response = await fetch('/api/process-excel', {
                 method: 'POST',
                 body: formData,
             });
@@ -139,7 +141,8 @@ export default function App() {
         if (!uploadedData) return;
         setApiError(null);
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/submit-transaction', {
+            // CORRECTED LINE 3: URL is now relative
+            const response = await fetch('/api/submit-transaction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(uploadedData),
