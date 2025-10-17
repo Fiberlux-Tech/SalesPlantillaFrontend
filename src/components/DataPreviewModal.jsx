@@ -28,7 +28,7 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
     ];
 
     const totalFixedCosts = data.fixed_costs.reduce((acc, item) => acc + (item.total || 0), 0);
-    const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0) * tx.plazoContrato;
+    const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0);
 
     const handleApproveClick = () => {
         if (window.confirm('Are you sure you want to approve this transaction?')) {
