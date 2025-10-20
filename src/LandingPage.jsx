@@ -1,51 +1,72 @@
+// src/LandingPage.jsx
 import React from 'react';
-import { FileTextIcon, DollarSignIcon } from './components/Icons';
 
-// This is the card for selecting a module (no changes)
-function ModuleCard({ title, description, icon, onClick }) {
+// --- Card Component ---
+const Card = ({ module, onNavigate }) => {
     return (
-        <button
-            onClick={onClick}
-            className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out text-left w-full"
+        <div
+            className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-lg border border-slate-200"
+            onClick={() => onNavigate(module.id)}
         >
-            <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0 bg-gray-800 p-4 rounded-full">
-                    {icon}
-                </div>
-                <div>
-                    <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-                    <p className="text-gray-600 mt-1">{description}</p>
+            <div className="p-8">
+                <div className="flex items-start gap-4">
+                    {/* Using an emoji for the icon as shown in the example */}
+                    <div className="text-5xl">{module.icon}</div>
+                    <div className="flex-1">
+                        <h3 className="text-xl font-bold text-slate-900">{module.name}</h3>
+                        <p className="text-slate-600 text-sm mt-2">{module.description}</p>
+                        {/* The button is primarily a visual cue since the whole card is clickable */}
+                        <button
+                           tabIndex="-1" // Makes the button not focusable, as the parent handles the click
+                           className="mt-4 px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-md hover:bg-slate-800"
+                        >
+                            Open Module
+                        </button>
+                    </div>
                 </div>
             </div>
-        </button>
+        </div>
     );
-}
+};
 
-// The component is now just the content area
+
+// --- Main LandingPage Component ---
 export default function LandingPage({ user, onNavigate }) {
-    return (
-        <div className="container mx-auto">
-            <h2 className="text-3xl font-bold text-gray-800 mb-8">Welcome, {user.username}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
-                
-                {/* Show Sales Module */}
-                {(user.role === 'SALES' || user.role === 'ADMIN') && (
-                    <ModuleCard
-                        title="Deal Approval Portal"
-                        description="Submit and track your deal proposals."
-                        icon={<FileTextIcon color="white" />}
-                        onClick={() => onNavigate('sales')}
-                    />
-                )}
+    // Determine access based on role, same logic as before
+    const isSales = user.role === 'SALES' || user.role === 'ADMIN';
+    const isFinance = user.role === 'FINANCE' || user.role === 'ADMIN';
 
-                {/* Show Finance Module */}
-                {(user.role === 'FINANCE' || user.role === 'ADMIN') && (
-                    <ModuleCard
-                        title="Finance Dashboard"
-                        description="Review and approve submitted deals."
-                        icon={<DollarSignIcon color="white" />}
-                        onClick={() => onNavigate('finance')}
-                    />
+    // The modules the user has access to, now with emoji icons
+    const availableModules = [
+        { id: 'sales', name: 'Sales Deal Portal', icon: '📝', description: 'Submit and track your deal proposals.', available: isSales },
+        { id: 'finance', name: 'Finance Dashboard', icon: '📊', description: 'Review and approve financial projections.', available: isFinance }
+    ].filter(module => module.available);
+
+    return (
+        // The main container sets the background for the entire content area
+        <div>
+            {/* Main Content Area - now entirely on the bg-slate-50 background */}
+            <div className="max-w-7xl mx-auto px-6 py-12">
+                <div className="mb-8">
+                    <h2 className="text-xl font-semibold text-slate-900">Available Modules</h2>
+                    <p className="text-slate-600 text-sm mt-1">Select a module to get started</p>
+                </div>
+
+                {/* Module Cards Grid */}
+                {availableModules.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {availableModules.map((module) => (
+                            <Card
+                                key={module.id}
+                                module={module}
+                                onNavigate={onNavigate}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-slate-600">No modules available for your role ({user.role})</p>
+                    </div>
                 )}
             </div>
         </div>

@@ -1,12 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-
-// --- Component Imports ---
 import StatsCard from './components/StatsCard';
 import StatusBadge from './components/StatusBadge';
 import DataPreviewModal from './components/DataPreviewModal';
 import DatePicker from './components/DatePicker';
-
-// --- Icon Imports (UserIcon and LogOutIcon removed) ---
+// --- Icons (UserIcon and LogOutIcon are GONE) ---
 import {
     ClockIcon,
     TrendUpIcon,
@@ -18,8 +15,7 @@ import {
 
 // --- Header function REMOVED ---
 
-// UPDATED SIGNATURE: We only need 'onLogout' (for 401 errors)
-export default function FinanceDashboard({ onLogout }) {
+export default function FinanceDashboard({ onLogout }) { // Signature updated
     const [transactions, setTransactions] = useState([]);
     const [filter, setFilter] = useState('');
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -39,10 +35,9 @@ export default function FinanceDashboard({ onLogout }) {
             const response = await fetch(`/api/transactions?page=${currentPage}&per_page=30`);
             
             if (response.status === 401) {
-                onLogout(); // Log out if session expired
+                onLogout(); 
                 return;
             }
-
             const result = await response.json();
             if (result.success) {
                 const formattedTransactions = result.data.transactions.map(tx => ({
@@ -122,8 +117,11 @@ export default function FinanceDashboard({ onLogout }) {
     const handleRowClick = async (transaction) => {
         try {
             const response = await fetch(`/api/transaction/${transaction.id}`);
+            if (response.status === 401) {
+                onLogout();
+                return;
+            }
             const result = await response.json();
-
             if (result.success) {
                 setSelectedTransaction(result.data);
                 setIsDetailModalOpen(true);
@@ -165,8 +163,7 @@ export default function FinanceDashboard({ onLogout }) {
         handleUpdateStatus(transactionId, 'reject');
     };
 
-    // UPDATED RETURN STATEMENT
-    // We remove the outer divs and the <Header>, leaving only the page content.
+    // UPDATED RETURN: Removed outer <Header>, <>, and padding divs.
     return (
         <>
             <header className="flex justify-between items-center mb-8">
@@ -198,7 +195,7 @@ export default function FinanceDashboard({ onLogout }) {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-gray-500">
+                    <table className="w-full text-sm text-left text-gray-500">
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-center">Transaction ID</th>
@@ -235,7 +232,6 @@ export default function FinanceDashboard({ onLogout }) {
                         </tbody>
                     </table>
                 </div>
-                {/* --- Pagination Controls --- */}
                 <div className="flex justify-between items-center pt-4">
                     <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}

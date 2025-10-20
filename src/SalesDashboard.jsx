@@ -1,13 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-
-// --- Component Imports ---
 import StatsCard from './components/StatsCard';
 import StatusBadge from './components/StatusBadge';
 import FileUploadModal from './components/FileUploadModal';
 import DataPreviewModal from './components/DataPreviewModal';
 import DatePicker from './components/DatePicker';
-
-// --- Icon Imports (UserIcon and LogOutIcon removed) ---
+// --- Icons (UserIcon and LogOutIcon are GONE) ---
 import {
     ClockIcon,
     TrendUpIcon,
@@ -19,10 +16,9 @@ import {
     CalendarIcon
 } from './components/Icons';
 
-// --- Header function REMOVED ---
+// --- The old Header function is GONE ---
 
-// UPDATED SIGNATURE: We only need 'onLogout' (for 401 errors)
-export default function SalesDashboard({ onLogout }) {
+export default function SalesDashboard({ onLogout }) { // Signature updated
     const [transactions, setTransactions] = useState([]);
     const [filter, setFilter] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,14 +32,13 @@ export default function SalesDashboard({ onLogout }) {
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 4. UPDATED fetchTransactions
     const fetchTransactions = async () => {
         setIsLoading(true);
         setApiError(null);
         try {
             const response = await fetch(`/api/transactions?page=${currentPage}&per_page=30`);
             if (response.status === 401) {
-                onLogout(); // Log out if session expired
+                onLogout(); 
                 return;
             }
             const result = await response.json();
@@ -166,8 +161,8 @@ export default function SalesDashboard({ onLogout }) {
     };
 
     // 5. UPDATED RETURN STATEMENT
-    // We remove the outer divs and the <Header>, leaving only the page content.
-    // The new AppLayout component will provide the padding.
+    // The outer <div className="min-h-screen..."> and <div className="container...">
+    // have been REMOVED. The <App.jsx> file now handles padding.
     return (
         <>
             <header className="flex justify-between items-center mb-8">
@@ -236,7 +231,6 @@ export default function SalesDashboard({ onLogout }) {
                         </tbody>
                     </table>
                 </div>
-                {/* --- Pagination Controls --- */}
                 <div className="flex justify-between items-center pt-4">
                     <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}

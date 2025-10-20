@@ -3,7 +3,7 @@ import AuthPage from './AuthPage';
 import LandingPage from './LandingPage';
 import SalesDashboard from './SalesDashboard';
 import FinanceDashboard from './FinanceDashboard';
-import AppLayout from './AppLayout'; // <-- 1. IMPORT THE NEW LAYOUT
+import GlobalHeader from './GlobalHeader'; // <-- 1. IMPORT THE NEW HEADER
 
 // A simple API helper to make requests and handle JSON
 const api = {
@@ -94,35 +94,39 @@ export default function App() {
         );
     }
 
+    // --- 2. LOGGED OUT STATE ---
     if (!user) {
         return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />;
     }
 
-    // --- 2. UPDATE THE ROUTER LOGIC ---
-    let content;
+    // --- 3. LOGGED IN STATE (NEW) ---
+    // Get the correct page component to show
+    let PageComponent;
     switch (currentPage) {
         case 'sales':
-            // Pass onLogout so fetch 401s can log the user out
-            content = <SalesDashboard onLogout={handleLogout} />; 
+            PageComponent = <SalesDashboard onLogout={handleLogout} />; 
             break;
         case 'finance':
-            // Pass onLogout so fetch 401s can log the user out
-            content = <FinanceDashboard onLogout={handleLogout} />;
+            PageComponent = <FinanceDashboard onLogout={handleLogout} />;
             break;
         case 'landing':
         default:
-            content = <LandingPage user={user} onNavigate={handleNavigate} />;
+            PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;
     }
 
-    // --- 3. WRAP CONTENT IN THE NEW LAYOUT ---
+    // Render the layout: Header on top, PageComponent below
     return (
-        <AppLayout
-            user={user}
-            onLogout={handleLogout}
-            onNavigate={handleNavigate}
-            currentPage={currentPage}
-        >
-            {content}
-        </AppLayout>
+        // 1. Set the background YOU WANT. Let's use the one from LandingPage.
+        <div className="min-h-screen flex flex-col bg-slate-50">
+            <GlobalHeader 
+                onLogout={handleLogout}
+                onNavigate={handleNavigate}
+                currentPage={currentPage}
+            />
+            {/* 2. REMOVE container/padding classes. Let the page handle it. */}
+            <main className="flex-grow">
+                 {PageComponent}
+            </main>
+        </div>
     );
 }
