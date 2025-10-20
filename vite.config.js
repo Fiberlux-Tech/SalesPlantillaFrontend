@@ -1,20 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { resolve } from 'path'
-import { fileURLToPath } from 'url'
-
-// Get the directory name in an ES module environment
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        finance: resolve(__dirname, 'finance.html'),
-      },
-    },
-  },
+  // We no longer need the 'build.rollupOptions'
+  // Vite will now default to 'index.html' as the only entry point.
+
+  // This 'server' section is for DEVELOPMENT (npm run dev)
+  // It tells your React dev server to send API calls to Flask
+  server: {
+    proxy: {
+      '/api': 'http://127.0.0.1:5000', 
+      '/auth': 'http://127.0.0.1:5000'
+    }
+  }
 })
