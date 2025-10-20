@@ -1,18 +1,37 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path' // This is correct
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  // We no longer need the 'build.rollupOptions'
-  // Vite will now default to 'index.html' as the only entry point.
+  plugins: [
+    react({
+      // This is correct
+      include: "**/*.{js,jsx,ts,tsx}",
+    }),
+  ],
+  
+  // This is correct
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 
-  // This 'server' section is for DEVELOPMENT (npm run dev)
-  // It tells your React dev server to send API calls to Flask
+  // --- THIS IS THE UPDATED BLOCK ---
+  // Use the full object syntax to add 'changeOrigin: true'
   server: {
     proxy: {
-      '/api': 'http://127.0.0.1:5000', 
-      '/auth': 'http://127.0.0.1:5000'
+      '/api': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true, // <-- THIS IS THE CRITICAL FIX
+        secure: false
+      },
+      '/auth': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true, // <-- AND THIS ONE
+        secure: false
+      }
     }
   }
 })

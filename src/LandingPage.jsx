@@ -17,8 +17,8 @@ const Card = ({ module, onNavigate }) => {
                         <p className="text-slate-600 text-sm mt-2">{module.description}</p>
                         {/* The button is primarily a visual cue since the whole card is clickable */}
                         <button
-                           tabIndex="-1" // Makes the button not focusable, as the parent handles the click
-                           className="mt-4 px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-md hover:bg-slate-800"
+                            tabIndex="-1" // Makes the button not focusable, as the parent handles the click
+                            className="mt-4 px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-md hover:bg-slate-800"
                         >
                             Open Module
                         </button>
@@ -32,14 +32,17 @@ const Card = ({ module, onNavigate }) => {
 
 // --- Main LandingPage Component ---
 export default function LandingPage({ user, onNavigate }) {
-    // Determine access based on role, same logic as before
+    // 1. Define access based on roles
     const isSales = user.role === 'SALES' || user.role === 'ADMIN';
     const isFinance = user.role === 'FINANCE' || user.role === 'ADMIN';
+    const isAdmin = user.role === 'ADMIN'; // NEW: Explicit check for Admin role
 
     // The modules the user has access to, now with emoji icons
     const availableModules = [
         { id: 'sales', name: 'Sales Deal Portal', icon: '📝', description: 'Submit and track your deal proposals.', available: isSales },
-        { id: 'finance', name: 'Finance Dashboard', icon: '📊', description: 'Review and approve financial projections.', available: isFinance }
+        { id: 'finance', name: 'Finance Dashboard', icon: '📊', description: 'Review and approve financial projections.', available: isFinance },
+        // NEW MODULE: Permission Management
+        { id: 'admin-management', name: 'Permission Management', icon: '🔒', description: 'Manage users, roles, and module assignments.', available: isAdmin }
     ].filter(module => module.available);
 
     return (
