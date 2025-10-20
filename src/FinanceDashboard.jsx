@@ -166,6 +166,11 @@ export default function FinanceDashboard({ onLogout }) { // Signature updated
     // UPDATED RETURN: Removed outer <Header>, <>, and padding divs.
     return (
         <>
+        {/* ADD THIS NEW WRAPPER DIV:
+              It uses the same 'container', 'mx-auto', and 'px-8' from your header.
+              I've also added 'py-8' for vertical spacing.
+            */}
+            <div className="container mx-auto px-8 py-8">
             <header className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Finance Dashboard</h1>
@@ -252,7 +257,7 @@ export default function FinanceDashboard({ onLogout }) { // Signature updated
                     </button>
                 </div>
             </div>
-            
+            </div>
             {/* Modals */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             

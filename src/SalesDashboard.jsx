@@ -165,6 +165,8 @@ export default function SalesDashboard({ onLogout }) { // Signature updated
     // have been REMOVED. The <App.jsx> file now handles padding.
     return (
         <>
+        {/* ADD THIS NEW WRAPPER DIV */}
+            <div className="container mx-auto px-8 py-8">
             <header className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Deal Approval Portal</h1>
@@ -250,6 +252,7 @@ export default function SalesDashboard({ onLogout }) { // Signature updated
                         Next
                     </button>
                 </div>
+            </div>
             </div>
 
             {/* Modals are fine outside the main content flow */}
