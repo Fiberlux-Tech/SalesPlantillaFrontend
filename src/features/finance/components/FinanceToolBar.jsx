@@ -1,5 +1,5 @@
 import React from 'react';
-import DatePicker from './DatePicker'; // This path is correct as it was already in components
+import DatePicker from '../../../components/shared/DatePicker';
 import { SearchIcon, CalendarIcon } from '../../../components/shared/Icons';
 
 export function FinanceToolbar({

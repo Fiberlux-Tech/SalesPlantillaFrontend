@@ -5,7 +5,7 @@ import {
     TrendUpIcon,
     DollarSignIcon,
     FileTextIcon,
-} from './Icons'; // From feature-specific components
+} from '../../../components/shared/Icons';
 
 export function SalesStatsGrid({ stats }) {
     return (

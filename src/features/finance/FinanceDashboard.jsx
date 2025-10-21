@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { FinanceStatsGrid } from './components/FinanceStatsGrid';
-import { FinanceToolbar } from './components/FinanceToolbar';
+import { FinanceToolBar } from './components/FinanceToolBar';
 import { TransactionList } from './components/TransactionList';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 
@@ -172,7 +172,7 @@ export default function FinanceDashboard({ onLogout }) {
             {/* This white box contains the toolbar and the table */}
             <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
                 {/* 2. Render the Toolbar Component */}
-                <FinanceToolbar
+                <FinanceToolBar
                     filter={filter}
                     setFilter={setFilter}
                     isDatePickerOpen={isDatePickerOpen}

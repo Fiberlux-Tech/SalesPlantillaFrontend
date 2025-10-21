@@ -1,6 +1,6 @@
 import React from 'react';
-import DatePicker from './DatePicker';
-import { SearchIcon, CalendarIcon } from './Icons';
+import DatePicker from '../../../components/shared/DatePicker';
+import { SearchIcon, CalendarIcon } from '../../../components/shared/Icons';
 
 export function SalesToolbar({
     filter,

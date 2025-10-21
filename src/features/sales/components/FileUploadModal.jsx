@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CloseIcon, FileUploadIcon } from './Icons';
+import { CloseIcon, FileUploadIcon } from '../../../components/shared/Icons';
 
 function FileUploadModal({ isOpen, onClose, onNext }) {
     const [selectedFile, setSelectedFile] = useState(null);

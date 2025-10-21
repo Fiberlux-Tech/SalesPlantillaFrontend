@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import KpiCard from '../../features/sales/components/KpiCard';
+import KpiCard from './KpiCard';
 import StatusBadge from './StatusBadge';
 import CostBreakdownRow from './CostBreakdownRow';
 import { CloseIcon, WarningIcon, CheckCircleIcon } from './Icons';
