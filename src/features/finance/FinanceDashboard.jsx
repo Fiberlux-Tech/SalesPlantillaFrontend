@@ -3,6 +3,7 @@ import { FinanceStatsGrid } from './components/FinanceStatsGrid';
 import { FinanceToolBar } from './components/FinanceToolBar';
 import { TransactionList } from './components/TransactionList';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
+import { api } from '@/lib/api';
 
 export default function FinanceDashboard({ onLogout }) {
     // --- ALL STATE REMAINS HERE ---
@@ -151,6 +152,41 @@ export default function FinanceDashboard({ onLogout }) {
         }
     };
 
+    const handleCalculateCommission = async (transactionId) => {
+    setApiError(null);
+    try {
+        // FIX: Change '/auth/transaction/' to '/api/transaction/'
+        const response = await fetch(`/api/transaction/${transactionId}/calculate-commission`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, 
+            credentials: 'include', 
+        });
+
+        // Manual status check, similar to your other handlers
+        if (response.status === 401) {
+            onLogout();
+            return;
+        }
+
+        const result = await response.json();
+        
+        if (result.success) { 
+            // Critical: Update the modal's state with the *new payload*
+            setSelectedTransaction(result.data); 
+            fetchTransactions(); 
+            
+        } else if (!response.ok) {
+            // Handle non-200, non-401 responses that return JSON error bodies
+            setApiError(result.error || `Failed to calculate commission: Server returned status ${response.status}`);
+        } else {
+             setApiError(result.error || `Failed to calculate commission.`);
+        }
+        } catch (error) {
+            // Catch network errors 
+            setApiError('Failed to connect to the server for commission calculation.');
+        }
+    };
+
     const handleApprove = (transactionId) => { handleUpdateStatus(transactionId, 'approve'); };
     const handleReject = (transactionId) => { handleUpdateStatus(transactionId, 'reject'); };
 
@@ -206,6 +242,7 @@ export default function FinanceDashboard({ onLogout }) {
                 isFinanceView={true}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onCalculateCommission={handleCalculateCommission}
             />
         </>
     );

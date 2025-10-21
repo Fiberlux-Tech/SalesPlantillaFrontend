@@ -6,7 +6,7 @@ import { CloseIcon, WarningIcon, CheckCircleIcon } from './Icons';
 import FixedCostsTable from './FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject }) {
+function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission }) {
     const [openSections, setOpenSections] = useState({});
 
     const toggleSection = (section) => {
@@ -41,6 +41,15 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
             onReject(tx.id);
         }
     };
+
+    const handleCalculateCommissionClick = () => {
+        if (window.confirm('Are you sure you want to calculate commissions for this transaction? This will update the financial data.')) {
+            // Call the function passed down from the parent
+            onCalculateCommission(tx.id);
+        }
+    };
+
+
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -115,6 +124,9 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                 <div className="flex justify-end items-center p-5 border-t bg-white space-x-3">
                     {isFinanceView ? (
                         <>
+                            <button onClick={handleCalculateCommissionClick} className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                                Comisiones
+                            </button>
                             <button onClick={handleRejectClick} className="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
                                 Reject
                             </button>
