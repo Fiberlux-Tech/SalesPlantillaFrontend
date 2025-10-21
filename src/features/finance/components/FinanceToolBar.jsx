@@ -2,7 +2,7 @@ import React from 'react';
 import DatePicker from '../../../components/shared/DatePicker';
 import { SearchIcon, CalendarIcon } from '../../../components/shared/Icons';
 
-export function FinanceToolbar({
+export function FinanceToolBar({
     filter,
     setFilter,
     isDatePickerOpen,

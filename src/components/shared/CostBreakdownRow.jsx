@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRightIcon, ChevronDownIcon } from './shared/Icons';
+import { ChevronRightIcon, ChevronDownIcon } from './Icons';
 
 const CostBreakdownRow = ({ title, items, total, isOpen, onToggle, children }) => (
     <div>
