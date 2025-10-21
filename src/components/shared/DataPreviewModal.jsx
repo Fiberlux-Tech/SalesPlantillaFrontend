@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import KpiCard from '../KpiCard';
+import KpiCard from '../../features/sales/components/KpiCard';
 import StatusBadge from './StatusBadge';
 import CostBreakdownRow from './CostBreakdownRow';
 import { CloseIcon, WarningIcon, CheckCircleIcon } from './Icons';
-import FixedCostsTable from '../FixedCostsTable';
-import RecurringServicesTable from '../RecurringServicesTable';
+import FixedCostsTable from './FixedCostsTable';
+import RecurringServicesTable from './RecurringServicesTable';
 
 function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject }) {
     const [openSections, setOpenSections] = useState({});

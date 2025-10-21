@@ -1,0 +1,21 @@
+# This is a comment. Git ignores lines starting with #.
+
+# 1. Ignore a specific directory and all its contents
+#    (The trailing slash is important and means "this is a directory")
+node_modules/
+dist/
+build/
+.vscode/
+
+# 2. Ignore a specific file
+.env
+.env.local
+
+# 3. Ignore all files of a certain type using a wildcard (*)
+*.log
+*.temp
+*.bak
+
+# 4. Ignore OS-specific files
+.DS_Store
+Thumbs.db

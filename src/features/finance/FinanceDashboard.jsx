@@ -4,9 +4,6 @@ import { FinanceToolbar } from './components/FinanceToolbar';
 import { TransactionList } from './components/TransactionList';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 
-// Note: You should consider moving DataPreviewModal into 'src/features/finance/components' 
-// as it seems specific to this feature. I'll leave the path as-is for now.
-
 export default function FinanceDashboard({ onLogout }) {
     // --- ALL STATE REMAINS HERE ---
     const [transactions, setTransactions] = useState([]);
