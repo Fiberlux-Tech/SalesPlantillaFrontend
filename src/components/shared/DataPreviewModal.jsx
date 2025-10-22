@@ -8,7 +8,6 @@ import RecurringServicesTable from './RecurringServicesTable';
 import { GigaLanCommissionInputs } from '../../features/sales/components/GigaLanCommissionInputs';
 
 function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange }) {
-    // Corrected to return 'N/A' for null, undefined, or 0 for cleaner display
     const formatCurrency = (value) => {
         if (typeof value !== 'number' || value === null || value === 0) return '-';
         return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -173,17 +172,17 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <KpiCard title="MRC (Monthly Recurring)" value={`${tx.MRC?.toLocaleString()}`} subtext="Key Revenue Metric" />
-                            <KpiCard title="NRC (Pago Único)" value={`${tx.NRC?.toLocaleString()}`} />
+                            <KpiCard title="MRC (Monthly Recurring)" value={formatCurrency(tx.MRC)} subtext="Key Revenue Metric" />
+                            <KpiCard title="NRC (Pago Único)" value={formatCurrency(tx.NRC)} />
                             <KpiCard title="VAN" value={`${tx.VAN?.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
                             <KpiCard title="TIR" value={`${(tx.TIR * 100)?.toFixed(2)}%`} />
                             <KpiCard title="Periodo de Payback" value={`${tx.payback} months`} />
-                            <KpiCard title="Ingresos Totales" value={`${tx.totalRevenue?.toLocaleString()}`} />
-                            <KpiCard title="Gastos Totales" value={`${tx.totalExpense?.toLocaleString()}`} isNegative={true} />
-                            <KpiCard title="Utilidad Bruta" value={`${tx.grossMargin?.toLocaleString()}`} />
+                            <KpiCard title="Ingresos Totales" value={formatCurrency(tx.totalRevenue)} />
+                            <KpiCard title="Gastos Totales" value={formatCurrency(tx.totalExpense)} isNegative={true} />
+                            <KpiCard title="Utilidad Bruta" value={formatCurrency(tx.grossMargin)} />
                             <KpiCard title="Margen Bruto (%)" value={`${(tx.grossMarginRatio * 100)?.toFixed(2)}%`} />
-                            <KpiCard title="Comisión de Ventas" value={`${tx.comisiones?.toLocaleString()}`} />
-                            <KpiCard title="Costo Instalación" value={`${tx.costoInstalacion?.toLocaleString()}`} />
+                            <KpiCard title="Comisión de Ventas" value={formatCurrency(tx.comisiones)} />
+                            <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion)} />
                             <KpiCard title="Costo Instalación (%)" value={`${(tx.costoInstalacionRatio * 100)?.toFixed(2)}%`} />
                         </div>
                     </div>
