@@ -5,10 +5,12 @@ import CostBreakdownRow from './CostBreakdownRow';
 import { CloseIcon, WarningIcon, CheckCircleIcon } from './Icons';
 import FixedCostsTable from './FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
+import { GigaLanCommissionInputs } from '../../features/sales/components/GigaLanCommissionInputs';
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission }) {
+function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange }) {
+    // Corrected to return 'N/A' for null, undefined, or 0 for cleaner display
     const formatCurrency = (value) => {
-        if (typeof value !== 'number') return 'N/A';
+        if (typeof value !== 'number' || value === null || value === 0) return 'N/A';
         return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
     };  
 
@@ -21,7 +23,26 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
     if (!isOpen || !data?.transactions) return null;
 
     const tx = data.transactions;
-    const overviewData = [
+
+    const getGigalanOverview = () => {
+        if (tx.unidadNegocio !== 'GIGALAN') return [];
+        
+        // This displays the SAVED values from the transaction (tx) object
+        return [
+            { label: 'GIGALAN Region', value: tx.gigalan_region || 'N/A' },
+            { label: 'GIGALAN Sale Type', value: tx.gigalan_sale_type || 'N/A' },
+            { 
+                label: 'GIGALAN Previous MRC', 
+                // Display the saved amount if available
+                value: (tx.gigalan_old_mrc) 
+                    ? formatCurrency(tx.gigalan_old_mrc) 
+                    : 'N/A'
+            },
+        ];
+    }
+
+    // Base data
+    const baseOverviewData = [
         { label: 'Unidad de Negocio', value: tx.unidadNegocio },
         { label: 'Transaction ID', value: tx.transactionID || '-' },
         { label: 'Nombre Cliente', value: tx.clientName },
@@ -31,6 +52,10 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
         { label: 'Plazo de Contrato', value: `${tx.plazoContrato} meses` },
         { label: 'Status', value: <StatusBadge status={tx.ApprovalStatus} /> },
     ];
+    
+    // <--- CRITICAL FIX: Merge base data with Gigalan-specific data for display --->
+    const overviewData = [...baseOverviewData, ...getGigalanOverview()];
+    // <--- END CRITICAL FIX --->
 
     const totalFixedCosts = data.fixed_costs.reduce((acc, item) => acc + (item.total || 0), 0);
     const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0);
@@ -83,7 +108,18 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                         <div className="bg-gray-100 p-4 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4">
                             {overviewData.map(item => (<div key={item.label}><p className="text-xs text-gray-500 uppercase tracking-wider">{item.label}</p><p className="font-semibold text-gray-900 mt-1">{item.value}</p></div>))}
                         </div>
+                        
+                        {/* <--- CRITICAL FIX: CONDITIONAL RENDER OF NEW INPUTS FOR SALES ---> */}
+                        {!isFinanceView && tx.unidadNegocio === 'GIGALAN' && (
+                            <GigaLanCommissionInputs 
+                                inputs={gigalanInputs} 
+                                onInputChange={onGigalanInputChange} 
+                            />
+                        )}
+                        {/* <--- END CRITICAL FIX ---> */}
                     </div>
+                    
+                    {/* The mb-6 on the div above replaces the margin for the input component */}
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Detalle de Servicios</h3>
                         <div className="space-y-3">
@@ -175,4 +211,4 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
     );
 }
 
-export default DataPreviewModal;
+export default DataPreview

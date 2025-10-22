@@ -23,6 +23,11 @@ export default function SalesDashboard({ onLogout }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
+    const [gigalanCommissionInputs, setGigalanCommissionInputs] = useState({
+        gigalan_region: '',
+        gigalan_sale_type: '',
+        gigalan_old_mrc: null,
+    });
 
     // --- ALL DATA FETCHING & LOGIC REMAINS HERE ---
     const fetchTransactions = async () => {
@@ -101,6 +106,17 @@ export default function SalesDashboard({ onLogout }) {
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
     const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
 
+    const handleGigalanInputChange = (key, value) => {
+        setGigalanCommissionInputs(prev => {
+            const newState = { ...prev, [key]: value };
+            // CRITICAL: Clear old_mrc if sale type changes to NEW
+            if (key === 'gigalan_sale_type' && value !== 'EXISTING') {
+                newState.gigalan_old_mrc = null;
+            }
+            return newState;
+        });
+    };
+
     const handleUploadNext = async (file) => {
         // ... your upload logic
         if (!file) return;
@@ -122,6 +138,11 @@ export default function SalesDashboard({ onLogout }) {
                 setUploadedData(dataWithFilename);
                 setIsModalOpen(false);
                 setIsPreviewModalOpen(true);
+                setGigalanCommissionInputs({
+                    gigalan_region: '',
+                    gigalan_sale_type: '',
+                    gigalan_old_mrc: null,
+                });
             } else {
                 setApiError(result.error || 'An unknown error occurred.');
                 setIsModalOpen(false);
@@ -136,11 +157,32 @@ export default function SalesDashboard({ onLogout }) {
         // ... your confirm logic
         if (!uploadedData) return;
         setApiError(null);
+        // <--- VALIDATION: Check for GIGALAN requirements before submission (New Logic) --->
+        if (uploadedData.transactions.unidadNegocio === 'GIGALAN') {
+            if (!gigalanCommissionInputs.gigalan_region || !gigalanCommissionInputs.gigalan_sale_type) {
+                setApiError('GIGALAN transactions require Region and Type of Sale to be selected.');
+                return;
+            }
+            if (gigalanCommissionInputs.gigalan_sale_type === 'EXISTING' && (!gigalanCommissionInputs.gigalan_old_mrc || gigalanCommissionInputs.gigalan_old_mrc <= 0)) {
+                setApiError('GIGALAN Existing Sales require a valid Previous Monthly Charge amount.');
+                return;
+            }
+        }
+        
+        // <--- PREPARE FINAL PAYLOAD (New Logic) --->
+        const finalPayload = {
+            ...uploadedData,
+            transactions: {
+                ...uploadedData.transactions,
+                // Merge GIGALAN inputs into the main transaction object
+                ...gigalanCommissionInputs, 
+            }
+        };
         try {
             const response = await fetch('/api/submit-transaction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(uploadedData),
+                body: JSON.stringify(finalPayload),
             });
             if (response.status === 401) {
                 onLogout();
@@ -206,7 +248,7 @@ export default function SalesDashboard({ onLogout }) {
             {/* Modals stay here, controlled by the parent */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
-            <DataPreviewModal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} onConfirm={handleConfirmSubmission} data={uploadedData} />
+            <DataPreviewModal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} onConfirm={handleConfirmSubmission} data={uploadedData} gigalanInputs={gigalanCommissionInputs} onGigalanInputChange={handleGigalanInputChange} />
         </>
     );
 }
