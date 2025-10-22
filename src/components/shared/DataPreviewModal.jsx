@@ -53,7 +53,7 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full">
+            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full">
                 <div className="flex justify-between items-center p-5 border-b">
                     <div>
                         <h2 className="text-xl font-bold text-gray-800">Review Transaction Data</h2>
@@ -79,6 +79,29 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                         </div>
                     </div>
                     <div className="mb-6">
+                        <h3 className="font-semibold text-gray-800 mb-3 text-lg">Cost Breakdown</h3>
+                        <div className="space-y-3">
+                            <CostBreakdownRow
+                                title="Total Recurring Costs"
+                                items={data.recurring_services.length}
+                                total={totalRecurringCosts}
+                                isOpen={openSections['recurringCosts']}
+                                onToggle={() => toggleSection('recurringCosts')}
+                            >
+                                <RecurringServicesTable data={data.recurring_services} />
+                            </CostBreakdownRow>
+                            <CostBreakdownRow
+                                title="Fixed Costs"
+                                items={data.fixed_costs.length}
+                                total={totalFixedCosts}
+                                isOpen={openSections['fixedCosts']}
+                                onToggle={() => toggleSection('fixedCosts')}
+                            >
+                                <FixedCostsTable data={data.fixed_costs} />
+                            </CostBreakdownRow>
+                        </div>
+                    </div>
+                    <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <KpiCard title="MRC (Monthly Recurring)" value={`$${tx.MRC?.toLocaleString()}`} subtext="Key Revenue Metric" />
@@ -93,29 +116,6 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                             <KpiCard title="Sales Commission" value={`$${tx.comisiones?.toLocaleString()}`} />
                             <KpiCard title="Installation Cost" value={`$${tx.costoInstalacion?.toLocaleString()}`} />
                             <KpiCard title="Installation Cost %" value={`${(tx.costoInstalacionRatio * 100)?.toFixed(2)}%`} />
-                        </div>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-gray-800 mb-3 text-lg">Cost Breakdown</h3>
-                        <div className="space-y-3">
-                            <CostBreakdownRow
-                                title="Fixed Costs"
-                                items={data.fixed_costs.length}
-                                total={totalFixedCosts}
-                                isOpen={openSections['fixedCosts']}
-                                onToggle={() => toggleSection('fixedCosts')}
-                            >
-                                <FixedCostsTable data={data.fixed_costs} />
-                            </CostBreakdownRow>
-                            <CostBreakdownRow
-                                title="Total Recurring Costs"
-                                items={data.recurring_services.length}
-                                total={totalRecurringCosts}
-                                isOpen={openSections['recurringCosts']}
-                                onToggle={() => toggleSection('recurringCosts')}
-                            >
-                                <RecurringServicesTable data={data.recurring_services} />
-                            </CostBreakdownRow>
                         </div>
                     </div>
                 </div>
