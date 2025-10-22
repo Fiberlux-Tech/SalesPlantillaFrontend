@@ -78,7 +78,7 @@ export default function FinanceDashboard({ onLogout }) {
         }).length;
 
         return {
-            totalApprovedValue: `$${(totalApprovedValue / 1000000).toFixed(2)}M`,
+            totalApprovedValue: `${(totalApprovedValue / 1000000).toFixed(2)}M`,
             averageMargin: `${(averageMargin * 100).toFixed(2)}%`,
             highRiskDeals,
             dealsThisMonth,

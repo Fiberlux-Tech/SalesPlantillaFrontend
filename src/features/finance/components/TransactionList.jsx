@@ -44,7 +44,7 @@ export function TransactionList({
                                     <td className="px-6 py-4 text-center">{tx.unidadNegocio}</td>
                                     <td className="px-6 py-4 font-bold text-gray-900 text-center">{tx.clientName}</td>
                                     <td className="px-6 py-4 text-center">{tx.salesman}</td>
-                                    <td className="px-6 py-4 text-center">${tx.MRC.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-center">{tx.MRC.toLocaleString()}</td>
                                     <td className="px-6 py-4 text-center">{tx.plazoContrato}</td>
                                     <td className="px-6 py-4 font-medium text-blue-600 text-center">{`${(tx.grossMarginRatio * 100).toFixed(2)}%`}</td>
                                     <td className="px-6 py-4 text-center">{tx.payback}</td>

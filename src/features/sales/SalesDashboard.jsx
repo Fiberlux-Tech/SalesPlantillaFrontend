@@ -75,7 +75,7 @@ export default function SalesDashboard({ onLogout }) {
         const avgPayback = 20;
         return {
             pendingApprovals,
-            totalValue: `$${(totalValue / 1000000).toFixed(2)}M`,
+            totalValue: `${(totalValue / 1000000).toFixed(2)}M`,
             avgIRR: `${avgIRR}%`,
             avgPayback: `${avgPayback} mo`,
         };

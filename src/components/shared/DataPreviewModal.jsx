@@ -10,8 +10,8 @@ import { GigaLanCommissionInputs } from '../../features/sales/components/GigaLan
 function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange }) {
     // Corrected to return 'N/A' for null, undefined, or 0 for cleaner display
     const formatCurrency = (value) => {
-        if (typeof value !== 'number' || value === null || value === 0) return 'N/A';
-        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        if (typeof value !== 'number' || value === null || value === 0) return '-';
+        return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };  
 
     const [openSections, setOpenSections] = useState({});
@@ -33,14 +33,14 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
         
         // This displays the SAVED values from the transaction (tx) object
         return [
-            { label: 'REGIÓN', value: tx.gigalan_region || 'N/A' },
-            { label: 'TIPO', value: tx.gigalan_sale_type || 'N/A' },
+            { label: 'REGIÓN', value: tx.gigalan_region || '-' },
+            { label: 'TIPO', value: tx.gigalan_sale_type || '-' },
             { 
                 label: 'MRC PREVIO', 
                 // Display the saved amount if available
                 value: (tx.gigalan_old_mrc) 
                     ? formatCurrency(tx.gigalan_old_mrc) 
-                    : 'N/A'
+                    : '-'
             },
         ];
     }
@@ -173,17 +173,17 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <KpiCard title="MRC (Monthly Recurring)" value={`$${tx.MRC?.toLocaleString()}`} subtext="Key Revenue Metric" />
-                            <KpiCard title="NRC (Pago Único)" value={`$${tx.NRC?.toLocaleString()}`} />
-                            <KpiCard title="VAN" value={`$${tx.VAN?.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
+                            <KpiCard title="MRC (Monthly Recurring)" value={`${tx.MRC?.toLocaleString()}`} subtext="Key Revenue Metric" />
+                            <KpiCard title="NRC (Pago Único)" value={`${tx.NRC?.toLocaleString()}`} />
+                            <KpiCard title="VAN" value={`${tx.VAN?.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
                             <KpiCard title="TIR" value={`${(tx.TIR * 100)?.toFixed(2)}%`} />
                             <KpiCard title="Periodo de Payback" value={`${tx.payback} months`} />
-                            <KpiCard title="Ingresos Totales" value={`$${tx.totalRevenue?.toLocaleString()}`} />
-                            <KpiCard title="Gastos Totales" value={`$${tx.totalExpense?.toLocaleString()}`} isNegative={true} />
-                            <KpiCard title="Utilidad Bruta" value={`$${tx.grossMargin?.toLocaleString()}`} />
+                            <KpiCard title="Ingresos Totales" value={`${tx.totalRevenue?.toLocaleString()}`} />
+                            <KpiCard title="Gastos Totales" value={`${tx.totalExpense?.toLocaleString()}`} isNegative={true} />
+                            <KpiCard title="Utilidad Bruta" value={`${tx.grossMargin?.toLocaleString()}`} />
                             <KpiCard title="Margen Bruto (%)" value={`${(tx.grossMarginRatio * 100)?.toFixed(2)}%`} />
-                            <KpiCard title="Comisión de Ventas" value={`$${tx.comisiones?.toLocaleString()}`} />
-                            <KpiCard title="Costo Instalación" value={`$${tx.costoInstalacion?.toLocaleString()}`} />
+                            <KpiCard title="Comisión de Ventas" value={`${tx.comisiones?.toLocaleString()}`} />
+                            <KpiCard title="Costo Instalación" value={`${tx.costoInstalacion?.toLocaleString()}`} />
                             <KpiCard title="Costo Instalación (%)" value={`${(tx.costoInstalacionRatio * 100)?.toFixed(2)}%`} />
                         </div>
                     </div>
