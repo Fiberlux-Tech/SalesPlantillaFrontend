@@ -16,7 +16,7 @@ const CostBreakdownRow = ({ title, items, total, isOpen, onToggle, children, cus
                     customTotalsNode 
                 ) : (
                      <>
-                        <p className="font-semibold text-gray-800">{`$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</p>
+                        <p className="font-semibold text-gray-800">{`$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</p>
                         <p className="text-xs text-gray-500 text-right">Total</p>
                     </>
                 )}

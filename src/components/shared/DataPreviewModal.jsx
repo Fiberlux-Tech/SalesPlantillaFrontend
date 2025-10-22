@@ -10,7 +10,7 @@ import { GigaLanCommissionInputs } from '../../features/sales/components/GigaLan
 function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange }) {
     const formatCurrency = (value) => {
         if (typeof value !== 'number' || value === null || value === 0) return '-';
-        return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };  
 
     const [openSections, setOpenSections] = useState({});
@@ -172,9 +172,9 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <KpiCard title="MRC (Monthly Recurring)" value={formatCurrency(tx.MRC)} subtext="Key Revenue Metric" />
+                            <KpiCard title="MRC (Recurrente Mensual)" value={formatCurrency(tx.MRC)} subtext="Métrica Clave" />
                             <KpiCard title="NRC (Pago Único)" value={formatCurrency(tx.NRC)} />
-                            <KpiCard title="VAN" value={`${tx.VAN?.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
+                            <KpiCard title="VAN" value={formatCurrency(tx.VAN)} />
                             <KpiCard title="TIR" value={`${(tx.TIR * 100)?.toFixed(2)}%`} />
                             <KpiCard title="Periodo de Payback" value={`${tx.payback} months`} />
                             <KpiCard title="Ingresos Totales" value={formatCurrency(tx.totalRevenue)} />

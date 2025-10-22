@@ -9,7 +9,7 @@ const RecurringServicesTable = ({ data }) => {
   const formatCurrency = (value) => {
     if (value === null || typeof value === 'undefined' || value === 0) return '-';
     if (typeof value !== 'number') return '-'; // Treat non-numbers (except handled above) as '-'
-    return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   // Handles non-currency data (text and numbers like 'Q') and returns '-' for 0/null/undefined/empty/N/A
