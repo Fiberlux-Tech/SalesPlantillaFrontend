@@ -7,6 +7,11 @@ import FixedCostsTable from './FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
 import { GigaLanCommissionInputs } from '../../features/sales/components/GigaLanCommissionInputs';
 
+// Import the new footer components
+import { SalesPreviewFooter } from '../../features/sales/components/SalesPreviewFooter';
+import { FinancePreviewFooter } from '../../features/finance/components/FinancePreviewFooter';
+
+
 function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange }) {
     const formatCurrency = (value) => {
         if (typeof value !== 'number' || value === null || value === 0) return '-';
@@ -22,6 +27,9 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
     if (!isOpen || !data?.transactions) return null;
 
     const tx = data.transactions;
+    
+    // NEW: Check if the transaction is pending (used for UI state and sales view inputs)
+    const isPending = tx.ApprovalStatus === 'PENDING';
 
     // MODIFIED: Only returns Gigalan overview fields if it's the Finance View.
     const getGigalanOverview = () => {
@@ -64,26 +72,6 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
     const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0);
     const totalRecurringIncome = data.recurring_services.reduce((acc, item) => acc + (item.ingreso || 0), 0);
 
-    const handleApproveClick = () => {
-        if (window.confirm('Estas seguro/a de aprobar esta transacción?')) {
-            onApprove(tx.id);
-        }
-    };
-
-    const handleRejectClick = () => {
-        if (window.confirm('Estas seguro/a de rechazar esta transacción?')) {
-            onReject(tx.id);
-        }
-    };
-
-    const handleCalculateCommissionClick = () => {
-        if (window.confirm('Estas seguro/a de realizar el calculo de comisión? Esto actualizara la base de datos.')) {
-            // Call the function passed down from the parent
-            onCalculateCommission(tx.id);
-        }
-    };
-
-
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -96,7 +84,20 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon /></button>
                 </div>
                 <div className="p-6 bg-gray-50 max-h-[75vh] overflow-y-auto">
-                    {!isFinanceView && (
+                    
+                    {/* NEW: Display message if transaction is approved/rejected in Sales View */}
+                    {!isFinanceView && !isPending && (
+                        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex">
+                            <WarningIcon />
+                            <div className="ml-3">
+                                <p className="font-semibold text-red-800">Transaction Status: {tx.ApprovalStatus}</p>
+                                <p className="text-sm text-red-700">Modification of key inputs is **not allowed** once a transaction has been reviewed.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* EXISTING: Warning for Sales View when PENDING */}
+                    {!isFinanceView && isPending && (
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex">
                             <WarningIcon />
                             <div className="ml-3">
@@ -106,13 +107,15 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                         </div>
                     )}
 
+
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Transaction Overview</h3>
                         <div className="bg-gray-100 p-4 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4">
                             {overviewData.map(item => (<div key={item.label}><p className="text-xs text-gray-500 uppercase tracking-wider">{item.label}</p><p className="font-semibold text-gray-900 mt-1">{item.value}</p></div>))}
                             
-                            {/* CORRECT LOCATION (INSIDE GRAY BOX) */}
-                            {!isFinanceView && tx.unidadNegocio === 'GIGALAN' && (
+                            {/* CORRECT LOCATION: GigaLan Commission Inputs for Sales View (ONLY if PENDING) */}
+                            {/* This is the key change to hide the inputs once status is immutable */}
+                            {!isFinanceView && tx.unidadNegocio === 'GIGALAN' && isPending && (
                                 <div className="col-span-full pt-4 mt-4 border-t border-gray-200">
                                     <GigaLanCommissionInputs 
                                         inputs={gigalanInputs} 
@@ -123,7 +126,6 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                             {/* END CORRECT LOCATION */}
                         </div>
                         
-                        {/* REMOVED DUPLICATE BLOCK: The old code block that created the second, unstyled set of inputs outside the gray box has been removed from here. */}
                     </div>
                     
                     {/* The mb-6 on the div above replaces the margin for the input component */}
@@ -188,31 +190,20 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                     </div>
                 </div>
 
-                {/* --- MODIFIED FOOTER --- */}
-                <div className="flex justify-end items-center p-5 border-t bg-white space-x-3">
-                    {isFinanceView ? (
-                        <>
-                            <button onClick={handleCalculateCommissionClick} className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                                Comisiones
-                            </button>
-                            <button onClick={handleRejectClick} className="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
-                                Reject
-                            </button>
-                            <button onClick={handleApproveClick} className="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
-                                Approve
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <div className="flex-grow flex items-center text-sm text-gray-600">
-                                <CheckCircleIcon />
-                                <span className="ml-2">All data extracted from Excel file</span>
-                            </div>
-                            <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                            <button onClick={onConfirm} className="px-5 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800">Confirm & Submit</button>
-                        </>
-                    )}
-                </div>
+                {/* --- FOOTER INTEGRATION --- */}
+                {isFinanceView ? (
+                    <FinancePreviewFooter
+                        tx={tx}
+                        onApprove={onApprove}
+                        onReject={onReject}
+                        onCalculateCommission={onCalculateCommission}
+                    />
+                ) : (
+                    <SalesPreviewFooter 
+                        onConfirm={onConfirm} 
+                        onClose={onClose} 
+                    />
+                )}
             </div>
         </div>
     );

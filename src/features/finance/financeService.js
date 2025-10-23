@@ -88,6 +88,16 @@ export async function updateTransactionStatus(transactionId, action) {
         if (response.status === 401) {
             return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
         }
+        
+        // Handle non-successful responses (e.g., 400 Bad Request, 403 Forbidden)
+        if (!response.ok) {
+            const errorData = await response.json();
+            return { 
+                success: false, 
+                error: errorData.error || `Failed to ${action} transaction.`,
+                status: response.status 
+            };
+        }
 
         const result = await response.json();
         
@@ -118,12 +128,20 @@ export async function calculateCommission(transactionId) {
             return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
         }
 
+        // Handle non-successful responses (e.g., 403 Forbidden for immutable data)
+        if (!response.ok) {
+            const errorData = await response.json();
+             return { 
+                success: false, 
+                error: errorData.error || `Failed to calculate commission. Server returned status ${response.status}`,
+                status: response.status
+            };
+        }
+        
         const result = await response.json();
         
         if (result.success) { 
             return { success: true, data: result.data };
-        } else if (!response.ok) {
-            return { success: false, error: result.error || `Failed to calculate commission: Server returned status ${response.status}` };
         } else {
              return { success: false, error: result.error || `Failed to calculate commission.` };
         }

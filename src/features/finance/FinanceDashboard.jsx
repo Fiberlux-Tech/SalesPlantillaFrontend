@@ -21,7 +21,7 @@ export default function FinanceDashboard({ onLogout }) {
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
     const datePickerRef = useRef(null);
-    const [apiError, setApiError] = useState(null);
+    const [apiError, setApiError] = useState(null); // <-- Error state remains
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -89,7 +89,7 @@ export default function FinanceDashboard({ onLogout }) {
         });
     }, [transactions, filter, selectedDate]);
 
-    // --- EVENT HANDLERS (CLEANED UP) ---
+    // --- EVENT HANDLERS (UPDATED) ---
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
     const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
 
@@ -125,6 +125,7 @@ export default function FinanceDashboard({ onLogout }) {
             setIsDetailModalOpen(false);
             fetchTransactions(); // Refresh the table
         } else {
+            // CRITICAL CHANGE: Catch the error from the service and display it.
             setApiError(result.error);
         }
     };
@@ -140,9 +141,11 @@ export default function FinanceDashboard({ onLogout }) {
         }
 
         if (result.success) { 
+            // If recalculation is successful, update the detail modal data and refresh the list
             setSelectedTransaction(result.data); 
             fetchTransactions(); 
         } else {
+             // CRITICAL CHANGE: Catch the error from the service and display it.
              setApiError(result.error);
         }
     };
