@@ -32,7 +32,7 @@ export function FinancePreviewFooter({ tx, onApprove, onReject, onCalculateCommi
             <div className="flex-grow">
                  {!canModify && (
                     <p className="text-sm font-medium text-red-600">
-                        Transaction is **{statusText}**. Modification buttons are disabled.
+                        La transaccion esta {statusText}. No se puede modificar de nuevo.
                     </p>
                  )}
             </div>

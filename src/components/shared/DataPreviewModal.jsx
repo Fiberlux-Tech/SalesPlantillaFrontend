@@ -178,7 +178,7 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                             <KpiCard title="NRC (Pago Único)" value={formatCurrency(tx.NRC)} />
                             <KpiCard title="VAN" value={formatCurrency(tx.VAN)} />
                             <KpiCard title="TIR" value={`${(tx.TIR * 100)?.toFixed(2)}%`} />
-                            <KpiCard title="Periodo de Payback" value={`${tx.payback} months`} />
+                            <KpiCard title="Periodo de Payback" value={`${tx.payback} meses`} />
                             <KpiCard title="Ingresos Totales" value={formatCurrency(tx.totalRevenue)} />
                             <KpiCard title="Gastos Totales" value={formatCurrency(tx.totalExpense)} isNegative={true} />
                             <KpiCard title="Utilidad Bruta" value={formatCurrency(tx.grossMargin)} />
