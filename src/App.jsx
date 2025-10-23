@@ -7,6 +7,7 @@ import LandingPage from './features/landing/LandingPage';
 import SalesDashboard from './features/sales/SalesDashboard';
 import FinanceDashboard from './features/finance/FinanceDashboard';
 import { PermissionManagementModule } from './features/admin/AdminUserManagement';
+import MasterDataManagement from './features/masterdata/MasterDataManagement';
 
 // --- 3. CORRECTED SHARED COMPONENT IMPORT ---
 import GlobalHeader from './components/shared/GlobalHeader'; 
@@ -68,6 +69,9 @@ export default function App() {
             case 'admin-management':
                 if (role === 'ADMIN') setCurrentPage('admin-management');
                 break;
+            case 'variable-master': // New: Universal access at navigation layer
+                setCurrentPage('variable-master');
+                break;
             case 'landing':
             default:
                 setCurrentPage('landing');
@@ -98,6 +102,9 @@ export default function App() {
         case 'admin-management':
             PageComponent = <PermissionManagementModule />; 
             break;
+        case 'variable-master': // New: Render the actual MasterDataManagement component
+            PageComponent = <MasterDataManagement user={user} />;
+            break;
         case 'landing':
         default:
             PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;

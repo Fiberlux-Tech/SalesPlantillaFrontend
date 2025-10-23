@@ -8,12 +8,14 @@ export default function LandingPage({ user, onNavigate }) {
     const isSales = user.role === 'SALES' || user.role === 'ADMIN';
     const isFinance = user.role === 'FINANCE' || user.role === 'ADMIN';
     const isAdmin = user.role === 'ADMIN';
+    const isMasterData = true;
 
     // The modules the user has access to, now with emoji icons
     const availableModules = [
         { id: 'sales', name: 'Sales Deal Portal', icon: '📝', description: 'Submit and track your deal proposals.', available: isSales },
         { id: 'finance', name: 'Finance Dashboard', icon: '📊', description: 'Review and approve financial projections.', available: isFinance },
-        { id: 'admin-management', name: 'Permission Management', icon: '🔒', description: 'Manage users, roles, and module assignments.', available: isAdmin }
+        { id: 'admin-management', name: 'Permission Management', icon: '🔒', description: 'Manage users, roles, and module assignments.', available: isAdmin },
+        { id: 'variable-master', name: 'Maestro de Variables', icon: '⚙️', description: 'Visualiza y actualizar variables clave.', available: isMasterData }
     ].filter(module => module.available);
 
     return (

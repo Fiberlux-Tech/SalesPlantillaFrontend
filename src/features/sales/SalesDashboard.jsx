@@ -6,9 +6,6 @@ import FileUploadModal from './components/FileUploadModal';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 import { UploadIcon, ExportIcon } from '../../components/shared/Icons';
 
-// Note: StatsCard, StatusBadge, DataPreviewModal are imported from 
-// the global components folder, which is correct.
-
 export default function SalesDashboard({ onLogout }) {
     // --- ALL STATE REMAINS HERE ---
     const [transactions, setTransactions] = useState([]);
