@@ -1,9 +1,18 @@
+// src/features/finance/FinanceDashboard.jsx (Refactored)
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { FinanceStatsGrid } from './components/FinanceStatsGrid';
 import { FinanceToolBar } from './components/FinanceToolBar';
 import { TransactionList } from './components/TransactionList';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 import { api } from '@/lib/api';
+// Import the new Service Layer
+import { 
+    getFinanceTransactions, 
+    getTransactionDetails, 
+    updateTransactionStatus, 
+    calculateCommission 
+} from './financeService';
 
 export default function FinanceDashboard({ onLogout }) {
     // --- ALL STATE REMAINS HERE ---
@@ -19,39 +28,24 @@ export default function FinanceDashboard({ onLogout }) {
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
 
-    // --- ALL DATA FETCHING REMAINS HERE ---
+    // --- DATA FETCHING (CLEANED UP) ---
     const fetchTransactions = async () => {
         setIsLoading(true);
         setApiError(null);
-        try {
-            const response = await fetch(`/api/transactions?page=${currentPage}&per_page=30`);
-            
-            if (response.status === 401) {
-                onLogout(); 
-                return;
-            }
-            const result = await response.json();
-            if (result.success) {
-                // ... (formatting logic is fine here)
-                const formattedTransactions = result.data.transactions.map(tx => ({
-                    id: tx.id,
-                    unidadNegocio: tx.unidadNegocio,
-                    clientName: tx.clientName,
-                    salesman: tx.salesman,
-                    MRC: tx.MRC,
-                    plazoContrato: tx.plazoContrato,
-                    grossMarginRatio: tx.grossMarginRatio,
-                    payback: tx.payback,
-                    submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
-                    status: tx.ApprovalStatus,
-                }));
-                setTransactions(formattedTransactions);
-                setTotalPages(result.data.pages);
-            } else {
-                setApiError(result.error || 'Failed to fetch transactions.');
-            }
-        } catch (error) {
-            setApiError('Failed to connect to the server. Please ensure the backend is running.');
+        
+        // Use the service function
+        const result = await getFinanceTransactions(currentPage); 
+        
+        if (result.status === 401) {
+            onLogout(); 
+            return;
+        }
+
+        if (result.success) {
+            setTransactions(result.data); // Data is already formatted
+            setTotalPages(result.pages);
+        } else {
+            setApiError(result.error);
         }
         setIsLoading(false);
     };
@@ -60,9 +54,9 @@ export default function FinanceDashboard({ onLogout }) {
         fetchTransactions();
     }, [currentPage]);
 
-    // --- ALL CALCULATIONS REMAIN HERE ---
+    // --- CALCULATIONS (REMAINS THE SAME) ---
     const stats = useMemo(() => {
-        // ... (your stats calculation)
+        // ... (your stats calculation logic)
         const totalApprovedValue = transactions
             .filter(t => t.status === 'APPROVED')
             .reduce((acc, t) => acc + (t.totalValue || 100000), 0); // Placeholder
@@ -86,7 +80,7 @@ export default function FinanceDashboard({ onLogout }) {
     }, [transactions]);
 
     const filteredTransactions = useMemo(() => {
-        // ... (your filter calculation)
+        // ... (your filter calculation logic)
         return transactions.filter(t => {
             const clientMatch = t.clientName.toLowerCase().includes(filter.toLowerCase());
             if (!selectedDate) return clientMatch;
@@ -95,102 +89,68 @@ export default function FinanceDashboard({ onLogout }) {
         });
     }, [transactions, filter, selectedDate]);
 
-    // --- ALL EVENT HANDLERS & HOOKS REMAIN HERE ---
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
-                setIsDatePickerOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [datePickerRef]);
-
+    // --- EVENT HANDLERS (CLEANED UP) ---
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
     const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
 
     const handleRowClick = async (transaction) => {
-        // ... (your row click logic)
-        try {
-            const response = await fetch(`/api/transaction/${transaction.id}`);
-            if (response.status === 401) {
-                onLogout();
-                return;
-            }
-            const result = await response.json();
-            if (result.success) {
-                setSelectedTransaction(result.data);
-                setIsDetailModalOpen(true);
-            } else {
-                setApiError(result.error || 'Failed to fetch transaction details.');
-            }
-        } catch (error) {
-            setApiError('Failed to connect to the server.');
-        }
-    };
-
-    const handleUpdateStatus = async (transactionId, status) => {
-        // ... (your update status logic)
-        const endpoint = status === 'approve' ? 'approve' : 'reject';
-        try {
-            const response = await fetch(`/api/transaction/${endpoint}/${transactionId}`, {
-                method: 'POST',
-            });
-            if (response.status === 401) {
-                onLogout();
-                return;
-            }
-            const result = await response.json();
-            if (result.success) {
-                setIsDetailModalOpen(false);
-                fetchTransactions(); // Refresh the table
-            } else {
-                setApiError(result.error || `Failed to ${status} transaction.`);
-            }
-        } catch (error) {
-            setApiError('Failed to connect to the server.');
-        }
-    };
-
-    const handleCalculateCommission = async (transactionId) => {
-    setApiError(null);
-    try {
-        // FIX: Change '/auth/transaction/' to '/api/transaction/'
-        const response = await fetch(`/api/transaction/${transactionId}/calculate-commission`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }, 
-            credentials: 'include', 
-        });
-
-        // Manual status check, similar to your other handlers
-        if (response.status === 401) {
+        setApiError(null);
+        // Use the service function
+        const result = await getTransactionDetails(transaction.id);
+        
+        if (result.status === 401) {
             onLogout();
             return;
         }
 
-        const result = await response.json();
+        if (result.success) {
+            setSelectedTransaction(result.data);
+            setIsDetailModalOpen(true);
+        } else {
+            setApiError(result.error);
+        }
+    };
+
+    const handleUpdateStatus = async (transactionId, status) => {
+        setApiError(null);
+        // Use the service function
+        const result = await updateTransactionStatus(transactionId, status);
         
+        if (result.status === 401) {
+            onLogout();
+            return;
+        }
+
+        if (result.success) {
+            setIsDetailModalOpen(false);
+            fetchTransactions(); // Refresh the table
+        } else {
+            setApiError(result.error);
+        }
+    };
+
+    const handleCalculateCommission = async (transactionId) => {
+        setApiError(null);
+        // Use the service function
+        const result = await calculateCommission(transactionId);
+        
+        if (result.status === 401) {
+            onLogout();
+            return;
+        }
+
         if (result.success) { 
-            // Critical: Update the modal's state with the *new payload*
             setSelectedTransaction(result.data); 
             fetchTransactions(); 
-            
-        } else if (!response.ok) {
-            // Handle non-200, non-401 responses that return JSON error bodies
-            setApiError(result.error || `Failed to calculate commission: Server returned status ${response.status}`);
         } else {
-             setApiError(result.error || `Failed to calculate commission.`);
-        }
-        } catch (error) {
-            // Catch network errors 
-            setApiError('Failed to connect to the server for commission calculation.');
+             setApiError(result.error);
         }
     };
 
     const handleApprove = (transactionId) => { handleUpdateStatus(transactionId, 'approve'); };
     const handleReject = (transactionId) => { handleUpdateStatus(transactionId, 'reject'); };
 
-    // --- CLEAN RENDER METHOD ---
+    // --- CLEAN RENDER METHOD (REMAINS THE SAME) ---
     return (
         <>
             <div className="container mx-auto px-8 py-8">

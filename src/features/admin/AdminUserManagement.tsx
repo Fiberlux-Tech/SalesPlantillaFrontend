@@ -1,14 +1,15 @@
+// src/features/admin/AdminUserManagement.tsx (Refactored)
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { UserListTable } from "./components/UserListTable"
 import { ResetPasswordForm } from "./components/ResetPasswordForm"
+// Import the new service functions
+import { getAllUsers, updateUserRole, resetUserPassword } from "./adminService";
 
-// This reads the base URL set in the environment
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// --- INTERFACES ---
-// We can export this to share it with child components
+// NOTE: The User interface remains here as it defines the data structure for this module.
 export interface User {
   id: number 
   email: string
@@ -16,9 +17,10 @@ export interface User {
   role: "ADMIN" | "SALES" | "FINANCE" | "USER"
 }
 
+// NOTE: We remove the `const API_BASE_URL` definition.
+
 export function PermissionManagementModule() {
-  // --- STATE ---
-  // All state is kept here in the main component
+  // --- STATE (KEPT) ---
   const [users, setUsers] = useState<User[]>([])
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -31,7 +33,7 @@ export function PermissionManagementModule() {
     confirmPassword: "",
   })
 
-  // --- DATA FETCHING ---
+  // --- DATA FETCHING (CLEANED UP) ---
   useEffect(() => {
     loadData()
   }, [])
@@ -40,23 +42,16 @@ export function PermissionManagementModule() {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-          credentials: 'include' 
-        }) 
       
-      if (!response.ok) {
-          let errorMessage = 'Failed to fetch users.';
-          try {
-              const errorData = await response.json();
-              errorMessage = errorData.message || errorData.error || errorMessage;
-          } catch (e) {
-              errorMessage = `Server returned status ${response.status}.`;
-          }
-          throw new Error(errorMessage)
+      // Use the service function
+      const result = await getAllUsers();
+
+      if (result.success) {
+        setUsers(result.data as User[]) 
+      } else {
+        throw new Error(result.error);
       }
 
-      const data = await response.json()
-      setUsers(data.users as User[]) 
     } catch (err: any) {
       setError(err.message || "Failed to load user data.")
     } finally {
@@ -64,28 +59,23 @@ export function PermissionManagementModule() {
     }
   }
 
-  // --- EVENT HANDLERS ---
-  // All logic handlers also stay in the parent
+  // --- EVENT HANDLERS (CLEANED UP) ---
   const handleRoleChange = async (userId: number, newRole: string) => {
     try {
       setError(null)
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', 
-          body: JSON.stringify({ role: newRole.toUpperCase() }), 
-      })
+      // Use the service function
+      const result = await updateUserRole(userId, newRole);
 
-      if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || `Failed to update role.`)
-      }
-
-      const updatedUsers = users.map((u) => 
-          u.id === userId ? { ...u, role: newRole.toUpperCase() as User['role'] } : u
-      )
-      setUsers(updatedUsers)
-      alert(`Role updated successfully to ${newRole.toUpperCase()}`)
+      if (result.success) {
+        // Update local state based on successful API call
+        const updatedUsers = users.map((u) => 
+            u.id === userId ? { ...u, role: newRole.toUpperCase() as User['role'] } : u
+        )
+        setUsers(updatedUsers)
+        alert(`Role updated successfully to ${newRole.toUpperCase()}`)
+      } else {
+        throw new Error(result.error)
+      }
     } catch (err: any) {
       setError(err.message || "Failed to update role.")
     }
@@ -93,6 +83,8 @@ export function PermissionManagementModule() {
 
   const handleResetPasswordSubmit = async () => {
     try {
+      setError(null);
+      // Client-side validation logic remains here
       if (!selectedUser) {
         setError("Please select a user");
         return;
@@ -106,27 +98,25 @@ export function PermissionManagementModule() {
         return;
       }
       
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${selectedUser.id}/reset-password`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', 
-          body: JSON.stringify({ new_password: resetPasswordForm.newPassword }), 
-      })
+      // Use the service function
+      const result = await resetUserPassword(selectedUser.id, resetPasswordForm.newPassword);
 
-      if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to reset password.')
-      }
-
-      alert(`Password reset successful for ${selectedUser.username}`)
-      setResetPasswordForm({ username: "", newPassword: "", confirmPassword: "" })
-      setSelectedUser(null)
-      setFilteredUsers([])
-      setError(null)
+      if (result.success) {
+        alert(`Password reset successful for ${selectedUser.username}`)
+        // Reset UI state on success
+        setResetPasswordForm({ username: "", newPassword: "", confirmPassword: "" })
+        setSelectedUser(null)
+        setFilteredUsers([])
+        setError(null)
+      } else {
+        throw new Error(result.error)
+      }
     } catch (err: any) {
       setError(err.message || "Failed to reset password.")
     }
   }
+
+  // The rest of the handlers (handleUserNameChange, handleSelectUser) and the render method remain the same.
 
   const handleUserNameChange = (value: string) => {
     setResetPasswordForm({ ...resetPasswordForm, username: value })
@@ -148,7 +138,7 @@ export function PermissionManagementModule() {
   }
 
 
-  // --- RENDER ---
+  // --- RENDER (KEPT) ---
   if (loading) {
     return (
       <div className="container mx-auto px-8 py-8">
@@ -167,15 +157,11 @@ export function PermissionManagementModule() {
       <div className="space-y-6">
         {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">{error}</div>}
 
-        {/* Instead of all that JSX, we just render the child component 
-          and pass it the props it needs.
-        */}
         <UserListTable 
           users={users} 
           onRoleChange={handleRoleChange} 
         />
         
-        {/* Same for the reset password form */}
         <ResetPasswordForm
           resetPasswordForm={resetPasswordForm}
           setResetPasswordForm={setResetPasswordForm}

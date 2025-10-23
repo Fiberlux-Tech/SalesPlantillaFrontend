@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { api } from './lib/api'; // <-- 1. IMPORT the new api helper
 
-// --- 2. CORRECTED FEATURE IMPORTS ---
+// --- Import Service Layer ---
+import { checkAuthStatus, loginUser, registerUser, logoutUser } from './features/auth/authService'; 
+
+// --- FEATURE IMPORTS ---
 import AuthPage from './features/auth/AuthPage';
 import LandingPage from './features/landing/LandingPage';
 import SalesDashboard from './features/sales/SalesDashboard';
 import FinanceDashboard from './features/finance/FinanceDashboard';
 import { PermissionManagementModule } from './features/admin/AdminUserManagement';
-import MasterDataManagement from './features/masterdata/MasterDataManagement';
+import MasterDataManagement from './features/masterdata/MasterDataManagement'; // Assuming you named it this way
 
-// --- 3. CORRECTED SHARED COMPONENT IMPORT ---
+// --- SHARED COMPONENT IMPORT ---
 import GlobalHeader from './components/shared/GlobalHeader'; 
 
 export default function App() {
@@ -17,12 +19,11 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState('landing'); 
 
-    // Check if user is logged in on initial load
+    // Check if user is logged in on initial load (uses Service Layer)
     useEffect(() => {
         const checkUser = async () => {
             try {
-                // This now uses the imported 'api' object
-                const data = await api.get('/auth/me'); 
+                const data = await checkAuthStatus(); // <--- Service Call
                 if (data.is_authenticated) {
                     setUser({ username: data.username, role: data.role });
                 }
@@ -34,26 +35,35 @@ export default function App() {
         checkUser();
     }, []);
 
-    // --- Auth Functions (now use imported 'api') ---
+    // --- Auth Functions (Now use Service Layer) ---
     const handleLogin = async (username, password) => {
-        const data = await api.post('/auth/login', { username, password });
-        setUser({ username: data.username, role: data.role });
-        setCurrentPage('landing');
+        const result = await loginUser(username, password); // <--- Service Call
+        if (result.success) {
+            setUser({ username: result.data.username, role: result.data.role });
+            setCurrentPage('landing');
+        } else {
+            // Re-throw the error so AuthPage.jsx can catch it and display the message
+            throw new Error(result.error);
+        }
     };
 
     const handleRegister = async (username, email, password) => {
-        const data = await api.post('/auth/register', { username, email, password });
-        setUser({ username: data.username, role: data.role });
-        setCurrentPage('landing');
+        const result = await registerUser(username, email, password); // <--- Service Call
+        if (result.success) {
+            setUser({ username: result.data.username, role: result.data.role });
+            setCurrentPage('landing');
+        } else {
+            throw new Error(result.error);
+        }
     };
 
     const handleLogout = async () => {
-        await api.post('/auth/logout');
+        await logoutUser(); // <--- Service Call
         setUser(null);
         setCurrentPage('landing');
     };
 
-    // --- Navigation (This logic is fine) ---
+    // --- Navigation (Updated to include Master Data) ---
     const handleNavigate = (page) => {
         if (!user) return; 
         
@@ -69,7 +79,7 @@ export default function App() {
             case 'admin-management':
                 if (role === 'ADMIN') setCurrentPage('admin-management');
                 break;
-            case 'variable-master': // New: Universal access at navigation layer
+            case 'variable-master':
                 setCurrentPage('variable-master');
                 break;
             case 'landing':
@@ -78,48 +88,48 @@ export default function App() {
         }
     };
     
-    // --- Render Logic (This is all correct) ---
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <h1 className="text-2xl">Loading...</h1>
-            </div>
-        );
-    }
+    // --- Render Logic (Updated to include Master Data) ---
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+                <h1 className="text-2xl">Loading...</h1>
+            </div>
+        );
+    }
 
-    if (!user) {
-        return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />;
-    }
+    if (!user) {
+        return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />;
+    }
 
-    let PageComponent;
-    switch (currentPage) {
-        case 'sales':
-            PageComponent = <SalesDashboard onLogout={handleLogout} />; 
-            break;
-        case 'finance':
-            PageComponent = <FinanceDashboard onLogout={handleLogout} />;
-            break;
-        case 'admin-management':
-            PageComponent = <PermissionManagementModule />; 
-            break;
-        case 'variable-master': // New: Render the actual MasterDataManagement component
-            PageComponent = <MasterDataManagement user={user} />;
+    let PageComponent;
+    switch (currentPage) {
+        case 'sales':
+            PageComponent = <SalesDashboard onLogout={handleLogout} />; 
             break;
-        case 'landing':
-        default:
-            PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;
-    }
+        case 'finance':
+            PageComponent = <FinanceDashboard onLogout={handleLogout} />;
+            break;
+        case 'admin-management':
+            PageComponent = <PermissionManagementModule />; 
+            break;
+        case 'variable-master':
+            PageComponent = <MasterDataManagement user={user} />; 
+            break;
+        case 'landing':
+        default:
+            PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;
+    }
 
-    return (
-        <div className="min-h-screen flex flex-col bg-slate-50">
-            <GlobalHeader 
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                currentPage={currentPage}
-            />
-            <main className="flex-grow">
-                 {PageComponent}
-            </main>
-        </div>
-    );
+    return (
+        <div className="min-h-screen flex flex-col bg-slate-50">
+            <GlobalHeader 
+                onLogout={handleLogout}
+                onNavigate={handleNavigate}
+                currentPage={currentPage}
+            />
+            <main className="flex-grow">
+                 {PageComponent}
+            </main>
+        </div>
+    );
 }
