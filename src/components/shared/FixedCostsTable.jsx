@@ -2,7 +2,7 @@ import React from 'react';
 
 const FixedCostsTable = ({ data }) => {
   if (!data || data.length === 0) {
-    return <p className="text-center text-gray-500 py-4">No fixed cost data available.</p>;
+    return <p className="text-center text-gray-500 py-4">No hay costos fijos disponible.</p>;
   }
 
   // Handles currency formatting AND returns '-' for 0/null/undefined

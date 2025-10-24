@@ -15,8 +15,8 @@ import {
 export function FinanceStatsGrid({ stats }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatsCard title="Total Approved Value" value={stats.totalApprovedValue} icon={<DollarSignIcon />} iconBgColor="bg-green-100" />
-            <StatsCard title="Average Margin" value={stats.averageMargin} icon={<TrendUpIcon />} iconBgColor="bg-blue-100" />
+            <StatsCard title="Valor Total Aprobado" value={stats.totalApprovedValue} icon={<DollarSignIcon />} iconBgColor="bg-green-100" />
+            <StatsCard title="Margen Promedio" value={stats.averageMargin} icon={<TrendUpIcon />} iconBgColor="bg-blue-100" />
             <StatsCard title="High-Risk Deals" value={stats.highRiskDeals} icon={<FileTextIcon />} iconBgColor="bg-yellow-100" />
             <StatsCard title="Deals This Month" value={stats.dealsThisMonth} icon={<ClockIcon />} iconBgColor="bg-purple-100" />
         </div>

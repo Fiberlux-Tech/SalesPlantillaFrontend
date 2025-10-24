@@ -2,7 +2,7 @@ import React from 'react';
 
 const RecurringServicesTable = ({ data }) => {
   if (!data || data.length === 0) {
-    return <p className="text-center text-gray-500 py-4">No recurring services data available.</p>;
+    return <p className="text-center text-gray-500 py-4">No hay servicios recurrentes disponible.</p>;
   }
 
   // Handles currency formatting AND returns '-' for 0/null/undefined

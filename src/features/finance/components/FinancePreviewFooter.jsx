@@ -43,7 +43,7 @@ export function FinancePreviewFooter({ tx, onApprove, onReject, onCalculateCommi
                 className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
                 disabled={!canModify} 
             >
-                Recalculate Comisiones
+                Comisiones
             </button>
             
             {/* Reject Button - Disabled if not PENDING (relying on backend 400/403 for final check) */}
@@ -52,7 +52,7 @@ export function FinancePreviewFooter({ tx, onApprove, onReject, onCalculateCommi
                 className="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-400"
                 disabled={!canModify}
             >
-                Reject
+                Rechazar
             </button>
             
             {/* Approve Button - Disabled if not PENDING (relying on backend 400/403 for final check) */}
@@ -61,7 +61,7 @@ export function FinancePreviewFooter({ tx, onApprove, onReject, onCalculateCommi
                 className="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
                 disabled={!canModify}
             >
-                Approve
+                Aprobar
             </button>
         </div>
     );

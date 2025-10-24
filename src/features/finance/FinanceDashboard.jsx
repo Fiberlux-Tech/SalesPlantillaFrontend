@@ -160,8 +160,7 @@ export default function FinanceDashboard({ onLogout }) {
             {/* Header stays here as it's simple */}
             <header className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Finance Dashboard</h1>
-                    <p className="text-gray-500 mt-1">Review and analyze deal proposals</p>
+                    <h1 className="text-3xl font-bold text-gray-800">Aprobación de Plantillas Economicas</h1>
                 </div>
             </header>
     

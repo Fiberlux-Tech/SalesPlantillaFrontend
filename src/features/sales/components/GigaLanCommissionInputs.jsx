@@ -23,7 +23,7 @@ export function GigaLanCommissionInputs({ inputs, onInputChange }) {
     return (
         // The component now ONLY renders this single input field and its label.
         <div>
-            <label className="block text-xs font-medium text-gray-700 uppercase mb-1">PREVIOUS MONTHLY CHARGE</label>
+            <label className="block text-xs font-medium text-gray-700 uppercase mb-1">MRC PREVIO</label>
             <Input
                 type="number"
                 placeholder="Enter amount"

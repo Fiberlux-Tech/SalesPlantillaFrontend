@@ -14,13 +14,13 @@ export function SalesTransactionList({
                 <table className="w-full text-sm text-left text-gray-500">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th scope="col" className="px-6 py-3">Transaction ID</th>
-                            <th scope="col" className="px-6 py-3">Client</th>
-                            <th scope="col" className="px-6 py-3">Salesman</th>
-                            <th scope="col" className="px-6 py-3">Margin %</th>
+                            <th scope="col" className="px-6 py-3">ID Transacción</th>
+                            <th scope="col" className="px-6 py-3">Cliente</th>
+                            <th scope="col" className="px-6 py-3">Vendedor</th>
+                            <th scope="col" className="px-6 py-3">Margen %</th>
                             <th scope="col" className="px-6 py-3">Payback (Months)</th>
-                            <th scope="col" className="px-6 py-3">Submission Date</th>
-                            <th scope="col" className="px-6 py-3">Approval Date</th>
+                            <th scope="col" className="px-6 py-3">Fecha Carga</th>
+                            <th scope="col" className="px-6 py-3">Fecha Aprobación</th>
                             <th scope="col" className="px-6 py-3">Status</th>
                         </tr>
                     </thead>
@@ -50,17 +50,17 @@ export function SalesTransactionList({
                     disabled={currentPage === 1 || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
-                    Previous
+                    Previo
                 </button>
                 <span className="text-sm text-gray-700">
-                    Page {currentPage} of {totalPages}
+                    Pagina {currentPage} de {totalPages}
                 </span>
                 <button
                     onClick={() => onPageChange(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
-                    Next
+                    Siguiente
                 </button>
             </div>
         </>

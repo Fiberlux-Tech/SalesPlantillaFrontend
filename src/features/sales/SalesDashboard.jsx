@@ -277,8 +277,7 @@ export default function SalesDashboard({ onLogout }) {
             {/* Header stays here as it's simple */}
             <header className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Deal Approval Portal</h1>
-                    <p className="text-gray-500 mt-1">Submit and track your deal proposals</p>
+                    <h1 className="text-3xl font-bold text-gray-800">Plantillas Economicas</h1>
                 </div>
                 <div className="flex items-center space-x-2">
                     <button className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50"><ExportIcon /><span>Export</span></button>

@@ -27,7 +27,7 @@ export function AuthForm({
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700" htmlFor="username">
-                        Username
+                        Usuario
                     </label>
                     <input
                         id="username"
@@ -57,7 +57,7 @@ export function AuthForm({
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700" htmlFor="password">
-                        Password
+                        Contraseña
                     </label>
                     <input
                         id="password"

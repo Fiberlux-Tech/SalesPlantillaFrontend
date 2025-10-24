@@ -19,7 +19,7 @@ export function SalesToolbar({
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon /></div>
                 <input 
                     type="text" 
-                    placeholder="Filter by client name..." 
+                    placeholder="Filtra por nombre de cliente..." 
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                     value={filter} 
                     onChange={(e) => setFilter(e.target.value)} 

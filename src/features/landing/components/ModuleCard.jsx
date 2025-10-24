@@ -17,7 +17,7 @@ export const ModuleCard = ({ module, onNavigate }) => {
                             tabIndex="-1" // Makes the button not focusable, as the parent handles the click
                             className="mt-4 px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-md hover:bg-slate-800"
                         >
-                            Open Module
+                            Abrir Modulo
                         </button>
                     </div>
                 </div>

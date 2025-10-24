@@ -19,7 +19,7 @@ export default function GlobalHeader({ onLogout, onNavigate, currentPage }) {
                             className={buttonStyles}
                         >
                             <ArrowLeftIcon className="w-5 h-5 mr-2 text-gray-500" />
-                            Back
+                            Atras
                         </button>
                     )}
                 </div>

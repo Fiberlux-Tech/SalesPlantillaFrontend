@@ -12,9 +12,9 @@ export default function LandingPage({ user, onNavigate }) {
 
     // The modules the user has access to, now with emoji icons
     const availableModules = [
-        { id: 'sales', name: 'Sales Deal Portal', icon: '📝', description: 'Submit and track your deal proposals.', available: isSales },
-        { id: 'finance', name: 'Finance Dashboard', icon: '📊', description: 'Review and approve financial projections.', available: isFinance },
-        { id: 'admin-management', name: 'Permission Management', icon: '🔒', description: 'Manage users, roles, and module assignments.', available: isAdmin },
+        { id: 'sales', name: 'Plantillas Economicas', icon: '📝', description: 'Ingresa y revisa el estado de tus plantillas.', available: isSales },
+        { id: 'finance', name: 'Aprobación de Plantillas Economicas', icon: '📊', description: 'Aprueba las plantillas economicas.', available: isFinance },
+        { id: 'admin-management', name: 'Manejo de Permisos', icon: '🔒', description: 'Maneja usuarios, roles y asignación de modulos.', available: isAdmin },
         { id: 'variable-master', name: 'Maestro de Variables', icon: '⚙️', description: 'Visualiza y actualizar variables clave.', available: isMasterData }
     ].filter(module => module.available);
 
@@ -22,8 +22,8 @@ export default function LandingPage({ user, onNavigate }) {
         <div>
             <div className="max-w-7xl mx-auto px-6 py-12">
                 <div className="mb-8">
-                    <h2 className="text-xl font-semibold text-slate-900">Available Modules</h2>
-                    <p className="text-slate-600 text-sm mt-1">Select a module to get started</p>
+                    <h2 className="text-xl font-semibold text-slate-900">Modulos Disponibles</h2>
+                    <p className="text-slate-600 text-sm mt-1">Selecciona uno para iniciar</p>
                 </div>
 
                 {/* Module Cards Grid */}
@@ -39,7 +39,7 @@ export default function LandingPage({ user, onNavigate }) {
                     </div>
                 ) : (
                     <div className="text-center py-12">
-                        <p className="text-slate-600">No modules available for your role ({user.role})</p>
+                        <p className="text-slate-600">No hay modulos disponible para ti ({user.role})</p>
                     </div>
                 )}
             </div>

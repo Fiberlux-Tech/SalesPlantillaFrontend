@@ -21,16 +21,16 @@ function FileUploadModal({ isOpen, onClose, onNext }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl p-8 max-w-lg w-full">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Upload Deal Proposal</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">Carga tu Excel</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon /></button>
                 </div>
 
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls" />
                 <div onClick={handleDropzoneClick} className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center mb-6 cursor-pointer">
                     <div className="flex justify-center mb-4"><FileUploadIcon /></div>
-                    <p className="text-gray-600">Click to upload or drag and drop</p>
+                    <p className="text-gray-600">Clickea para cargarlo o arrastralo hasta aquí</p>
                     {selectedFile && <p className="text-sm text-green-600 mt-2 font-semibold">{selectedFile.name}</p>}
-                    <p className="text-sm text-gray-400 mt-1">Excel files only (.xlsx, .xls)</p>
+                    <p className="text-sm text-gray-400 mt-1">Solo archivos de excel (.xlsx, .xls)</p>
                 </div>
                 
                 <div className="flex justify-end space-x-4 mb-6">
@@ -39,12 +39,11 @@ function FileUploadModal({ isOpen, onClose, onNext }) {
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-gray-700 mb-2">Upload Instructions:</h3>
+                    <h3 className="font-semibold text-gray-700 mb-2">Instrucciones de carga:</h3>
                     <ol className="list-decimal list-inside text-sm text-gray-600 space-y-1">
-                        <li>Ensure your Excel file follows the approved template</li>
-                        <li>All required fields must be filled out</li>
-                        <li>You'll review the data before final submission</li>
-                        <li>You'll receive an email once reviewed</li>
+                        <li>Asegurate que el archivo sigue la plantilla correcta</li>
+                        <li>Todos los campos obligatorios deben estar ingresados</li>
+                        <li>Revisa la data antes de confirmar la carga</li>
                     </ol>
                 </div>
             </div>

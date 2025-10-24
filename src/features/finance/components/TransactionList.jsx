@@ -19,14 +19,14 @@ export function TransactionList({
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
                             <th scope="col" className="px-6 py-3 text-center">Transaction ID</th>
-                            <th scope="col" className="px-6 py-3 text-center">Business Unit</th>
-                            <th scope="col" className="px-6 py-3 text-center">Client</th>
-                            <th scope="col" className="px-6 py-3 text-center">Salesman</th>
+                            <th scope="col" className="px-6 py-3 text-center">Unidad de Negocio</th>
+                            <th scope="col" className="px-6 py-3 text-center">Cliente</th>
+                            <th scope="col" className="px-6 py-3 text-center">Vendedor</th>
                             <th scope="col" className="px-6 py-3 text-center">MRC</th>
-                            <th scope="col" className="px-6 py-3 text-center">Contract Term</th>
-                            <th scope="col" className="px-6 py-3 text-center">Margin %</th>
-                            <th scope="col" className="px-6 py-3 text-center">Payback (Months)</th>
-                            <th scope="col" className="px-6 py-3 text-center">Submission Date</th>
+                            <th scope="col" className="px-6 py-3 text-center">Plazo de Contrato</th>
+                            <th scope="col" className="px-6 py-3 text-center">Margen %</th>
+                            <th scope="col" className="px-6 py-3 text-center">Payback (Meses)</th>
+                            <th scope="col" className="px-6 py-3 text-center">Fecha</th>
                             <th scope="col" className="px-6 py-3 text-center">Status</th>
                         </tr>
                     </thead>
@@ -64,17 +64,17 @@ export function TransactionList({
                     disabled={currentPage === 1 || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
-                    Previous
+                    Previo
                 </button>
                 <span className="text-sm text-gray-700">
-                    Page {currentPage} of {totalPages}
+                    Pagina {currentPage} de {totalPages}
                 </span>
                 <button
                     onClick={() => onPageChange(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
-                    Next
+                    Siguiente
                 </button>
             </div>
         </>
