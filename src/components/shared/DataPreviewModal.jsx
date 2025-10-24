@@ -8,13 +8,12 @@ import {
     CloseIcon,
     WarningIcon,
     CheckCircleIcon,
-    EditPencilIcon, // Make sure this name matches your Icons.jsx
+    EditPencilIcon,
     EditCheckIcon,
     EditXIcon
 } from './Icons';
 import FixedCostsTable from './FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
-// GigaLanCommissionInputs should ONLY contain MRC Previo input now
 import { GigaLanCommissionInputs } from '../../features/sales/components/GigaLanCommissionInputs';
 import {
     Select,
@@ -32,9 +31,21 @@ const SALE_TYPES = ['NUEVO', 'EXISTENTE'];
 import { SalesPreviewFooter } from '../../features/sales/components/SalesPreviewFooter';
 import { FinancePreviewFooter } from '../../features/finance/components/FinancePreviewFooter';
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange, selectedUnidad, onUnidadChange, liveKpis }) {
+function DataPreviewModal({ 
+    isOpen, 
+    onClose, 
+    onConfirm, 
+    data, 
+    isFinanceView = false, 
+    onApprove, 
+    onReject, 
+    onCalculateCommission, 
+    gigalanInputs, // This now holds data.transactions (tx) from SalesDashboard
+    onInputChangeAndRecalculate, // <-- Unified handler (was onGigalanInputChange & onUnidadChange)
+    selectedUnidad, // Kept for the initial sync only, but data.transactions is now preferred source
+    liveKpis 
+}) {
     const formatCurrency = (value) => {
-        // Updated to handle potential non-numeric strings from input state
         const numValue = parseFloat(value);
         if (typeof numValue !== 'number' || isNaN(numValue) || numValue === 0) return '-';
         return numValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -42,87 +53,58 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
 
     const [openSections, setOpenSections] = useState({});
 
-    // --- State for editing ---
+    // --- Local Edit State Flags ---
     const [isEditingPlazo, setIsEditingPlazo] = useState(false);
-    const [editedPlazo, setEditedPlazo] = useState(data?.transactions?.plazoContrato ?? '');
-
     const [isEditingUnidad, setIsEditingUnidad] = useState(false);
-    const [editedUnidad, setEditedUnidad] = useState(selectedUnidad || '');
-
     const [isEditingRegion, setIsEditingRegion] = useState(false);
-    const [editedRegion, setEditedRegion] = useState(gigalanInputs?.gigalan_region || '');
-
     const [isEditingSaleType, setIsEditingSaleType] = useState(false);
-    const [editedSaleType, setEditedSaleType] = useState(gigalanInputs?.gigalan_sale_type || '');
-
-    // --- ADDED STATE for MRC/NRC ---
     const [isEditingMRC, setIsEditingMRC] = useState(false);
-    const [editedMRC, setEditedMRC] = useState(data?.transactions?.MRC ?? '');
-
     const [isEditingNRC, setIsEditingNRC] = useState(false);
+    
+    // --- Local Input Values (Synced from props) ---
+    // Initialize with fallback to ensure value is present, but true sync is in useEffect
+    const [editedPlazo, setEditedPlazo] = useState(data?.transactions?.plazoContrato ?? '');
+    const [editedUnidad, setEditedUnidad] = useState(data?.transactions?.unidadNegocio || '');
+    const [editedRegion, setEditedRegion] = useState(data?.transactions?.gigalan_region || '');
+    const [editedSaleType, setEditedSaleType] = useState(data?.transactions?.gigalan_sale_type || '');
+    const [editedMRC, setEditedMRC] = useState(data?.transactions?.MRC ?? '');
     const [editedNRC, setEditedNRC] = useState(data?.transactions?.NRC ?? '');
-    // --- END ADDED STATE ---
-
-
-    // --- Sync states with props ---
-    useEffect(() => {
-        if (data?.transactions) {
-             const currentPlazo = liveKpis?.plazoContrato ?? data.transactions.plazoContrato ?? '';
-             setEditedPlazo(currentPlazo);
-             // setIsEditingPlazo(false); // Removed per previous discussion
-        }
-    }, [data, liveKpis]);
-
-    useEffect(() => {
-        if (!isEditingUnidad) {
-            setEditedUnidad(selectedUnidad || '');
-        }
-    }, [selectedUnidad, isEditingUnidad]);
-
-    useEffect(() => {
-        if (!isEditingRegion) {
-            setEditedRegion(gigalanInputs?.gigalan_region || '');
-        }
-        if (!isEditingSaleType) {
-            setEditedSaleType(gigalanInputs?.gigalan_sale_type || '');
-        }
-    }, [gigalanInputs, isEditingRegion, isEditingSaleType]);
-
-    // --- ADDED useEffect for MRC/NRC ---
-     useEffect(() => {
-        // Sync MRC state; prioritize liveKpis if available and contains MRC
-        const currentMRC = liveKpis?.MRC ?? data?.transactions?.MRC ?? '';
-        setEditedMRC(currentMRC);
-        // Maybe don't auto-close edit mode here either
-        // setIsEditingMRC(false);
-    }, [data, liveKpis]);
-
-    useEffect(() => {
-        // Sync NRC state; prioritize liveKpis if available and contains NRC
-        const currentNRC = liveKpis?.NRC ?? data?.transactions?.NRC ?? '';
-        setEditedNRC(currentNRC);
-        // Maybe don't auto-close edit mode here either
-        // setIsEditingNRC(false);
-    }, [data, liveKpis]);
-    // --- END ADDED useEffect ---
-
-
-    const toggleSection = (section) => {
-        setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-    };
+    // --- END State for editing ---
 
     if (!isOpen || !data?.transactions) return null;
 
     const tx = data.transactions;
     const isPending = tx.ApprovalStatus === 'PENDING';
-    // Use liveKpis if available, otherwise fallback to original tx data
-    const kpiData = liveKpis || tx; // kpiData now potentially holds MRC/NRC from liveKpis
+    const kpiData = liveKpis || tx; 
 
-    // --- Edit Handlers (Plazo, Unidad, Region, SaleType remain) ---
+    // --- Sync states with data props ---
+    // This runs whenever `data` or `liveKpis` changes to ensure the edited fields reflect the source of truth
+    useEffect(() => {
+        if (data?.transactions) {
+             const currentTx = data.transactions;
+             const kpiSource = liveKpis || currentTx;
+
+             // Use kpiSource for values that change on recalculation
+             if (!isEditingPlazo) setEditedPlazo(kpiSource.plazoContrato ?? '');
+             if (!isEditingMRC) setEditedMRC(kpiSource.MRC ?? '');
+             if (!isEditingNRC) setEditedNRC(kpiSource.NRC ?? '');
+             
+             // Use currentTx for dropdowns/strings
+             if (!isEditingUnidad) setEditedUnidad(currentTx.unidadNegocio || '');
+             if (!isEditingRegion) setEditedRegion(currentTx.gigalan_region || '');
+             if (!isEditingSaleType) setEditedSaleType(currentTx.gigalan_sale_type || '');
+        }
+    }, [data, liveKpis, isEditingPlazo, isEditingUnidad, isEditingRegion, isEditingSaleType, isEditingMRC, isEditingNRC]);
+
+    const toggleSection = (section) => {
+        setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
+    // --- Handlers (All call the unified handler) ---
     const handleEditPlazoSubmit = () => {
         const newPlazo = parseInt(editedPlazo, 10);
         if (!isNaN(newPlazo) && newPlazo > 0 && Number.isInteger(newPlazo)) {
-            onGigalanInputChange('plazoContrato', newPlazo);
+            onInputChangeAndRecalculate('plazoContrato', newPlazo); // <-- UNIFIED CALL
             setIsEditingPlazo(false);
         } else {
             alert("Please enter a valid whole number greater than 0 for Plazo Contrato.");
@@ -132,97 +114,92 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
         setEditedPlazo(kpiData.plazoContrato ?? tx.plazoContrato ?? '');
         setIsEditingPlazo(false);
     };
+
     const handleEditUnidadSubmit = () => {
         if (!editedUnidad || !UNIDADES_NEGOCIO.includes(editedUnidad)) {
              alert("Selección obligatoria: Por favor, selecciona una Unidad de Negocio válida.");
              return;
         }
-        onUnidadChange(editedUnidad);
+        onInputChangeAndRecalculate('unidadNegocio', editedUnidad); // <-- UNIFIED CALL
         setIsEditingUnidad(false);
     };
     const handleCancelEditUnidad = () => {
-        setEditedUnidad(selectedUnidad || '');
+        setEditedUnidad(tx.unidadNegocio || ''); // Reset using the source of truth
         setIsEditingUnidad(false);
     };
+
     const handleEditRegionSubmit = () => {
         if (!editedRegion || !REGIONS.includes(editedRegion)) {
             alert("Selección obligatoria: Por favor, selecciona una Región válida.");
             return;
         }
-        onGigalanInputChange('gigalan_region', editedRegion);
+        onInputChangeAndRecalculate('gigalan_region', editedRegion); // <-- UNIFIED CALL
         setIsEditingRegion(false);
     };
     const handleCancelEditRegion = () => {
-        setEditedRegion(gigalanInputs?.gigalan_region || '');
+        setEditedRegion(tx.gigalan_region || ''); // Reset using the source of truth
         setIsEditingRegion(false);
     };
+
     const handleEditSaleTypeSubmit = () => {
          if (!editedSaleType || !SALE_TYPES.includes(editedSaleType)) {
             alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
             return;
         }
-        onGigalanInputChange('gigalan_sale_type', editedSaleType);
+        onInputChangeAndRecalculate('gigalan_sale_type', editedSaleType); // <-- UNIFIED CALL
         setIsEditingSaleType(false);
     };
     const handleCancelEditSaleType = () => {
-        setEditedSaleType(gigalanInputs?.gigalan_sale_type || '');
+        setEditedSaleType(tx.gigalan_sale_type || ''); // Reset using the source of truth
         setIsEditingSaleType(false);
     };
 
-    // --- ADDED Handlers for MRC/NRC ---
     const handleEditMRCSubmit = () => {
-        const newMRC = parseFloat(editedMRC); // Use parseFloat for currency
-        // Allow 0 or positive values
+        const newMRC = parseFloat(editedMRC); 
         if (!isNaN(newMRC) && newMRC >= 0) {
-            onGigalanInputChange('MRC', newMRC); // Assuming onGigalanInputChange handles 'MRC' key
+            onInputChangeAndRecalculate('MRC', newMRC); // <-- UNIFIED CALL
             setIsEditingMRC(false);
         } else {
             alert("Please enter a valid non-negative number for MRC.");
         }
     };
     const handleCancelEditMRC = () => {
-        // Reset to current display value
         setEditedMRC(kpiData.MRC ?? tx.MRC ?? '');
         setIsEditingMRC(false);
     };
 
     const handleEditNRCSubmit = () => {
-        const newNRC = parseFloat(editedNRC); // Use parseFloat for currency
-        // Allow 0 or positive values
+        const newNRC = parseFloat(editedNRC); 
         if (!isNaN(newNRC) && newNRC >= 0) {
-            onGigalanInputChange('NRC', newNRC); // Assuming onGigalanInputChange handles 'NRC' key
+            onInputChangeAndRecalculate('NRC', newNRC); // <-- UNIFIED CALL
             setIsEditingNRC(false);
         } else {
             alert("Please enter a valid non-negative number for NRC.");
         }
     };
     const handleCancelEditNRC = () => {
-        // Reset to current display value
         setEditedNRC(kpiData.NRC ?? tx.NRC ?? '');
         setIsEditingNRC(false);
     };
-    // --- END ADDED Handlers ---
+    // --- END Handlers ---
 
-
-    // --- Base overview items ---
     const baseOverviewData = [
-        { label: 'Transaction ID', value: tx.transactionID || '-' },
+        { label: 'Transaction ID', value: tx.id || '-' }, // Changed from tx.transactionID
         { label: 'Nombre Cliente', value: tx.clientName },
         { label: 'RUC/DNI', value: tx.companyID },
         { label: 'Order ID', value: tx.orderID },
-        { label: 'Tipo de Cambio', value: tx.tipoCambio },
+        { label: 'Tipo de Cambio', value: formatCurrency(tx.tipoCambio) },
         { label: 'Status', value: <StatusBadge status={tx.ApprovalStatus} /> },
     ];
 
-    // Calculate totals (Unchanged)
     const totalFixedCosts = data.fixed_costs.reduce((acc, item) => acc + (item.total || 0), 0);
     const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0);
     const totalRecurringIncome = data.recurring_services.reduce((acc, item) => acc + (item.ingreso || 0), 0);
 
-    // Determine the CONFIRMED values (Unchanged)
-    const confirmedUnidad = isFinanceView ? tx.unidadNegocio : selectedUnidad;
-    const confirmedRegion = isFinanceView ? tx.gigalan_region : gigalanInputs?.gigalan_region;
-    const confirmedSaleType = isFinanceView ? tx.gigalan_sale_type : gigalanInputs?.gigalan_sale_type;
+    // Use tx (which is the current uploadedData.transactions) as the definitive source
+    const confirmedUnidad = tx.unidadNegocio; 
+    const confirmedRegion = tx.gigalan_region;
+    const confirmedSaleType = tx.gigalan_sale_type;
 
 
     return (
@@ -384,8 +361,8 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                                     {!isFinanceView && isPending && confirmedSaleType === 'EXISTENTE' && (
                                         <div className="min-h-[60px]">
                                             <GigaLanCommissionInputs
-                                                inputs={{ ...gigalanInputs, gigalan_sale_type: confirmedSaleType }}
-                                                onInputChange={onGigalanInputChange}
+                                                inputs={tx} // <-- Pass the full transaction object (tx)
+                                                onInputChange={onInputChangeAndRecalculate} // <-- Use UNIFIED handler
                                             />
                                         </div>
                                     )}
@@ -405,7 +382,7 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                         </div>
                     </div>
 
-                    {/* Key Performance Indicators Section - MODIFIED */}
+                    {/* Key Performance Indicators Section */}
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -440,7 +417,10 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                                         />
                                         {(!isFinanceView && isPending) && (
                                             <button
-                                                onClick={() => { setEditedMRC(kpiData.MRC ?? tx.MRC ?? ''); setIsEditingMRC(true); }}
+                                                onClick={() => { 
+                                                    setEditedMRC(kpiData.MRC ?? tx.MRC ?? ''); 
+                                                    setIsEditingMRC(true); 
+                                                }}
                                                 className="absolute top-2 right-2 p-1 rounded bg-gray-100 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-200"
                                                 aria-label="Edit MRC"
                                             >
@@ -453,48 +433,6 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                             {/* --- END EDITABLE MRC --- */}
 
 
-                            {/* --- EDITABLE NRC (using KpiCard) --- */}
-                            <div className="relative group"> {/* Wrapper for hover/edit */}
-                                {(!isFinanceView && isPending && isEditingNRC) ? (
-                                    /* --- Editing View (Input + Buttons) --- */
-                                    <div className="bg-white p-3 rounded-lg border border-blue-300 shadow-md h-full flex flex-col justify-center"> {/* Added height/flex */}
-                                        <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Edit NRC</label>
-                                        <div className="flex items-center space-x-2 mt-1">
-                                            <Input
-                                                type="number"
-                                                value={editedNRC}
-                                                onChange={(e) => setEditedNRC(e.target.value)}
-                                                className="h-9 flex-grow text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white"
-                                                min="0"
-                                                step="0.01"
-                                                autoFocus
-                                            />
-                                            <button onClick={handleEditNRCSubmit} className="p-1 rounded hover:bg-gray-200 text-green-600 flex-shrink-0"><EditCheckIcon /></button>
-                                            <button onClick={handleCancelEditNRC} className="p-1 rounded hover:bg-gray-200 text-red-600 flex-shrink-0"><EditXIcon /></button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    /* --- Display View (KpiCard + Hover Edit Button) --- */
-                                    <>
-                                        <KpiCard
-                                            title="NRC (Pago Único)"
-                                            value={formatCurrency(kpiData.NRC ?? tx.NRC)}
-                                        />
-                                        {(!isFinanceView && isPending) && (
-                                            <button
-                                                onClick={() => { setEditedNRC(kpiData.NRC ?? tx.NRC ?? ''); setIsEditingNRC(true); }}
-                                                className="absolute top-2 right-2 p-1 rounded bg-gray-100 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-200"
-                                                aria-label="Edit NRC"
-                                            >
-                                                <EditPencilIcon />
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                            {/* --- END EDITABLE NRC --- */}
-
-
                         {/* --- Other KpiCards --- */}
                         <KpiCard title="VAN" value={formatCurrency(kpiData.VAN)} />
                         <KpiCard title="TIR" value={`${(kpiData.TIR * 100)?.toFixed(2)}%`} />
@@ -504,7 +442,6 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                         <KpiCard title="Utilidad Bruta" value={formatCurrency(kpiData.grossMargin)} />
                         <KpiCard title="Margen Bruto (%)" value={`${(kpiData.grossMarginRatio * 100)?.toFixed(2)}%`} />
                         <KpiCard title="Comisión de Ventas" value={formatCurrency(kpiData.comisiones)} />
-                        {/* Note: Original tx.costoInstalacion is likely static, kpiData.costoInstalacionRatio is calculated */}
                         <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion)} />
                         <KpiCard title="Costo Instalación (%)" value={`${(kpiData.costoInstalacionRatio * 100)?.toFixed(2)}%`} />
                         </div>
