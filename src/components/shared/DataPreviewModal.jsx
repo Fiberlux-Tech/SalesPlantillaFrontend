@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 
-const UNIDADES_NEGOCIO = ['GIGALAN', 'CORPORATIVO', 'MAYORISTA'];
+const UNIDADES_NEGOCIO = ['GIGALAN', 'CORPORATIVO', 'ESTADO'];
 const REGIONS = ['LIMA', 'PROVINCIAS CON CACHING', 'PROVINCIAS CON INTERNEXA', 'PROVINCIAS CON TDP'];
 const SALE_TYPES = ['NUEVO', 'EXISTENTE'];
 
