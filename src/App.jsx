@@ -1,25 +1,29 @@
-// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/App.jsx
-
 import React, { useState, useEffect } from 'react';
 
 // --- Import Service Layer ---
 import { checkAuthStatus, loginUser, registerUser, logoutUser } from './features/auth/authService'; 
 
-// --- FEATURE IMPORTS (Standardized with @/) ---
-import AuthPage from '@/features/auth/AuthPage';
-import LandingPage from '@/features/landing/LandingPage';
-import SalesDashboard from '@/features/sales/SalesDashboard';
-import FinanceDashboard from '@/features/finance/FinanceDashboard';
-import { PermissionManagementModule } from '@/features/admin/AdminUserManagement';
-import MasterDataManagement from '@/features/masterdata/MasterDataManagement'; 
+// --- FEATURE IMPORTS ---
+import AuthPage from './features/auth/AuthPage';
+import LandingPage from './features/landing/LandingPage';
+import SalesDashboard from './features/sales/SalesDashboard';
+import FinanceDashboard from './features/finance/FinanceDashboard';
+import { PermissionManagementModule } from './features/admin/AdminUserManagement';
+import MasterDataManagement from './features/masterdata/MasterDataManagement'; // Assuming you named it this way
 
 // --- SHARED COMPONENT IMPORT ---
-import GlobalHeader from '@/components/shared/GlobalHeader'; 
+import GlobalHeader from './components/shared/GlobalHeader'; 
 
 export default function App() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState('landing'); 
+    
+    // NEW STATE: Holds the action handlers provided by the mounted SalesDashboard component.
+    const [salesActions, setSalesActions] = useState({ 
+        onUpload: () => console.log('Upload handler not yet mounted'), 
+        onExport: () => console.log('Export handler not yet mounted') 
+    });
 
     // Check if user is logged in on initial load (uses Service Layer)
     useEffect(() => {
@@ -90,24 +94,7 @@ export default function App() {
         }
     };
     
-    const getPageTitle = (page) => {
-        switch (page) {
-            case 'sales':
-                return 'Sales Deal Portal';
-            case 'finance':
-                return 'Finance Dashboard';
-            case 'admin-management':
-                return 'Permission Management';
-            case 'variable-master':
-                return 'Maestro de Variables';
-            case 'landing':
-            default:
-                // Use a default for the landing page or keep it empty if preferred
-                return 'Available Modules'; 
-        }
-    };
-
-    // --- Render Logic (Updated to include Master Data) ---
+    // --- Render Logic (Updated to pass user and salesActions) ---
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -123,10 +110,19 @@ export default function App() {
     let PageComponent;
     switch (currentPage) {
         case 'sales':
-            PageComponent = <SalesDashboard onLogout={handleLogout} />; 
+            // CRITICAL CHANGE: Pass user and setSalesActions for global header buttons
+            PageComponent = <SalesDashboard 
+                onLogout={handleLogout} 
+                user={user} 
+                setSalesActions={setSalesActions} // <--- NEW PROP for registering actions
+            />; 
             break;
         case 'finance':
-            PageComponent = <FinanceDashboard onLogout={handleLogout} />;
+            // CHANGE: Pass user for the new DataPreviewModal permission logic
+            PageComponent = <FinanceDashboard 
+                onLogout={handleLogout} 
+                user={user} 
+            />;
             break;
         case 'admin-management':
             PageComponent = <PermissionManagementModule />; 
@@ -139,17 +135,13 @@ export default function App() {
             PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;
     }
 
-    // Get the title based on the current page
-    const currentTitle = getPageTitle(currentPage);
-
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
-            {/* PASS THE TITLE TO GLOBAL HEADER */}
             <GlobalHeader 
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
                 currentPage={currentPage}
-                pageTitle={currentTitle} // <-- NEW PROP
+                salesActions={salesActions} // <--- NEW PROP for displaying actions
             />
             <main className="flex-grow">
                  {PageComponent}
