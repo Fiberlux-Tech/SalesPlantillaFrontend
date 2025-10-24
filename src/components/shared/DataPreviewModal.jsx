@@ -6,13 +6,23 @@ import { CloseIcon, WarningIcon, CheckCircleIcon } from './Icons';
 import FixedCostsTable from './FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
 import { GigaLanCommissionInputs } from '../../features/sales/components/GigaLanCommissionInputs';
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from '@/components/ui/select';
+
+// --- ADD THIS CONSTANT ---
+const UNIDADES_NEGOCIO = ['GIGALAN', 'CORPORATIVO', 'MAYORISTA'];
 
 // Import the new footer components
 import { SalesPreviewFooter } from '../../features/sales/components/SalesPreviewFooter';
 import { FinancePreviewFooter } from '../../features/finance/components/FinancePreviewFooter';
 
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange }) {
+function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange, selectedUnidad, onUnidadChange }) {
     const formatCurrency = (value) => {
         if (typeof value !== 'number' || value === null || value === 0) return '-';
         return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -54,7 +64,6 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
 
     // Base data
     const baseOverviewData = [
-        { label: 'Unidad de Negocio', value: tx.unidadNegocio },
         { label: 'Transaction ID', value: tx.transactionID || '-' },
         { label: 'Nombre Cliente', value: tx.clientName },
         { label: 'RUC/DNI', value: tx.companyID },
@@ -111,11 +120,40 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Transaction Overview</h3>
                         <div className="bg-gray-100 p-4 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {!isFinanceView && (
+                            <div className="mb-4 max-w-xs">
+                                <label className="block text-xs font-medium text-gray-700 uppercase mb-1">
+                                    Unidad de Negocio
+                                </label>
+                                <Select
+                                    value={selectedUnidad}
+                                    onValueChange={(value) => onUnidadChange(value)}
+                                >
+                                    <SelectTrigger className="text-sm">
+                                        <SelectValue placeholder="Selecciona unidad de negocio" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {UNIDADES_NEGOCIO.map(unidad => (
+                                            <SelectItem key={unidad} value={unidad}>
+                                                {unidad}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        {isFinanceView && (
+                            <div> {/* Grid item for static text */}
+                                <p className="text-xs text-gray-500 uppercase tracking-wider">Unidad de Negocio</p>
+                                {/* Display the value from the transaction data */}
+                                <p className="font-semibold text-gray-900 mt-1">{tx.unidadNegocio}</p>
+                            </div>
+                        )}
                             {overviewData.map(item => (<div key={item.label}><p className="text-xs text-gray-500 uppercase tracking-wider">{item.label}</p><p className="font-semibold text-gray-900 mt-1">{item.value}</p></div>))}
                             
                             {/* CORRECT LOCATION: GigaLan Commission Inputs for Sales View (ONLY if PENDING) */}
                             {/* This is the key change to hide the inputs once status is immutable */}
-                            {!isFinanceView && tx.unidadNegocio === 'GIGALAN' && isPending && (
+                            {!isFinanceView && selectedUnidad === 'GIGALAN' && isPending && (
                                 <div className="col-span-full pt-4 mt-4 border-t border-gray-200">
                                     <GigaLanCommissionInputs 
                                         inputs={gigalanInputs} 
