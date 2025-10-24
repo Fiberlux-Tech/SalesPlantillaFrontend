@@ -190,6 +190,9 @@ export default function SalesDashboard({ onLogout }) {
         let nextUnidad = selectedUnidad;
         let nextGigalanInputs = { ...gigalanCommissionInputs };
 
+        // Default to the value from the originally uploaded data
+        let nextPlazo = uploadedData.transactions.plazoContrato; 
+
         if (inputKey === 'unidadNegocio') {
             nextUnidad = inputValue;
             // Reset Gigalan inputs if Unidad changes away from GIGALAN
@@ -202,6 +205,10 @@ export default function SalesDashboard({ onLogout }) {
             if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
                 nextGigalanInputs.gigalan_old_mrc = null;
             }
+
+        // --- ADD THIS ELSE IF BLOCK ---
+        } else if (inputKey === 'plazoContrato') {
+            nextPlazo = inputValue;
         }
         // Add similar logic here if you make other fields editable later
 
@@ -216,8 +223,8 @@ export default function SalesDashboard({ onLogout }) {
                 ...uploadedData.transactions, // Includes original clientName, MRC, NRC etc.
                 // --- Override with current/next input values ---
                 unidadNegocio: nextUnidad,
-                ...nextGigalanInputs // Spread the updated Gigalan inputs
-                // Add other editable fields here if needed
+                ...nextGigalanInputs, // Spread the updated Gigalan inputs
+                plazoContrato: nextPlazo // <-- ADD THIS LINE
             }
         };
 
