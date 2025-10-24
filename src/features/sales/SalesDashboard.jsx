@@ -296,9 +296,10 @@ export default function SalesDashboard({ onLogout }) {
             <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
             <DataPreviewModal
                 isOpen={isPreviewModalOpen}
-                onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); }} // Reset unidad on close
+                onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} // Reset KPIs on close
                 onConfirm={handleConfirmSubmission}
                 data={uploadedData}
+                liveKpis={liveKpis} // Pass the live KPI results
 
                 gigalanInputs={gigalanCommissionInputs}
                 onGigalanInputChange={(key, value) => handleInputChangeAndRecalculate(key, value)} // Use new handler
