@@ -8,7 +8,7 @@ import FileUploadModal from './components/FileUploadModal';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 import { UploadIcon, ExportIcon } from '../../components/shared/Icons';
 // Import the new Service Layer
-import { getSalesTransactions, uploadExcelForPreview, submitFinalTransaction } from './salesService';
+import { getSalesTransactions, uploadExcelForPreview, submitFinalTransaction, calculatePreview } from './salesService'; // Add calculatePreview
 
 export default function SalesDashboard({ onLogout }) {
     // --- ALL STATE REMAINS HERE ---
@@ -31,6 +31,7 @@ export default function SalesDashboard({ onLogout }) {
     });
     // --- ADDED STATE ---
     const [selectedUnidad, setSelectedUnidad] = useState('');
+    const [liveKpis, setLiveKpis] = useState(null);
 
     // --- DATA FETCHING (CLEANED UP) ---
     const fetchTransactions = async () => {
@@ -117,9 +118,8 @@ export default function SalesDashboard({ onLogout }) {
             setUploadedData(result.data); // Data is now guaranteed to have fileName
             setIsModalOpen(false);
             setIsPreviewModalOpen(true);
-            // --- MODIFIED: Reset selectedUnidad on new upload ---
-            setSelectedUnidad(''); // Reset to force user selection
-
+            setSelectedUnidad('');
+            setLiveKpis(null); // Reset live KPIs for new preview
             setGigalanCommissionInputs({
                 gigalan_region: '',
                 gigalan_sale_type: '',
@@ -181,6 +181,72 @@ export default function SalesDashboard({ onLogout }) {
         }
     };
 
+    const handleInputChangeAndRecalculate = async (inputKey, inputValue) => {
+        if (!uploadedData) return; // Should not happen if modal is open, but safe check
+
+        setApiError(null); // Clear previous errors
+
+        // 1. Determine which state to update and prepare the next state values
+        let nextUnidad = selectedUnidad;
+        let nextGigalanInputs = { ...gigalanCommissionInputs };
+
+        if (inputKey === 'unidadNegocio') {
+            nextUnidad = inputValue;
+            // Reset Gigalan inputs if Unidad changes away from GIGALAN
+            if (inputValue !== 'GIGALAN') {
+                nextGigalanInputs = { gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null };
+            }
+        } else if (inputKey.startsWith('gigalan_')) {
+            nextGigalanInputs[inputKey] = inputValue;
+            // Handle dependent reset for gigalan_old_mrc
+            if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
+                nextGigalanInputs.gigalan_old_mrc = null;
+            }
+        }
+        // Add similar logic here if you make other fields editable later
+
+        // 2. Update the state visually *immediately*
+        setSelectedUnidad(nextUnidad);
+        setGigalanCommissionInputs(nextGigalanInputs);
+
+        // 3. Prepare the payload for the backend (using the *next* state values)
+        const payload = {
+            ...uploadedData, // Includes original fixed_costs, recurring_services
+            transactions: {
+                ...uploadedData.transactions, // Includes original clientName, MRC, NRC etc.
+                // --- Override with current/next input values ---
+                unidadNegocio: nextUnidad,
+                ...nextGigalanInputs // Spread the updated Gigalan inputs
+                // Add other editable fields here if needed
+            }
+        };
+
+        // 4. Call the backend preview calculation
+        try {
+            // Set loading state if desired (optional, for visual feedback)
+            // setIsLoading(true); // Maybe use a different loading state for KPIs?
+
+            const result = await calculatePreview(payload);
+
+            if (result.status === 401) {
+                onLogout();
+                return;
+            }
+
+            if (result.success) {
+                setLiveKpis(result.data); // Update the live KPI state
+            } else {
+                setApiError(result.error || 'Failed to update KPIs.');
+                setLiveKpis(null); // Clear KPIs on error maybe? Or leave stale? Decide UX.
+            }
+        } catch (error) {
+            setApiError('Network error calculating preview.');
+            setLiveKpis(null); // Clear KPIs on error
+        } finally {
+            // setIsLoading(false); // Reset loading state
+        }
+    };
+
     // --- CLEAN RENDER METHOD (No change needed) ---
     return (
         <>
@@ -233,11 +299,12 @@ export default function SalesDashboard({ onLogout }) {
                 onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); }} // Reset unidad on close
                 onConfirm={handleConfirmSubmission}
                 data={uploadedData}
+
                 gigalanInputs={gigalanCommissionInputs}
-                onGigalanInputChange={handleGigalanInputChange}
+                onGigalanInputChange={(key, value) => handleInputChangeAndRecalculate(key, value)} // Use new handler
                 // --- ADDED PROPS ---
                 selectedUnidad={selectedUnidad}
-                onUnidadChange={setSelectedUnidad}
+                onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)} // Use new handler
             />
         </>
     );

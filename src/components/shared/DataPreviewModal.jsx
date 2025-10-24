@@ -22,7 +22,7 @@ import { SalesPreviewFooter } from '../../features/sales/components/SalesPreview
 import { FinancePreviewFooter } from '../../features/finance/components/FinancePreviewFooter';
 
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange, selectedUnidad, onUnidadChange }) {
+function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange, selectedUnidad, onUnidadChange, liveKpis }) {
     const formatCurrency = (value) => {
         if (typeof value !== 'number' || value === null || value === 0) return '-';
         return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -212,18 +212,18 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <KpiCard title="MRC (Recurrente Mensual)" value={formatCurrency(tx.MRC)} subtext="Métrica Clave" />
+                            <KpiCard title="MRC (Recurrente Mensual)" value={formatCurrency(tx.MRC)} subtext="Métrica Clave" /> {/* MRC/NRC likely don't change */}
                             <KpiCard title="NRC (Pago Único)" value={formatCurrency(tx.NRC)} />
-                            <KpiCard title="VAN" value={formatCurrency(tx.VAN)} />
-                            <KpiCard title="TIR" value={`${(tx.TIR * 100)?.toFixed(2)}%`} />
-                            <KpiCard title="Periodo de Payback" value={`${tx.payback} meses`} />
-                            <KpiCard title="Ingresos Totales" value={formatCurrency(tx.totalRevenue)} />
-                            <KpiCard title="Gastos Totales" value={formatCurrency(tx.totalExpense)} isNegative={true} />
-                            <KpiCard title="Utilidad Bruta" value={formatCurrency(tx.grossMargin)} />
-                            <KpiCard title="Margen Bruto (%)" value={`${(tx.grossMarginRatio * 100)?.toFixed(2)}%`} />
-                            <KpiCard title="Comisión de Ventas" value={formatCurrency(tx.comisiones)} />
-                            <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion)} />
-                            <KpiCard title="Costo Instalación (%)" value={`${(tx.costoInstalacionRatio * 100)?.toFixed(2)}%`} />
+                            <KpiCard title="VAN" value={formatCurrency(kpiData.VAN)} /> {/* Use kpiData */}
+                            <KpiCard title="TIR" value={`${(kpiData.TIR * 100)?.toFixed(2)}%`} /> {/* Use kpiData */}
+                            <KpiCard title="Periodo de Payback" value={`${kpiData.payback} meses`} /> {/* Use kpiData */}
+                            <KpiCard title="Ingresos Totales" value={formatCurrency(kpiData.totalRevenue)} /> {/* Use kpiData */}
+                            <KpiCard title="Gastos Totales" value={formatCurrency(kpiData.totalExpense)} isNegative={true} /> {/* Use kpiData */}
+                            <KpiCard title="Utilidad Bruta" value={formatCurrency(kpiData.grossMargin)} /> {/* Use kpiData */}
+                            <KpiCard title="Margen Bruto (%)" value={`${(kpiData.grossMarginRatio * 100)?.toFixed(2)}%`} /> {/* Use kpiData */}
+                            <KpiCard title="Comisión de Ventas" value={formatCurrency(kpiData.comisiones)} /> {/* Use kpiData - THIS IS THE KEY ONE */}
+                            <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion)} /> {/* May not change? Use tx or kpiData? Check backend response */}
+                            <KpiCard title="Costo Instalación (%)" value={`${(kpiData.costoInstalacionRatio * 100)?.toFixed(2)}%`} /> {/* Use kpiData */}
                         </div>
                     </div>
                 </div>

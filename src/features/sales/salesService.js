@@ -104,3 +104,39 @@ export async function submitFinalTransaction(finalPayload) {
         return { success: false, error: 'Failed to connect to the server for submission.' };
     }
 }
+
+/**
+ * Sends the current modal data to the backend for KPI recalculation.
+ * @param {object} payload - The full data package (original + edits).
+ * @returns {Promise<{success: boolean, data: object, error: string, status: number}>}
+ */
+export async function calculatePreview(payload) {
+    try {
+        // Use fetch directly to handle potential 401s specifically if needed,
+        // or use the api.post helper if it handles credentials correctly.
+        // Assuming api.post includes credentials ('include') as configured in api.js
+        const result = await api.post('/api/calculate-preview', payload);
+
+        // Assuming api.post throws an error for non-OK responses or handles 401
+        // If api.post returns structured errors like { success: false, ...}:
+        if (result && result.success) {
+            return { success: true, data: result.data };
+        } else {
+             // Check if the api helper returns a specific status for auth errors
+             if (result.status === 401) {
+                 return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
+             }
+             // Otherwise, use the error message provided by the helper or a default
+             return { success: false, error: result.error || 'Failed to calculate preview.' };
+        }
+
+    } catch (error) {
+         // Handle network errors or errors thrown by api.post
+         // Check if the error object contains status information (useful for 401)
+         const status = error.response?.status; // Example if using axios-like error structure
+         if (status === 401) {
+              return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
+         }
+        return { success: false, error: error.message || 'Failed to connect to the server for preview calculation.' };
+    }
+}
