@@ -1,3 +1,5 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/components/ui/badge.tsx
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -15,6 +17,14 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
+        statusPending: "border-transparent bg-yellow-100 text-yellow-800",
+        statusApproved: "border-transparent bg-green-100 text-green-800",
+        statusRejected: "border-transparent bg-red-100 text-red-800",
+        categoryFinance: "border-transparent bg-blue-100 text-blue-800",
+        categorySales: "border-transparent bg-purple-100 text-purple-800",
+        categoryMayorista: "border-transparent bg-green-100 text-green-800",
+        categoryAdmin: "border-transparent bg-slate-100 text-slate-800",
+        categoryUser: "border-transparent bg-gray-100 text-gray-800",
       },
     },
     defaultVariants: {

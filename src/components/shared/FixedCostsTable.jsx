@@ -1,24 +1,14 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/components/shared/FixedCostsTable.jsx
+
 import React from 'react';
+import { formatCurrency, formatCellData } from '@/lib/formatters'; // Import shared formatters
 
 const FixedCostsTable = ({ data }) => {
   if (!data || data.length === 0) {
-    return <p className="text-center text-gray-500 py-4">No hay costos fijos disponible.</p>;
+    return <p className="text-center text-gray-500 py-4">No fixed cost data available.</p>;
   }
 
-  // Handles currency formatting AND returns '-' for 0/null/undefined
-  const formatCurrency = (value) => {
-    if (value === null || typeof value === 'undefined' || value === 0) return '-';
-    if (typeof value !== 'number') return '-'; // Treat non-numbers (except handled above) as '-'
-    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
-  // Handles non-currency data (text and numbers like 'Cantidad') and returns '-' for 0/null/undefined/empty/N/A
-  const formatCellData = (value) => {
-    if (value === null || typeof value === 'undefined' || value === '' || value === 'N/A' || value === 0) {
-      return '-';
-    }
-    return value; // Return original value otherwise
-  };
+  // NOTE: Local formatCurrency and formatCellData functions have been removed.
 
   return (
     <div className="overflow-x-auto bg-white rounded-lg">

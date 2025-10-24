@@ -156,14 +156,7 @@ export default function FinanceDashboard({ onLogout }) {
     // --- CLEAN RENDER METHOD (REMAINS THE SAME) ---
     return (
         <>
-            <div className="container mx-auto px-8 py-8">
-            {/* Header stays here as it's simple */}
-            <header className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Aprobación de Plantillas Economicas</h1>
-                </div>
-            </header>
-    
+            <div className="container mx-auto px-8 py-8">    
             {/* 1. Render the Stats Grid Component */}
             <FinanceStatsGrid stats={stats} />
     

@@ -1,6 +1,8 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/features/sales/components/SalesToolBar.jsx
+
 import React from 'react';
-import DatePicker from '../../../components/shared/DatePicker';
-import { SearchIcon, CalendarIcon } from '../../../components/shared/Icons';
+import DatePicker from '@/components/shared/DatePicker'; // Standardized import
+import { SearchIcon, CalendarIcon } from '@/components/shared/Icons'; // Standardized import
 
 export function SalesToolbar({
     filter,

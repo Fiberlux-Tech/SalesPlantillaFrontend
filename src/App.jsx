@@ -1,18 +1,20 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/App.jsx
+
 import React, { useState, useEffect } from 'react';
 
 // --- Import Service Layer ---
 import { checkAuthStatus, loginUser, registerUser, logoutUser } from './features/auth/authService'; 
 
-// --- FEATURE IMPORTS ---
-import AuthPage from './features/auth/AuthPage';
-import LandingPage from './features/landing/LandingPage';
-import SalesDashboard from './features/sales/SalesDashboard';
-import FinanceDashboard from './features/finance/FinanceDashboard';
-import { PermissionManagementModule } from './features/admin/AdminUserManagement';
-import MasterDataManagement from './features/masterdata/MasterDataManagement'; // Assuming you named it this way
+// --- FEATURE IMPORTS (Standardized with @/) ---
+import AuthPage from '@/features/auth/AuthPage';
+import LandingPage from '@/features/landing/LandingPage';
+import SalesDashboard from '@/features/sales/SalesDashboard';
+import FinanceDashboard from '@/features/finance/FinanceDashboard';
+import { PermissionManagementModule } from '@/features/admin/AdminUserManagement';
+import MasterDataManagement from '@/features/masterdata/MasterDataManagement'; 
 
 // --- SHARED COMPONENT IMPORT ---
-import GlobalHeader from './components/shared/GlobalHeader'; 
+import GlobalHeader from '@/components/shared/GlobalHeader'; 
 
 export default function App() {
     const [user, setUser] = useState(null);
@@ -88,6 +90,23 @@ export default function App() {
         }
     };
     
+    const getPageTitle = (page) => {
+        switch (page) {
+            case 'sales':
+                return 'Sales Deal Portal';
+            case 'finance':
+                return 'Finance Dashboard';
+            case 'admin-management':
+                return 'Permission Management';
+            case 'variable-master':
+                return 'Maestro de Variables';
+            case 'landing':
+            default:
+                // Use a default for the landing page or keep it empty if preferred
+                return 'Available Modules'; 
+        }
+    };
+
     // --- Render Logic (Updated to include Master Data) ---
     if (isLoading) {
         return (
@@ -120,12 +139,17 @@ export default function App() {
             PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;
     }
 
+    // Get the title based on the current page
+    const currentTitle = getPageTitle(currentPage);
+
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
+            {/* PASS THE TITLE TO GLOBAL HEADER */}
             <GlobalHeader 
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
                 currentPage={currentPage}
+                pageTitle={currentTitle} // <-- NEW PROP
             />
             <main className="flex-grow">
                  {PageComponent}

@@ -1,8 +1,8 @@
-// src/features/admin/adminService.js
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/features/admin/adminService.js
 
-// The Admin module requires direct fetch calls to handle custom error parsing and the API_BASE_URL 
-// which was the pattern established in the original AdminUserManagement.tsx
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+import { api } from '@/lib/api'; // Import the central API utility
+
+// --- REMOVED: API_BASE_URL constant is no longer needed
 
 /**
  * Fetches the list of all users from the backend.
@@ -10,26 +10,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
  */
 export async function getAllUsers() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-            credentials: 'include' 
-        });
-
-        if (!response.ok) {
-            let errorMessage = 'Failed to fetch users.';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorData.error || errorMessage;
-            } catch (e) {
-                errorMessage = `Server returned status ${response.status}.`;
-            }
-            return { success: false, error: errorMessage };
-        }
-
-        const data = await response.json();
-        // Return the raw list of users for the component to handle.
-        return { success: true, data: data.users };
-    } catch (err) {
-        return { success: false, error: err.message || "Failed to load user data." };
+        // Use the centralized api.get helper. 
+        // This returns the JSON body (e.g., { users: [...] }) on success.
+        // It will also throw a standardized error for non-OK responses (like 403 Forbidden).
+        const data = await api.get('/api/admin/users');
+        
+        // Extract the users array from the response body for the component
+        return { success: true, data: data.users || [] };
+    } catch (error) {
+        // Catch errors thrown by api.get (including unauthorized/network)
+        return { success: false, error: error.message || "Failed to load user data." };
     }
 }
 
@@ -41,21 +31,13 @@ export async function getAllUsers() {
  */
 export async function updateUserRole(userId, newRole) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', 
-            body: JSON.stringify({ role: newRole.toUpperCase() }), 
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            return { success: false, error: errorData.error || `Failed to update role.` };
-        }
+        // Use the centralized api.post helper
+        await api.post(`/api/admin/users/${userId}/role`, { role: newRole.toUpperCase() });
 
         return { success: true };
-    } catch (err) {
-        return { success: false, error: err.message || "Failed to update role." };
+    } catch (error) {
+        // Catch errors thrown by api.post
+        return { success: false, error: error.message || "Failed to update role." };
     }
 }
 
@@ -67,20 +49,12 @@ export async function updateUserRole(userId, newRole) {
  */
 export async function resetUserPassword(userId, newPassword) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/reset-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', 
-            body: JSON.stringify({ new_password: newPassword }), 
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            return { success: false, error: errorData.error || 'Failed to reset password.' };
-        }
+        // Use the centralized api.post helper
+        await api.post(`/api/admin/users/${userId}/reset-password`, { new_password: newPassword });
 
         return { success: true };
-    } catch (err) {
-        return { success: false, error: err.message || "Failed to reset password." };
+    } catch (error) {
+        // Catch errors thrown by api.post
+        return { success: false, error: error.message || "Failed to reset password." };
     }
 }

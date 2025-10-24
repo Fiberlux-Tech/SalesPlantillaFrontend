@@ -1,5 +1,7 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/features/sales/components/SalesTransactionList.jsx
+
 import React from 'react';
-import StatusBadge from '../../../components/shared/StatusBadge'; // From shared components
+import StatusBadge from '@/components/shared/StatusBadge'; // Changed from '../../../components/shared/StatusBadge'
 
 export function SalesTransactionList({
     isLoading,

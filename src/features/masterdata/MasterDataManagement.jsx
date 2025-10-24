@@ -94,7 +94,6 @@ export default function MasterDataManagement({ user }) {
     // --- CLEAN RENDER LOGIC ---
     return (
         <div className="container mx-auto px-8 py-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Maestro de Variables</h1>
             {apiError && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 mb-6">{apiError}</div>}
 
             {/* Render the DUMB Form Component */}

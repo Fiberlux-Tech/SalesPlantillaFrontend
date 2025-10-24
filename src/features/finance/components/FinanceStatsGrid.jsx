@@ -1,16 +1,14 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/features/finance/components/FinanceStatsGrid.jsx
+
 import React from 'react';
-import StatsCard from '../../../components/shared/StatsCard';
+import StatsCard from '@/components/shared/StatsCard'; // Standardized import
 // --- Icons ---
-import {
+import { // Standardized imports
     ClockIcon,
     TrendUpIcon,
     DollarSignIcon,
     FileTextIcon,
-} from '../../../components/shared/Icons';
-
-// Note: You should consider moving StatsCard into 'src/features/finance/components'
-// or 'src/components/shared' if it's used elsewhere.
-// The icon paths are also adjusted based on the new file location.
+} from '@/components/shared/Icons'; 
 
 export function FinanceStatsGrid({ stats }) {
     return (

@@ -25,9 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 
-const UNIDADES_NEGOCIO = ['GIGALAN', 'CORPORATIVO', 'ESTADO'];
-const REGIONS = ['LIMA', 'PROVINCIAS CON CACHING', 'PROVINCIAS CON INTERNEXA', 'PROVINCIAS CON TDP'];
-const SALE_TYPES = ['NUEVO', 'EXISTENTE'];
+import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants'; //
 
 import { SalesPreviewFooter } from '../../features/sales/components/SalesPreviewFooter';
 import { FinancePreviewFooter } from '../../features/finance/components/FinancePreviewFooter';

@@ -1,8 +1,5 @@
 import React from 'react';
-import StatusBadge from '../../../components/shared/StatusBadge';
-
-// Note: You should consider moving StatusBadge into 'src/features/finance/components'
-// as it seems specific to this feature.
+import StatusBadge from '@/components/shared/StatusBadge';
 
 export function TransactionList({ 
     isLoading, 

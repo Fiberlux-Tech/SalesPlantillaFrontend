@@ -1,16 +1,25 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/features/masterdata/components/HistoryTable.jsx
+
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge'; // Import the centralized Badge component
 
-// Local helper component (should be extracted if used outside this module)
-const CategoryBadge = ({ category }) => {
-    const baseClasses = "px-2 py-0.5 text-xs font-medium rounded-full inline-flex items-center";
-    const categoryClasses = {
-        'Finance': "bg-blue-100 text-blue-800",
-        'Sales': "bg-purple-100 text-purple-800",
-        'Mayorista': "bg-green-100 text-green-800",
-        'Admin': "bg-slate-100 text-slate-800",
-    };
-    return <span className={`${baseClasses} ${categoryClasses[category] || "bg-gray-100 text-gray-800"}`}>{category}</span>;
+// --- REMOVED: Local CategoryBadge component.
+
+// Utility to map category string to the new badge variant 
+const getCategoryVariant = (category) => {
+    switch (category) {
+        case 'Finance':
+            return 'categoryFinance';
+        case 'Sales':
+            return 'categorySales';
+        case 'Mayorista':
+            return 'categoryMayorista';
+        case 'Admin':
+            return 'categoryAdmin';
+        default:
+            return 'categoryUser'; // Fallback for any other category
+    }
 };
 
 // Local date formatting utility (kept here as it's specific to the history table's format)
@@ -59,7 +68,11 @@ export function HistoryTable({ isLoading, history }) {
                             {history.map((record, index) => (
                                 <TableRow key={record.id || index} className="hover:bg-gray-50"> 
                                     <TableCell className="font-medium">{record.variable_name}</TableCell>
-                                    <TableCell><CategoryBadge category={record.category} /></TableCell>
+                                    <TableCell>
+                                        <Badge variant={getCategoryVariant(record.category)}>
+                                            {record.category}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell className="text-right font-mono">{record.variable_value}</TableCell>
                                     <TableCell className="text-center text-xs">{formatDate(record.date_recorded)}</TableCell>
                                     <TableCell>{record.recorder_username}</TableCell>

@@ -1,5 +1,7 @@
+// fiberlux-tech/salesplantillafrontend/SalesPlantillaFrontend-64ed8b30ed6e79e4876344359d7698df855dbf56/src/features/sales/components/FileUploadModal.jsx
+
 import React, { useState, useRef } from 'react';
-import { CloseIcon, FileUploadIcon } from '../../../components/shared/Icons';
+import { CloseIcon, FileUploadIcon } from '@/components/shared/Icons'; // Standardized import
 
 function FileUploadModal({ isOpen, onClose, onNext }) {
     const [selectedFile, setSelectedFile] = useState(null);

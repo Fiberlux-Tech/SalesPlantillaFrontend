@@ -274,17 +274,6 @@ export default function SalesDashboard({ onLogout }) {
     return (
         <>
             <div className="container mx-auto px-8 py-8">
-            {/* Header stays here as it's simple */}
-            <header className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Plantillas Economicas</h1>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <button className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50"><ExportIcon /><span>Export</span></button>
-                    <button onClick={() => setIsModalOpen(true)} className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg shadow-sm hover:bg-gray-800"><UploadIcon /><span>Upload File</span></button>
-                </div>
-            </header>
-
             {/* 1. Render the Stats Grid Component */}
             <SalesStatsGrid stats={stats} />
 

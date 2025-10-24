@@ -22,7 +22,6 @@ export default function LandingPage({ user, onNavigate }) {
         <div>
             <div className="max-w-7xl mx-auto px-6 py-12">
                 <div className="mb-8">
-                    <h2 className="text-xl font-semibold text-slate-900">Modulos Disponibles</h2>
                     <p className="text-slate-600 text-sm mt-1">Selecciona uno para iniciar</p>
                 </div>
 
