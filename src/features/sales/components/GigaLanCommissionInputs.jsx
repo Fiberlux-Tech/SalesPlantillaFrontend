@@ -1,74 +1,42 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
-import { 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue 
-} from "@/components/ui/select"; 
+// REMOVED: Select imports are no longer needed here
+// import {
+//     Select,
+//     SelectContent,
+//     SelectItem,
+//     SelectTrigger,
+//     SelectValue
+// } from "@/components/ui/select";
 
-const REGIONS = ['LIMA', 'PROVINCIAS CON CACHING', 'PROVINCIAS CON INTERNEXA', 'PROVINCIAS CON TDP'];
-const SALE_TYPES = ['NUEVO', 'EXISTENTE'];
+// REMOVED: Constants are no longer needed here
+// const REGIONS = ['LIMA', 'PROVINCIAS CON CACHING', 'PROVINCIAS CON INTERNEXA', 'PROVINCIAS CON TDP'];
+// const SALE_TYPES = ['NUEVO', 'EXISTENTE'];
 
 export function GigaLanCommissionInputs({ inputs, onInputChange }) {
+    // Only render the "PREVIOUS MONTHLY CHARGE" input if the sale type is 'EXISTENTE'
+    // The component itself is only rendered when Unidad is GIGALAN, so we don't need to check that here.
+    if (inputs.gigalan_sale_type !== 'EXISTENTE') {
+        return null; // Don't render anything if the sale type isn't 'EXISTENTE'
+    }
+
     return (
-        // Removed the outer div, title, border, and margin classes.
-        // This component now only contains the input grid.
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* REGION Select */}
-            <div>
-                <label className="block text-xs font-medium text-gray-700 uppercase mb-1">REGION</label>
-                <Select
-                    value={inputs.gigalan_region || ""}
-                    onValueChange={(value) => onInputChange('gigalan_region', value)}
-                >
-                    <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="Select a region" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {REGIONS.map(region => (
-                            <SelectItem key={region} value={region}>
-                                {region}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-
-            {/* TYPE OF SALE Select */}
-            <div>
-                <label className="block text-xs font-medium text-gray-700 uppercase mb-1">TYPE OF SALE</label>
-                <Select
-                    value={inputs.gigalan_sale_type || ""}
-                    onValueChange={(value) => onInputChange('gigalan_sale_type', value)}
-                >
-                    <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {SALE_TYPES.map(type => (
-                            <SelectItem key={type} value={type}>
-                                {type}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-
-            {/* PREVIOUS MONTHLY CHARGE Input (Conditional) */}
-            {inputs.gigalan_sale_type === 'EXISTENTE' && (
-                <div>
-                    <label className="block text-xs font-medium text-gray-700 uppercase mb-1">PREVIOUS MONTHLY CHARGE</label>
-                    <Input
-                        type="number"
-                        placeholder="Enter amount"
-                        value={inputs.gigalan_old_mrc || ""}
-                        onChange={(e) => onInputChange('gigalan_old_mrc', parseFloat(e.target.value) || null)}
-                        className="text-sm"
-                    />
-                </div>
-            )}
+        // The component now ONLY renders this single input field and its label.
+        <div>
+            <label className="block text-xs font-medium text-gray-700 uppercase mb-1">PREVIOUS MONTHLY CHARGE</label>
+            <Input
+                type="number"
+                placeholder="Enter amount"
+                // Ensure value is handled correctly (empty string if null/undefined)
+                value={inputs.gigalan_old_mrc ?? ""}
+                onChange={(e) => {
+                    // Attempt to parse the float, fallback to null if invalid
+                    const value = parseFloat(e.target.value);
+                    onInputChange('gigalan_old_mrc', isNaN(value) ? null : value);
+                }}
+                className="text-sm"
+                min="0" // Optional: prevent negative numbers
+            />
         </div>
     );
 }
