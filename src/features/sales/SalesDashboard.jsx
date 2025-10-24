@@ -8,7 +8,7 @@ import FileUploadModal from './components/FileUploadModal';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 import { UploadIcon, ExportIcon } from '../../components/shared/Icons';
 // Import the new Service Layer
-import { getSalesTransactions, uploadExcelForPreview, submitFinalTransaction, calculatePreview } from './salesService'; 
+import { getSalesTransactions, uploadExcelForPreview, submitFinalTransaction, calculatePreview } from './salesService'; // Add calculatePreview
 
 export default function SalesDashboard({ onLogout }) {
     // --- ALL STATE REMAINS HERE ---
@@ -19,24 +19,32 @@ export default function SalesDashboard({ onLogout }) {
     const [selectedDate, setSelectedDate] = useState(null);
     const datePickerRef = useRef(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-    // uploadedData is the single source of truth for the entire transaction package
-    const [uploadedData, setUploadedData] = useState(null); 
+    const [uploadedData, setUploadedData] = useState(null);
     const [apiError, setApiError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
-    // gigalanCommissionInputs is now deprecated and removed, as its data is now merged into uploadedData.transactions
-    
-    // --- ADDED STATE (Kept only what's absolutely necessary for UI/Recalc) ---
-    // We use this to manage the display of the Unit dropdown until recalculation is triggered.
-    const [selectedUnidad, setSelectedUnidad] = useState(''); 
+    const [gigalanCommissionInputs, setGigalanCommissionInputs] = useState({
+        gigalan_region: '',
+        gigalan_sale_type: '',
+        gigalan_old_mrc: null,
+    });
+    // --- ADDED STATE ---
+    const [selectedUnidad, setSelectedUnidad] = useState('');
     const [liveKpis, setLiveKpis] = useState(null);
+    // NEW: State for editable MRC, NRC, Plazo Contrato
+    const [overrideFields, setOverrideFields] = useState({ 
+        plazoContrato: null, 
+        MRC: null, 
+        NRC: null 
+    });
 
-    // --- DATA FETCHING ---
+    // --- DATA FETCHING (CLEANED UP) ---
     const fetchTransactions = async () => {
         setIsLoading(true);
         setApiError(null);
 
+        // Use the service function
         const result = await getSalesTransactions(currentPage);
 
         if (result.status === 401) {
@@ -45,7 +53,7 @@ export default function SalesDashboard({ onLogout }) {
         }
 
         if (result.success) {
-            setTransactions(result.data);
+            setTransactions(result.data); // Data is already formatted
             setTotalPages(result.pages);
         } else {
             setApiError(result.error);
@@ -60,8 +68,9 @@ export default function SalesDashboard({ onLogout }) {
 
     // ... (stats and filteredTransactions logic remain the same, relying on local state) ...
     const stats = useMemo(() => {
+        // ... your stats logic
         const pendingApprovals = transactions.filter(t => t.status === 'PENDING').length;
-        const totalValue = transactions.reduce((acc, t) => acc + (t.totalRevenue || 0), 0); // Corrected to use totalRevenue for better metric
+        const totalValue = transactions.reduce((acc, t) => acc + (t.totalValue || 0), 0);
         const avgIRR = 24.5;
         const avgPayback = 20;
         return {
@@ -73,6 +82,7 @@ export default function SalesDashboard({ onLogout }) {
     }, [transactions]);
 
     const filteredTransactions = useMemo(() => {
+        // ... your filter logic
         return transactions.filter(t => {
             const clientMatch = t.client.toLowerCase().includes(filter.toLowerCase());
             if (!selectedDate) return clientMatch;
@@ -81,16 +91,28 @@ export default function SalesDashboard({ onLogout }) {
         });
     }, [transactions, filter, selectedDate]);
 
-    // --- HANDLERS ---
+    // ... (handleClickOutside and date handlers remain the same) ...
+
+
+    // --- HANDLERS (CLEANED UP) ---
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
     const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
 
-    // REMOVED: handleGigalanInputChange is removed.
+    const handleGigalanInputChange = (key, value) => {
+        setGigalanCommissionInputs(prev => {
+            const newState = { ...prev, [key]: value };
+            if (key === 'gigalan_sale_type' && value !== 'EXISTENTE') {
+                newState.gigalan_old_mrc = null;
+            }
+            return newState;
+        });
+    };
 
     const handleUploadNext = async (file) => {
         if (!file) return;
         setApiError(null);
 
+        // Use the service function
         const result = await uploadExcelForPreview(file);
 
         if (result.status === 401) {
@@ -99,14 +121,24 @@ export default function SalesDashboard({ onLogout }) {
         }
 
         if (result.success) {
-            setUploadedData(result.data); // This is the new source of truth
+            setUploadedData(result.data); // Data is now guaranteed to have fileName
             setIsModalOpen(false);
             setIsPreviewModalOpen(true);
-            
-            // Set initial UI state from the uploaded data (for display purposes)
-            const initialTx = result.data.transactions;
-            setSelectedUnidad(initialTx.unidadNegocio || '');
+            setSelectedUnidad('');
             setLiveKpis(null); // Reset live KPIs for new preview
+
+            // NEW: Initialize override fields from the original uploaded data
+            setOverrideFields({ 
+                plazoContrato: result.data.transactions.plazoContrato,
+                MRC: result.data.transactions.MRC,
+                NRC: result.data.transactions.NRC,
+            });
+
+            setGigalanCommissionInputs({
+                gigalan_region: '',
+                gigalan_sale_type: '',
+                gigalan_old_mrc: null,
+            });
         } else {
             setApiError(result.error);
             setIsModalOpen(false);
@@ -117,30 +149,36 @@ export default function SalesDashboard({ onLogout }) {
         if (!uploadedData) return;
         setApiError(null);
 
-        // Use the **latest** state for validation
-        const currentTx = uploadedData.transactions; 
-
-        // --- VALIDATION: Uses currentTx (the single source of truth) ---
-        if (!currentTx.unidadNegocio) { 
+        // --- ADDED VALIDATION ---
+        if (!selectedUnidad) {
             setApiError('Por favor, selecciona una Unidad de Negocio.');
             return;
         }
 
-        if (currentTx.unidadNegocio === 'GIGALAN') { 
-            if (!currentTx.gigalan_region || !currentTx.gigalan_sale_type) {
+        // --- VALIDATION: Logic remains here, using selectedUnidad ---
+        if (selectedUnidad === 'GIGALAN') { // <-- MODIFIED: Use selectedUnidad
+            if (!gigalanCommissionInputs.gigalan_region || !gigalanCommissionInputs.gigalan_sale_type) {
                 setApiError('GIGALAN transactions require Region and Type of Sale to be selected.');
                 return;
             }
-            // Check for valid old_mrc if sale type is EXISTENTE
-            if (currentTx.gigalan_sale_type === 'EXISTENTE' && (currentTx.gigalan_old_mrc === null || currentTx.gigalan_old_mrc <= 0)) {
+            if (gigalanCommissionInputs.gigalan_sale_type === 'EXISTENTE' && (!gigalanCommissionInputs.gigalan_old_mrc || gigalanCommissionInputs.gigalan_old_mrc <= 0)) {
                 setApiError('GIGALAN Existing Sales require a valid Previous Monthly Charge amount.');
                 return;
             }
         }
 
-        // --- PAYLOAD: Use uploadedData directly, as it contains all persisted edits ---
-        const finalPayload = uploadedData;
+        // --- PREPARE FINAL PAYLOAD: MODIFIED to use selectedUnidad and overrideFields ---
+        const finalPayload = {
+            ...uploadedData,
+            transactions: {
+                ...uploadedData.transactions,
+                ...gigalanCommissionInputs,
+                unidadNegocio: selectedUnidad, // <-- THIS IS THE KEY CHANGE
+                ...overrideFields // <-- NEW: Include all overrides in final submission
+            }
+        };
 
+        // Use the service function
         const result = await submitFinalTransaction(finalPayload);
 
         if (result.status === 401) {
@@ -152,75 +190,87 @@ export default function SalesDashboard({ onLogout }) {
             fetchTransactions();
             setIsPreviewModalOpen(false);
             setUploadedData(null);
-            setSelectedUnidad(''); 
+            setSelectedUnidad(''); // Reset after successful submission
         } else {
             setApiError(result.error);
         }
     };
 
-    // --- REFACTORED: Single handler for all editable transaction data fields ---
-    const handleDataChangeAndRecalculate = async (inputKey, inputValue) => {
-        if (!uploadedData) return;
+    const handleInputChangeAndRecalculate = async (inputKey, inputValue) => {
+        if (!uploadedData) return; // Should not happen if modal is open, but safe check
 
-        setApiError(null);
+        setApiError(null); // Clear previous errors
 
-        // 1. Create a mutable copy of the transactions payload for persistence and calculation
-        let nextTransactions = { ...uploadedData.transactions }; 
+        // 1. Determine which state to update and prepare the next state values
+        let nextUnidad = selectedUnidad;
+        let nextGigalanInputs = { ...gigalanCommissionInputs };
+        let nextOverrideFields = { ...overrideFields }; // <--- NEW
 
-        // 2. Update the core data and local UI states
+        // Default to the value from the originally uploaded data (no longer needed here, handled by overrideFields)
+
+        // A. Handle Unidad
         if (inputKey === 'unidadNegocio') {
-            nextTransactions.unidadNegocio = inputValue;
-            setSelectedUnidad(inputValue); // Update UI state for display purpose
-            
-            // If switching away from GIGALAN, clear the dependent fields in the payload
+            nextUnidad = inputValue;
+            // Reset Gigalan inputs if Unidad changes away from GIGALAN
             if (inputValue !== 'GIGALAN') {
-                nextTransactions.gigalan_region = '';
-                nextTransactions.gigalan_sale_type = '';
-                nextTransactions.gigalan_old_mrc = null;
+                nextGigalanInputs = { gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null };
             }
-        } 
-        // Handles Plazo, MRC, NRC, Region, SaleType, and OldMRC (all stored inside transactions object)
-        else if (nextTransactions.hasOwnProperty(inputKey) || inputKey.startsWith('gigalan_') || inputKey === 'MRC' || inputKey === 'NRC' || inputKey === 'plazoContrato') { 
-             nextTransactions[inputKey] = inputValue;
-
-            // Handle dependent reset for gigalan_old_mrc if sale type changes
+        // B. Handle Gigalan inputs
+        } else if (inputKey.startsWith('gigalan_')) {
+            nextGigalanInputs[inputKey] = inputValue;
+            // Handle dependent reset for gigalan_old_mrc
             if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
-                 nextTransactions.gigalan_old_mrc = null;
+                nextGigalanInputs.gigalan_old_mrc = null;
             }
-        } else {
-            // Safety break if an unhandled key is passed
-            console.warn(`Attempted to update unknown key: ${inputKey}`);
-            return;
+        // C. Handle top-level editable fields (Plazo Contrato, MRC, NRC)
+        } else if (['plazoContrato', 'MRC', 'NRC'].includes(inputKey)) {
+             nextOverrideFields[inputKey] = inputValue; 
         }
-        
-        // 3. Persist the change to the main state and set payload
-        const nextUploadedData = {
-            ...uploadedData, 
-            transactions: nextTransactions
+
+        // 2. Update the state visually *immediately*
+        setSelectedUnidad(nextUnidad);
+        setGigalanCommissionInputs(nextGigalanInputs);
+        setOverrideFields(nextOverrideFields); // <--- NEW
+
+        // 3. Prepare the payload for the backend (using the *next* state values)
+        const payload = {
+            ...uploadedData, // Includes original fixed_costs, recurring_services
+            transactions: {
+                ...uploadedData.transactions, // Includes original clientName, MRC, NRC etc.
+                // --- Override with current/next input values ---
+                unidadNegocio: nextUnidad,
+                ...nextGigalanInputs, // Spread the updated Gigalan inputs
+                ...nextOverrideFields // <-- CRITICAL FIX: Spread the overrides for MRC, NRC, Plazo Contrato
+            }
         };
-        setUploadedData(nextUploadedData);
-        
+
         // 4. Call the backend preview calculation
         try {
-            const result = await calculatePreview(nextUploadedData); 
+            // Set loading state if desired (optional, for visual feedback)
+            // setIsLoading(true); // Maybe use a different loading state for KPIs?
+
+            const result = await calculatePreview(payload);
 
             if (result.status === 401) {
                 onLogout();
                 return;
             }
+
             if (result.success) {
-                setLiveKpis(result.data);
+                setLiveKpis(result.data); // Update the live KPI state
             } else {
                 setApiError(result.error || 'Failed to update KPIs.');
-                setLiveKpis(null); 
+                setLiveKpis(null); // Clear KPIs on error maybe? Or leave stale? Decide UX.
             }
         } catch (error) {
             setApiError('Network error calculating preview.');
-            setLiveKpis(null);
+            setLiveKpis(null); // Clear KPIs on error
+        } finally {
+            // setIsLoading(false); // Reset loading state
         }
     };
 
-    // --- CLEAN RENDER METHOD ---
+    // --- CLEAN RENDER METHOD (No change needed) ---
     return (
         <>
             <div className="container mx-auto px-8 py-8">
@@ -269,18 +319,16 @@ export default function SalesDashboard({ onLogout }) {
             <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
             <DataPreviewModal
                 isOpen={isPreviewModalOpen}
-                onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} 
+                onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} // Reset KPIs on close
                 onConfirm={handleConfirmSubmission}
                 data={uploadedData}
-                liveKpis={liveKpis} 
+                liveKpis={liveKpis} // Pass the live KPI results
 
-                // --- UPDATED PROPS ---
-                // Pass the current transaction object (which includes all editable fields)
-                gigalanInputs={uploadedData?.transactions} 
-                // Use the single handler for all input changes
-                onInputChangeAndRecalculate={handleDataChangeAndRecalculate} 
-                // Keep selectedUnidad for the initial display logic within the modal
-                selectedUnidad={selectedUnidad} 
+                gigalanInputs={gigalanCommissionInputs}
+                onGigalanInputChange={(key, value) => handleInputChangeAndRecalculate(key, value)} // Use new handler for all inputs
+                // --- ADDED PROPS ---
+                selectedUnidad={selectedUnidad}
+                onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)} // Use new handler
             />
         </>
     );
