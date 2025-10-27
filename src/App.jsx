@@ -1,35 +1,39 @@
+// src/App.jsx
+
 import React, { useState, useEffect } from 'react';
 
 // --- Import Service Layer ---
 import { checkAuthStatus, loginUser, registerUser, logoutUser } from './features/auth/authService'; 
 
-// --- FEATURE IMPORTS ---
-import AuthPage from './features/auth/AuthPage';
-import LandingPage from './features/landing/LandingPage';
-import SalesDashboard from './features/sales/SalesDashboard';
-import FinanceDashboard from './features/finance/FinanceDashboard';
-import { PermissionManagementModule } from './features/admin/AdminUserManagement';
-import MasterDataManagement from './features/masterdata/MasterDataManagement'; // Assuming you named it this way
+// --- FEATURE IMPORTS (Standardized with @/) ---
+import AuthPage from '@/features/auth/AuthPage';
+import LandingPage from '@/features/landing/LandingPage';
+import SalesDashboard from '@/features/sales/SalesDashboard';
+import FinanceDashboard from '@/features/finance/FinanceDashboard';
+import { PermissionManagementModule } from '@/features/admin/AdminUserManagement';
+import MasterDataManagement from '@/features/masterdata/MasterDataManagement'; 
 
 // --- SHARED COMPONENT IMPORT ---
-import GlobalHeader from './components/shared/GlobalHeader'; 
+import GlobalHeader from '@/components/shared/GlobalHeader'; 
+
+// Default state for sales actions until the SalesDashboard mounts and registers its handlers
+const defaultSalesActions = {
+    onUpload: () => console.log('Upload handler not yet mounted'),
+    onExport: () => console.log('Export handler not yet mounted')
+};
 
 export default function App() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState('landing'); 
-    
     // NEW STATE: Holds the action handlers provided by the mounted SalesDashboard component.
-    const [salesActions, setSalesActions] = useState({ 
-        onUpload: () => console.log('Upload handler not yet mounted'), 
-        onExport: () => console.log('Export handler not yet mounted') 
-    });
+    const [salesActions, setSalesActions] = useState(defaultSalesActions);
 
     // Check if user is logged in on initial load (uses Service Layer)
     useEffect(() => {
         const checkUser = async () => {
             try {
-                const data = await checkAuthStatus(); // <--- Service Call
+                const data = await checkAuthStatus();
                 if (data.is_authenticated) {
                     setUser({ username: data.username, role: data.role });
                 }
@@ -41,20 +45,19 @@ export default function App() {
         checkUser();
     }, []);
 
-    // --- Auth Functions (Now use Service Layer) ---
+    // --- Auth Functions (remain the same) ---
     const handleLogin = async (username, password) => {
-        const result = await loginUser(username, password); // <--- Service Call
+        const result = await loginUser(username, password);
         if (result.success) {
             setUser({ username: result.data.username, role: result.data.role });
             setCurrentPage('landing');
         } else {
-            // Re-throw the error so AuthPage.jsx can catch it and display the message
             throw new Error(result.error);
         }
     };
 
     const handleRegister = async (username, email, password) => {
-        const result = await registerUser(username, email, password); // <--- Service Call
+        const result = await registerUser(username, email, password);
         if (result.success) {
             setUser({ username: result.data.username, role: result.data.role });
             setCurrentPage('landing');
@@ -64,12 +67,12 @@ export default function App() {
     };
 
     const handleLogout = async () => {
-        await logoutUser(); // <--- Service Call
+        await logoutUser();
         setUser(null);
         setCurrentPage('landing');
     };
 
-    // --- Navigation (Updated to include Master Data) ---
+    // --- Navigation (remain the same) ---
     const handleNavigate = (page) => {
         if (!user) return; 
         
@@ -93,8 +96,25 @@ export default function App() {
                 setCurrentPage('landing');
         }
     };
-    
-    // --- Render Logic (Updated to pass user and salesActions) ---
+    
+    // NEW: Centralized title lookup function
+    const getPageTitle = (page) => {
+        switch (page) {
+            case 'sales':
+                return 'Plantillas Economicas';
+            case 'finance':
+                return 'Aprobación de Plantillas Economicas';
+            case 'admin-management':
+                return 'Manejo de Permisos';
+            case 'variable-master':
+                return 'Maestro de Variables';
+            case 'landing':
+            default:
+                return 'Menu Principal'; 
+        }
+    };
+
+    // --- Render Logic ---
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -110,15 +130,15 @@ export default function App() {
     let PageComponent;
     switch (currentPage) {
         case 'sales':
-            // CRITICAL CHANGE: Pass user and setSalesActions for global header buttons
+            // CRITICAL FIX: Pass user and setSalesActions for action registration and permissions
             PageComponent = <SalesDashboard 
                 onLogout={handleLogout} 
                 user={user} 
-                setSalesActions={setSalesActions} // <--- NEW PROP for registering actions
+                setSalesActions={setSalesActions} // Pass setter to register handlers
             />; 
             break;
         case 'finance':
-            // CHANGE: Pass user for the new DataPreviewModal permission logic
+            // FIX: Pass user for DataPreviewModal permissions
             PageComponent = <FinanceDashboard 
                 onLogout={handleLogout} 
                 user={user} 
@@ -135,13 +155,18 @@ export default function App() {
             PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;
     }
 
+    // Get the title based on the current page
+    const currentTitle = getPageTitle(currentPage);
+
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
+            {/* PASS THE TITLE AND ACTIONS TO GLOBAL HEADER */}
             <GlobalHeader 
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
                 currentPage={currentPage}
-                salesActions={salesActions} // <--- NEW PROP for displaying actions
+                pageTitle={currentTitle} // Pass the centralized title string
+                salesActions={salesActions} // Pass the sales actions/handlers
             />
             <main className="flex-grow">
                  {PageComponent}
