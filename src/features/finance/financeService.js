@@ -73,16 +73,24 @@ export async function getTransactionDetails(transactionId) {
 
 
 /**
- * Sends a command to approve or reject a transaction.
+ * Sends a command to approve or reject a transaction, optionally including modified data.
  * @param {number} transactionId - The ID of the transaction.
  * @param {('approve'|'reject')} action - The action to take.
+ * @param {object} [modifiedData] - Optional payload of modified transaction fields.
  * @returns {Promise<{success: boolean, error: string, status: number}>}
  */
-export async function updateTransactionStatus(transactionId, action) {
+export async function updateTransactionStatus(transactionId, action, modifiedData = {}) { // MODIFIED to accept modifiedData
     const endpoint = action === 'approve' ? 'approve' : 'reject';
+    
+    // If there is modifiedData, send it as JSON body
+    const body = Object.keys(modifiedData).length > 0 ? JSON.stringify({ transactions: modifiedData }) : null;
+    const headers = body ? { 'Content-Type': 'application/json' } : {};
+    
     try {
         const response = await fetch(`/api/transaction/${endpoint}/${transactionId}`, {
             method: 'POST',
+            headers: headers, // Pass headers if body exists
+            body: body, // Pass body if body exists
         });
 
         if (response.status === 401) {
@@ -147,5 +155,33 @@ export async function calculateCommission(transactionId) {
         }
     } catch (error) {
         return { success: false, error: 'Failed to connect to the server for commission calculation.' };
+    }
+}
+
+
+/**
+ * Sends modified data to the backend for KPI recalculation (PREVIEW ONLY).
+ * This function mirrors the one in salesService.js but is used by FinanceDashboard.
+ * @param {object} payload - The full data package (original + edits).
+ * @returns {Promise<{success: boolean, data: object, error: string, status: number}>}
+ */
+export async function calculatePreview(payload) {
+    try {
+        const result = await api.post('/api/calculate-preview', payload); 
+
+        if (result && result.success) {
+            return { success: true, data: result.data };
+        } else {
+             if (result.status === 401) {
+                 return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
+             }
+             return { success: false, error: result.error || 'Failed to calculate preview.' };
+        }
+
+    } catch (error) {
+         if (error.message && error.message.includes('Not authenticated')) {
+              return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
+         }
+        return { success: false, error: error.message || 'Failed to connect to the server for preview calculation.' };
     }
 }

@@ -11,7 +11,8 @@ import {
     getFinanceTransactions, 
     getTransactionDetails, 
     updateTransactionStatus, 
-    calculateCommission 
+    calculateCommission,
+    calculatePreview 
 } from './financeService';
 
 export default function FinanceDashboard({ onLogout }) {
@@ -27,6 +28,8 @@ export default function FinanceDashboard({ onLogout }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
+    const [liveEdits, setLiveEdits] = useState(null); 
+    const [liveKpis, setLiveKpis] = useState(null);
 
     // --- DATA FETCHING (CLEANED UP) ---
     const fetchTransactions = async () => {
@@ -111,10 +114,71 @@ export default function FinanceDashboard({ onLogout }) {
         }
     };
 
+    const handleRecalculate = async (key, value) => {
+        if (!selectedTransaction) return;
+
+        setApiError(null);
+        
+        // 1. Update the local liveEdits state
+        setLiveEdits(prev => ({ ...prev, [key]: value }));
+
+        // 2. Prepare the payload
+        const baseTransaction = selectedTransaction.transactions;
+        const currentEdits = { ...liveEdits, [key]: value }; // Include the *new* value
+
+        // 3. Map keys from component props to backend payload format (assuming keys match, e.g., MRC -> MRC)
+        const payloadUpdates = {
+             unidadNegocio: currentEdits.unidadNegocio ?? baseTransaction.unidadNegocio,
+             gigalan_region: currentEdits.gigalan_region ?? baseTransaction.gigalan_region,
+             gigalan_sale_type: currentEdits.gigalan_sale_type ?? baseTransaction.gigalan_sale_type,
+             gigalan_old_mrc: currentEdits.gigalan_old_mrc ?? baseTransaction.gigalan_old_mrc,
+             plazoContrato: currentEdits.plazoContrato ?? baseTransaction.plazoContrato,
+             MRC: currentEdits.MRC ?? baseTransaction.MRC,
+             NRC: currentEdits.NRC ?? baseTransaction.NRC,
+        };
+        
+        // The recalculation payload needs the full data structure, including fixed/recurring costs
+        const recalculationPayload = {
+            ...selectedTransaction,
+            transactions: {
+                ...baseTransaction,
+                ...payloadUpdates
+            }
+        };
+
+        try {
+            const result = await calculatePreview(recalculationPayload); 
+
+            if (result.status === 401) {
+                onLogout();
+                return;
+            }
+
+            if (result.success) {
+                setLiveKpis(result.data);
+            } else {
+                setApiError(result.error || 'Failed to update KPIs.');
+                setLiveKpis(null);
+            }
+        } catch (error) {
+            setApiError('Network error calculating preview.');
+            setLiveKpis(null);
+        }
+    };
+
+
+    // Overwrite handleApprove/Reject to include latest edits in submission
     const handleUpdateStatus = async (transactionId, status) => {
         setApiError(null);
-        // Use the service function
-        const result = await updateTransactionStatus(transactionId, status);
+        
+        // 1. Prepare payload with updated transaction data for submission
+        const modifiedFields = {
+            ...selectedTransaction.transactions,
+            ...liveEdits,
+        };
+        
+        // 2. Use the service function for update with the modified fields payload
+        const result = await updateTransactionStatus(transactionId, status, modifiedFields);
         
         if (result.status === 401) {
             onLogout();
@@ -123,9 +187,10 @@ export default function FinanceDashboard({ onLogout }) {
 
         if (result.success) {
             setIsDetailModalOpen(false);
-            fetchTransactions(); // Refresh the table
+            setLiveEdits(null); 
+            setLiveKpis(null); 
+            fetchTransactions(); 
         } else {
-            // CRITICAL CHANGE: Catch the error from the service and display it.
             setApiError(result.error);
         }
     };
@@ -192,12 +257,19 @@ export default function FinanceDashboard({ onLogout }) {
             
             <DataPreviewModal 
                 isOpen={isDetailModalOpen} 
-                onClose={() => setIsDetailModalOpen(false)} 
+                onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); }} 
                 data={selectedTransaction} 
                 isFinanceView={true}
                 onApprove={handleApprove}
                 onReject={handleReject}
                 onCalculateCommission={handleCalculateCommission}
+                
+                // NEW/MODIFIED PROPS for Finance Editing
+                liveKpis={liveKpis} 
+                gigalanInputs={liveEdits} // Pass liveEdits for Gigalan fields (region, type, old_mrc)
+                onGigalanInputChange={handleRecalculate} // Central handler for all KPI/Gigalan/Plazo edits
+                selectedUnidad={liveEdits?.unidadNegocio}
+                onUnidadChange={(value) => handleRecalculate('unidadNegocio', value)} // Central handler for Unidad edit
             />
         </>
     );
