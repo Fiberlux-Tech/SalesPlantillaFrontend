@@ -16,47 +16,47 @@ import {
 
 export default function FinanceDashboard({ onLogout }) {
     // --- ALL STATE REMAINS HERE ---
-    const [transactions, setTransactions] = useState([]);
-    const [filter, setFilter] = useState('');
-    const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const datePickerRef = useRef(null);
-    const [apiError, setApiError] = useState(null); // <-- Error state remains
-    const [selectedTransaction, setSelectedTransaction] = useState(null);
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [isLoading, setIsLoading] = useState(true);
+    const [transactions, setTransactions] = useState([]);
+    const [filter, setFilter] = useState('');
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const datePickerRef = useRef(null);
+    const [apiError, setApiError] = useState(null); // <-- Error state remains
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [isLoading, setIsLoading] = useState(true);
 
     // --- DATA FETCHING (CLEANED UP) ---
-    const fetchTransactions = async () => {
-        setIsLoading(true);
-        setApiError(null);
+    const fetchTransactions = async () => {
+        setIsLoading(true);
+        setApiError(null);
         
         // Use the service function
-        const result = await getFinanceTransactions(currentPage); 
-        
-        if (result.status === 401) {
-            onLogout(); 
-            return;
-        }
+        const result = await getFinanceTransactions(currentPage); 
+        
+        if (result.status === 401) {
+            onLogout(); 
+            return;
+        }
 
-        if (result.success) {
-            setTransactions(result.data); // Data is already formatted
-            setTotalPages(result.pages);
-        } else {
-            setApiError(result.error);
-        }
-        setIsLoading(false);
-    };
+        if (result.success) {
+            setTransactions(result.data); // Data is already formatted
+            setTotalPages(result.pages);
+        } else {
+            setApiError(result.error);
+        }
+        setIsLoading(false);
+    };
 
-    useEffect(() => {
-        fetchTransactions();
-    }, [currentPage]);
+    useEffect(() => {
+        fetchTransactions();
+    }, [currentPage]);
 
     // --- CALCULATIONS (REMAINS THE SAME) ---
-    const stats = useMemo(() => {
-        // ... (your stats calculation logic)
+    const stats = useMemo(() => {
+        // ... (your stats calculation logic)
         const totalApprovedValue = transactions
             .filter(t => t.status === 'APPROVED')
             .reduce((acc, t) => acc + (t.totalValue || 100000), 0); // Placeholder
@@ -68,7 +68,7 @@ export default function FinanceDashboard({ onLogout }) {
             const submissionDate = new Date(t.submissionDate);
             const today = new Date();
             return submissionDate.getMonth() === today.getMonth() &&
-                    submissionDate.getFullYear() === today.getFullYear();
+                   submissionDate.getFullYear() === today.getFullYear();
         }).length;
 
         return {
@@ -77,23 +77,23 @@ export default function FinanceDashboard({ onLogout }) {
             highRiskDeals,
             dealsThisMonth,
         };
-    }, [transactions]);
+    }, [transactions]);
 
-    const filteredTransactions = useMemo(() => {
-        // ... (your filter calculation logic)
+    const filteredTransactions = useMemo(() => {
+        // ... (your filter calculation logic)
         return transactions.filter(t => {
             const clientMatch = t.clientName.toLowerCase().includes(filter.toLowerCase());
             if (!selectedDate) return clientMatch;
             const transactionDate = new Date(t.submissionDate + 'T00:00:00');
             return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
         });
-    }, [transactions, filter, selectedDate]);
+    }, [transactions, filter, selectedDate]);
 
     // --- EVENT HANDLERS (UPDATED) ---
-    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
-    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
+    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
+    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
 
-    const handleRowClick = async (transaction) => {
+    const handleRowClick = async (transaction) => {
         setApiError(null);
         // Use the service function
         const result = await getTransactionDetails(transaction.id);
@@ -109,9 +109,9 @@ export default function FinanceDashboard({ onLogout }) {
         } else {
             setApiError(result.error);
         }
-    };
+    };
 
-    const handleUpdateStatus = async (transactionId, status) => {
+    const handleUpdateStatus = async (transactionId, status) => {
         setApiError(null);
         // Use the service function
         const result = await updateTransactionStatus(transactionId, status);
@@ -128,7 +128,7 @@ export default function FinanceDashboard({ onLogout }) {
             // CRITICAL CHANGE: Catch the error from the service and display it.
             setApiError(result.error);
         }
-    };
+    };
 
     const handleCalculateCommission = async (transactionId) => {
         setApiError(null);
@@ -150,20 +150,20 @@ export default function FinanceDashboard({ onLogout }) {
         }
     };
 
-    const handleApprove = (transactionId) => { handleUpdateStatus(transactionId, 'approve'); };
-    const handleReject = (transactionId) => { handleUpdateStatus(transactionId, 'reject'); };
+    const handleApprove = (transactionId) => { handleUpdateStatus(transactionId, 'approve'); };
+    const handleReject = (transactionId) => { handleUpdateStatus(transactionId, 'reject'); };
 
     // --- CLEAN RENDER METHOD (REMAINS THE SAME) ---
-    return (
-        <>
-            <div className="container mx-auto px-8 py-8">    
+    return (
+        <>
+            <div className="container mx-auto px-8 py-8">    
             {/* 1. Render the Stats Grid Component */}
-            <FinanceStatsGrid stats={stats} />
-    
+            <FinanceStatsGrid stats={stats} />
+    
             {/* This white box contains the toolbar and the table */}
-            <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
                 {/* 2. Render the Toolbar Component */}
-                <FinanceToolBar
+                <FinanceToolBar
                     filter={filter}
                     setFilter={setFilter}
                     isDatePickerOpen={isDatePickerOpen}
@@ -184,21 +184,21 @@ export default function FinanceDashboard({ onLogout }) {
                     totalPages={totalPages}
                     onPageChange={setCurrentPage} // Pass the setter function
                 />
-            </div>
-            </div>
-            
+            </div>
+            </div>
+            
             {/* Modals and Toasts stay here, controlled by the parent */}
-            {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
-            
-            <DataPreviewModal 
-                isOpen={isDetailModalOpen} 
-                onClose={() => setIsDetailModalOpen(false)} 
-                data={selectedTransaction} 
-                isFinanceView={true}
-                onApprove={handleApprove}
-                onReject={handleReject}
+            {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
+            
+            <DataPreviewModal 
+                isOpen={isDetailModalOpen} 
+                onClose={() => setIsDetailModalOpen(false)} 
+                data={selectedTransaction} 
+                isFinanceView={true}
+                onApprove={handleApprove}
+                onReject={handleReject}
                 onCalculateCommission={handleCalculateCommission}
-            />
-        </>
-    );
+            />
+        </>
+    );
 }
