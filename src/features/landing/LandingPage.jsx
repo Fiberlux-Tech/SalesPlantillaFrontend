@@ -20,10 +20,7 @@ export default function LandingPage({ user, onNavigate }) {
 
     return (
         <div>
-            <div className="max-w-7xl mx-auto px-6 py-12">
-                <div className="mb-8">
-                </div>
-
+            <div className="container mx-auto px-8 py-12">
                 {/* Module Cards Grid */}
                 {availableModules.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

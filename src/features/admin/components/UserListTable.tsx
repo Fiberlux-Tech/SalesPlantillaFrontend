@@ -25,7 +25,7 @@ export function UserListTable({ users, onRoleChange }: UserListTableProps) {
                 <TableHead>Username</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Current Role</TableHead>
-          D       <TableHead>Change Role</TableHead>
+                 <TableHead>Change Role</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

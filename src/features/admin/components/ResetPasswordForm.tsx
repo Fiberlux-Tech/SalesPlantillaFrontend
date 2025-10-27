@@ -39,34 +39,28 @@ export function ResetPasswordForm({
         <CardDescription>Select a user and set a new password</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 max-w-md">
+        {/* NEW: Use a single flex container for the inputs and button */}
+        <div className="flex space-x-4 items-end">
           
-          {/* Here we use the new UserSearchInput component */}
-          <UserSearchInput
-            value={resetPasswordForm.username}
-            onChange={handleUserNameChange}
-            onFocus={() => {
-              if (resetPasswordForm.username.trim() && filteredUsers.length > 0) {
-                setShowUserDropdown(true)
-              }
-            }}
-            showDropdown={showUserDropdown}
-            filteredUsers={filteredUsers}
-            onSelectUser={handleSelectUser}
-          />
-
-          {/* Selected User Display */}
-          {selectedUser && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-sm">
-                <span className="font-medium">Selected:</span> {selectedUser.username} ({selectedUser.email})
-              </p>
-            </div>
-          )}
-
+          {/* Username Input - Takes up proportional space */}
+          <div className="flex-1">
+            <UserSearchInput
+              value={resetPasswordForm.username}
+              onChange={handleUserNameChange}
+              onFocus={() => {
+                if (resetPasswordForm.username.trim() && filteredUsers.length > 0) {
+                  setShowUserDropdown(true)
+                }
+              }}
+              showDropdown={showUserDropdown}
+              filteredUsers={filteredUsers}
+              onSelectUser={handleSelectUser}
+            />
+          </div>
+ 
           {/* New Password Input */}
-          <div>
-            <label className="block text-sm font-medium mb-2">New Password</label>
+          <div className="flex-1"> {/* Still flex-1 */}
+            <label className="block text-sm font-medium mb-1">New Password</label>
             <Input
               type="password"
               placeholder="Enter new password"
@@ -76,8 +70,8 @@ export function ResetPasswordForm({
           </div>
 
           {/* Confirm Password Input */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Confirm Password</label>
+          <div className="flex-1"> {/* Still flex-1 */}
+            <label className="block text-sm font-medium mb-1">Confirm Password</label>
             <Input
               type="password"
               placeholder="Confirm new password"
@@ -86,11 +80,20 @@ export function ResetPasswordForm({
             />
           </div>
 
-          {/* Submit Button */}
-          <Button onClick={handleResetPasswordSubmit} className="w-full" disabled={!selectedUser}>
+          {/* Submit Button - Now aligned horizontally */}
+          <Button onClick={handleResetPasswordSubmit} disabled={!selectedUser}>
             Reset Password
           </Button>
         </div>
+
+        {/* Selected User Display - Move outside the flex row */}
+        {selectedUser && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md max-w-md"> {/* Added mt-4 and max-w-md for spacing/sizing */}
+            <p className="text-sm">
+              <span className="font-medium">Selected:</span> {selectedUser.username} ({selectedUser.email})
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
