@@ -32,7 +32,8 @@ export default function App() {
             try {
                 const data = await checkAuthStatus();
                 if (data.is_authenticated) {
-                    setUser({ username: data.username, role: data.role } as User); // Cast to User
+                    // FIX 1: Access the nested 'user' property on the new AuthStatus type
+                    setUser(data.user); 
                 }
             } catch (error) {
                 console.error("Failed to fetch user", error);
@@ -46,7 +47,7 @@ export default function App() {
     const handleLogin = async (username: string, password: string) => {
         const result = await loginUser(username, password);
         if (result.success) {
-            setUser({ username: result.data.username, role: result.data.role } as User);
+            setUser(result.data);
             setCurrentPage('landing');
         } else {
             throw new Error(result.error);
@@ -56,7 +57,7 @@ export default function App() {
     const handleRegister = async (username: string, email: string, password: string) => {
         const result = await registerUser(username, email, password);
         if (result.success) {
-            setUser({ username: result.data.username, role: result.data.role } as User);
+            setUser(result.data);
             setCurrentPage('landing');
         } else {
             throw new Error(result.error);
@@ -93,7 +94,6 @@ export default function App() {
     };
     
     const getPageTitle = (page: string): string => {
-        // ... (switch logic remains the same) ...
         switch (page) {
             case 'sales':
                 return 'Plantillas Economicas';
@@ -132,6 +132,8 @@ export default function App() {
         case 'finance':
             PageComponent = <FinanceDashboard 
                 user={user} 
+                // FIX 2: Pass the required onLogout handler
+                onLogout={handleLogout}
             />;
             break;
         case 'admin-management':

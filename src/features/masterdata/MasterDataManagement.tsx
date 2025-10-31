@@ -1,6 +1,7 @@
 // src/features/masterdata/MasterDataManagement.tsx
 import React, { useState, useEffect } from 'react';
-import { getMasterVariableHistory, getEditableConfig, updateMasterVariable } from './masterDataService'; 
+// FIX: Import the explicit HistoryItem type from the service file
+import { getMasterVariableHistory, getEditableConfig, updateMasterVariable, type HistoryItem } from './masterDataService'; 
 import { VariableUpdateForm } from './components/VariableUpdateForm'; // Assumes migration
 import { HistoryTable } from './components/HistoryTable'; // Assumes migration
 import type { User } from '@/types'; // 1. Import User type
@@ -22,9 +23,6 @@ interface FormInputState {
     variable_value: string;
     comment: string;
 }
-
-// 4. Define a simple type for history items (or use 'any' if complex)
-type HistoryItem = Record<string, any>; // A flexible type for the history objects
 
 export default function MasterDataManagement({ user }: MasterDataManagementProps) {
     // 5. Type all state hooks

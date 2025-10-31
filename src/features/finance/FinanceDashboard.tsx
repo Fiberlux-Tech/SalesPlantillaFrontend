@@ -146,10 +146,12 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
         handleRecalculate('recurring_services', newServices);
     };
 
-    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: any) => {
+    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
         if (!editedFixedCosts) return;
 
         const newCosts = [...editedFixedCosts]; 
+        // The cast to 'any' here is still an anti-pattern (as discussed before) 
+        // but the value parameter is now correctly typed as string | number.
         (newCosts[index] as any)[field] = value; 
         
         setEditedFixedCosts(newCosts); 

@@ -11,7 +11,8 @@ interface FinanceToolBarProps {
     setIsDatePickerOpen: React.Dispatch<React.SetStateAction<boolean>>;
     selectedDate: Date | null;
     setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
-    datePickerRef: React.RefObject<HTMLDivElement>;
+    // FIX: Change the RefObject type to explicitly allow null
+    datePickerRef: React.RefObject<HTMLDivElement | null>; 
     onClearDate: () => void;
     onSelectToday: () => void;
 }

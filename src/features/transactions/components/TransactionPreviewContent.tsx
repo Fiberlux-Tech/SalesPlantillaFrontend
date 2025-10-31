@@ -167,11 +167,23 @@ export function TransactionPreviewContent({
         setIsEditingRegion(false);
     };
     const handleEditSaleTypeSubmit = () => {
-         if (!editedSaleType || !SALE_TYPES.includes(editedSaleType)) {
+         // Check 1: Handle null/empty string.
+         if (!editedSaleType) {
             alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
             return;
         }
-        onGigalanInputChange('gigalan_sale_type', editedSaleType);
+        
+        // FIX: Cast the argument to the required narrow union type for the includes method.
+        // This resolves the error on the 'editedSaleType' variable.
+        const saleType = editedSaleType as ('NUEVO' | 'EXISTENTE');
+
+        if (!SALE_TYPES.includes(saleType)) {
+            alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
+            return;
+        }
+        
+        // Now that validation is complete, pass the strictly typed variable.
+        onGigalanInputChange('gigalan_sale_type', saleType);
         setIsEditingSaleType(false);
     };
     const handleCancelEditSaleType = () => {

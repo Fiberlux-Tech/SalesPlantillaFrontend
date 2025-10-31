@@ -8,7 +8,7 @@ import type { RecurringService } from '@/types'; // 1. Import the data type
 interface RecurringServicesTableProps {
     data: RecurringService[] | null | undefined;
     canEdit?: boolean;
-    onServiceChange?: (index: number, field: keyof RecurringService, value: any) => void;
+    onServiceChange?: (index: number, field: keyof RecurringService, value: string | number) => void;
 }
 
 const RecurringServicesTable = ({ 
@@ -54,7 +54,8 @@ const RecurringServicesTable = ({
               </td>
               <td
                 className="px-3 py-2 text-gray-800 align-middle truncate max-w-[160px]"
-                title={formatCellData(item.ubicacion)}
+                // FIX: Convert the result of formatCellData to string to satisfy the 'title' prop requirement
+                title={`${formatCellData(item.ubicacion)}`}
               >
                 {formatCellData(item.ubicacion)}
               </td>
@@ -83,7 +84,8 @@ const RecurringServicesTable = ({
               </td>
               <td
                 className="px-3 py-2 text-gray-800 align-middle truncate text-center max-w-[150px]"
-                title={formatCellData(item.proveedor)}
+                // FIX: Apply the same fix here
+                title={`${formatCellData(item.proveedor)}`}
               >
                 {formatCellData(item.proveedor)}
               </td>

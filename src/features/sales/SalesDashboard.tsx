@@ -239,7 +239,7 @@ export default function SalesDashboard({ user, setSalesActions }: SalesDashboard
         handleInputChangeAndRecalculate('recurring_services', newServices);
     };
 
-    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: any) => {
+    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
         if (!editedFixedCosts) return;
 
         const newCosts = [...editedFixedCosts];

@@ -3,10 +3,15 @@ import { api } from '@/lib/api';
 import type { BaseApiResponse } from '@/types'; // 1. Import BaseApiResponse
 
 // --- 2. Define types for this service ---
-interface HistoryItem {
-    // Define the shape of a history item
-    // Using 'any' for flexibility, but you can be more specific
-    [key: string]: any; 
+// FIX: Define the explicit HistoryItem type based on HistoryTable's expectation
+export interface HistoryItem {
+    id: number | string;
+    variable_name: string;
+    category: string;
+    variable_value: number | string;
+    date_recorded: string;
+    recorder_username: string;
+    comment: string | null;
 }
 
 interface EditableVariableConfig {
@@ -39,6 +44,7 @@ const parseEditableConfig = (response: any): EditableVariableConfig[] => {
 
 // --- 3. Define typed service functions ---
 
+// FIX: Update HistoryResult to use the explicit HistoryItem
 type HistoryResult = {
     success: true;
     data: HistoryItem[];
@@ -50,7 +56,7 @@ type HistoryResult = {
 
 export async function getMasterVariableHistory(): Promise<HistoryResult> {
     try {
-        // Type the expected API response
+        // Use the explicit HistoryItem type in the API call
         const result = await api.get<{ success: boolean, data: HistoryItem[], error?: string }>('/api/master-variables');
         if (result.success) {
             return { success: true, data: result.data || [] };

@@ -3,11 +3,11 @@ import { api } from '@/lib/api';
 import type { 
     Transaction, 
     TransactionDetailResponse, 
-    KpiCalculationResponse,
-    BaseApiResponse,
-    FinanceTransactionListResponse, // This is an alias for ApiListResponse<Transaction>
-    FixedCost,
-    RecurringService
+    KpiCalculationResponse, 
+    BaseApiResponse, 
+    FinanceTransactionListResponse, 
+    FixedCost, 
+    RecurringService 
 } from '@/types';
 
 // 1. Define the formatted type for the finance list
@@ -38,7 +38,6 @@ interface GetFinanceTransactionsResult {
 export async function getFinanceTransactions(page: number): Promise<GetFinanceTransactionsResult> {
     try {
         const result = await api.get<FinanceTransactionListResponse['data']>(`/api/transactions?page=${page}&per_page=30`); 
- 
  
         // Data formatting logic moved here
         const formattedTransactions: FormattedFinanceTransaction[] = result.transactions.map((tx: Transaction) => ({
@@ -72,6 +71,7 @@ type GetTransactionDetailsResult = {
 } | {
     success: false;
     error: string;
+    data?: undefined;
 }
 
 /**
@@ -84,11 +84,9 @@ export async function getTransactionDetails(transactionId: number): Promise<GetT
         if (result.success) {
             return { success: true, data: result.data };
         } else {
-            // Handle API-level error { success: false, error: '...' }
             return { success: false, error: result.error || 'Failed to fetch transaction details.' };
         }
     } catch (error: any) {
-        // Handle network/exception-level error
         return { success: false, error: error.message || 'Failed to connect to the server.' };
     }
 }
@@ -99,4 +97,97 @@ export async function getTransactionDetails(transactionId: number): Promise<GetT
  */
 export async function updateTransactionStatus(
     transactionId: number, 
-    action: '
+    action: 'approve' | 'reject', 
+    modifiedData: Partial<Transaction> = {}, 
+    fixedCosts: FixedCost[] | null = null, 
+    recurringServices: RecurringService[] | null = null
+): Promise<BaseApiResponse> {
+    
+    const endpoint = action === 'approve' ? 'approve' : 'reject';
+    
+    const payload: {
+        transactions: Partial<Transaction>;
+        fixed_costs?: FixedCost[] | null;
+        recurring_services?: RecurringService[] | null;
+    } = {
+        transactions: modifiedData
+    };
+    
+    if (fixedCosts) {
+        payload.fixed_costs = fixedCosts;
+    }
+    if (recurringServices) {
+        payload.recurring_services = recurringServices;
+    }
+    
+    try {
+        const result = await api.post<BaseApiResponse>(`/api/transaction/${endpoint}/${transactionId}`, payload);
+        
+        if (result.success) {
+            return { success: true };
+        } else {
+            return { success: false, error: result.error || `Failed to ${action} transaction.` };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to the server.' };
+    }
+}
+
+// 6. Define a clear return type for calculate commission
+type CalculateCommissionResult = {
+    success: true;
+    data: TransactionDetailResponse['data'];
+} | {
+    success: false;
+    error: string;
+    data?: undefined;
+}
+
+/**
+ * Requests the backend to calculate the commission for a transaction.
+ */
+export async function calculateCommission(transactionId: number): Promise<CalculateCommissionResult> {
+    try {
+        // FIX: Added {} as the second argument (the request body)
+        const result = await api.post<TransactionDetailResponse>(
+            `/api/transaction/${transactionId}/calculate-commission`, 
+            {} // <-- Required by the signature in api.ts
+        );
+        
+        if (result.success) { 
+            return { success: true, data: result.data };
+        } else {
+            return { success: false, error: result.error || `Failed to calculate commission.` };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to the server for commission calculation.' };
+    }
+}
+
+// 7. Define a clear return type for calculate preview
+type CalculatePreviewResult = {
+    success: true;
+    data: KpiCalculationResponse['data'];
+} | {
+    success: false;
+    error: string;
+    data?: undefined;
+}
+
+/**
+ * Sends modified data to the backend for KPI recalculation (PREVIEW ONLY).
+ */
+export async function calculatePreview(payload: any): Promise<CalculatePreviewResult> {
+    try {
+        const result = await api.post<KpiCalculationResponse>('/api/calculate-preview', payload); 
+
+        if (result && result.success) {
+            return { success: true, data: result.data };
+        } else {
+             return { success: false, error: result.error || 'Failed to calculate preview.' };
+        }
+
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to the server for preview calculation.' };
+    }
+}

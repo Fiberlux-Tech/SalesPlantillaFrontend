@@ -52,8 +52,9 @@ const FixedCostsTable = ({
               <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">
                 <EditableTableCell
                     currentValue={item.periodo_inicio ?? 0}
-                    // 4. Ensure field name matches FixedCost type
-                    onConfirm={(newValue: number) => onCostChange(index, 'periodo_inicio', newValue)}
+                    // FIX B: Remove the explicit ': number' cast/hint. 
+                    // This satisfies the EditableTableCellProps: (newValue: string | number) => void
+                    onConfirm={(newValue) => onCostChange(index, 'periodo_inicio', newValue)}
                     canEdit={canEdit}
                     min={0}
                 />
@@ -61,7 +62,8 @@ const FixedCostsTable = ({
               <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">
                 <EditableTableCell
                     currentValue={item.duracion_meses ?? 1}
-                    onConfirm={(newValue: number) => onCostChange(index, 'duracion_meses', newValue)}
+                    // FIX B: Same fix here.
+                    onConfirm={(newValue) => onCostChange(index, 'duracion_meses', newValue)}
                     canEdit={canEdit}
                     min={1}
                 />

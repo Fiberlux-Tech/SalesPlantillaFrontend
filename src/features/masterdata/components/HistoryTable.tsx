@@ -4,23 +4,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'; 
 import type { VariantProps } from 'class-variance-authority';
 import { badgeVariants } from '@/components/ui/badge';
+// FIX: Import the type from the single source of truth (masterDataService)
+import type { HistoryItem as HistoryRecord } from '../masterDataService'; 
 
-// 1. Define the type for a single history record
-// (This is a guess, adjust as needed based on actual data)
-interface HistoryRecord {
-    id: number | string;
-    variable_name: string;
-    category: string;
-    variable_value: number | string;
-    date_recorded: string;
-    recorder_username: string;
-    comment: string | null;
-}
+
+// 1. Removed local definition of HistoryRecord, using imported alias
 
 // 2. Define the props interface
 interface HistoryTableProps {
     isLoading: boolean;
-    history: HistoryRecord[];
+    history: HistoryRecord[]; // This now correctly matches the imported type
 }
 
 // Utility to map category string to the new badge variant 
