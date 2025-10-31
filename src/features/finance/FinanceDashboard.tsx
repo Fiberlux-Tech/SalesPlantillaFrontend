@@ -76,18 +76,20 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
 
     // ... (stats calculation remains the same)
     const stats = useMemo(() => {
-        const totalApprovedValue = transactions
+        const transactionList = transactions || []; // FIX: Defensive check against undefined/null
+
+        const totalApprovedValue = transactionList
             .filter(t => t.status === 'APPROVED')
             .reduce((acc, t) => acc + (t.MRC || 0), 0); // Use MRC as a placeholder
-        const averageMargin = transactions.length > 0
-            ? transactions.reduce((acc, t) => acc + t.grossMarginRatio, 0) / transactions.length
+        const averageMargin = transactionList.length > 0
+            ? transactionList.reduce((acc, t) => acc + t.grossMarginRatio, 0) / transactionList.length
             : 0;
-        const highRiskDeals = transactions.filter(t => t.payback > 36).length;
-        const dealsThisMonth = transactions.filter(t => {
+        const highRiskDeals = transactionList.filter(t => t.payback > 36).length;
+        const dealsThisMonth = transactionList.filter(t => {
             const submissionDate = new Date(t.submissionDate);
             const today = new Date();
             return submissionDate.getMonth() === today.getMonth() &&
-                   submissionDate.getFullYear() === today.getFullYear();
+                        submissionDate.getFullYear() === today.getFullYear();
         }).length;
 
         return {
@@ -100,7 +102,9 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
     
     // ... (filteredTransactions remains the same)
     const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
+        const transactionList = transactions || []; // FIX: Defensive check against undefined/null
+
+        return transactionList.filter(t => {
             const clientMatch = t.clientName.toLowerCase().includes(filter.toLowerCase());
             if (!selectedDate) return clientMatch;
             const transactionDate = new Date(t.submissionDate + 'T00:00:00');
