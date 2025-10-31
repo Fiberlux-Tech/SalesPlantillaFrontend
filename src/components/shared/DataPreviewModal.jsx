@@ -50,7 +50,6 @@ function DataPreviewModal({
     liveKpis,
     fixedCostsData,
     onFixedCostChange,
-    // --- NEW PROPS ---
     recurringServicesData,
     onRecurringServiceChange
 }) {
@@ -201,11 +200,11 @@ function DataPreviewModal({
     
     // --- MODIFIED: Use new state props ---
     const currentFixedCosts = fixedCostsData || data.fixed_costs;
-    const currentRecurringServices = recurringServicesData || data.recurring_services; // <-- NEW
+    const currentRecurringServices = recurringServicesData || data.recurring_services; 
     
     const totalFixedCosts = currentFixedCosts.reduce((acc, item) => acc + (item.total || 0), 0);
-    const totalRecurringCosts = currentRecurringServices.reduce((acc, item) => acc + (item.egreso || 0), 0); // <-- MODIFIED
-    const totalRecurringIncome = currentRecurringServices.reduce((acc, item) => acc + (item.ingreso || 0), 0); // <-- MODIFIED
+    const totalRecurringCosts = currentRecurringServices.reduce((acc, item) => acc + (item.egreso || 0), 0); 
+    const totalRecurringIncome = currentRecurringServices.reduce((acc, item) => acc + (item.ingreso || 0), 0);
 
 
     // --- JSX RETURN ---
@@ -365,16 +364,16 @@ function DataPreviewModal({
                         {/* --- MODIFIED: RecurringServicesTable Row --- */}
                         <CostBreakdownRow 
                             title="Servicios Recurrentes" 
-                            items={currentRecurringServices.length} // Use edited state
+                            items={currentRecurringServices.length} 
                             total={totalRecurringCosts} 
                             isOpen={openSections['recurringCosts']} 
                             onToggle={() => toggleSection('recurringCosts')} 
                             customTotalsNode={ <div className="flex space-x-4"> <div> <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> <p className="text-xs text-gray-500 text-right">Ingreso</p> </div> <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> <p className="text-xs text-gray-500 text-right">Egreso</p> </div> </div> } 
                         > 
                             <RecurringServicesTable 
-                                data={currentRecurringServices} // Use edited state
+                                data={currentRecurringServices} 
                                 canEdit={canEdit}
-                                onServiceChange={onRecurringServiceChange} // Pass handler
+                                onServiceChange={onRecurringServiceChange} 
                             /> 
                         </CostBreakdownRow>
                             
@@ -388,9 +387,9 @@ function DataPreviewModal({
                             customTotalsNode={ <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p> <p className="text-xs text-gray-500 text-right">Total</p> </div> } 
                         > 
                             <FixedCostsTable 
-                                data={currentFixedCosts} // Use the edited state
-                                canEdit={canEdit} // Pass edit status
-                                onCostChange={onFixedCostChange} // Pass the handler
+                                data={currentFixedCosts} 
+                                canEdit={canEdit} 
+                                onCostChange={onFixedCostChange} 
                             /> 
                         </CostBreakdownRow>
 
@@ -414,7 +413,7 @@ function DataPreviewModal({
                         </div>
                     </div>
 
-                    {/* Key Performance Indicators Section (Unchanged from last step) */}
+                    {/* Key Performance Indicators Section - MODIFIED */}
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -442,16 +441,16 @@ function DataPreviewModal({
                                 onValueChange={onGigalanInputChange}
                             />
 
-                        {/* --- Other KpiCards (with PEN label) --- */}
-                        <KpiCard title="VAN" value={formatCurrency(kpiData.VAN) + " (PEN)"} />
+                        {/* --- MODIFIED: Other KpiCards (pass currency prop) --- */}
+                        <KpiCard title="VAN" value={formatCurrency(kpiData.VAN)} currency="PEN" />
                         <KpiCard title="TIR" value={`${(kpiData.TIR * 100)?.toFixed(2)}%`} />
                         <KpiCard title="Periodo de Payback" value={`${kpiData.payback} meses`} />
-                        <KpiCard title="Ingresos Totales" value={formatCurrency(kpiData.totalRevenue) + " (PEN)"} />
-                        <KpiCard title="Gastos Totales" value={formatCurrency(kpiData.totalExpense) + " (PEN)"} isNegative={true} />
-                        <KpiCard title="Utilidad Bruta" value={formatCurrency(kpiData.grossMargin) + " (PEN)"} />
+                        <KpiCard title="Ingresos Totales" value={formatCurrency(kpiData.totalRevenue)} currency="PEN" />
+                        <KpiCard title="Gastos Totales" value={formatCurrency(kpiData.totalExpense)} currency="PEN" isNegative={true} />
+                        <KpiCard title="Utilidad Bruta" value={formatCurrency(kpiData.grossMargin)} currency="PEN" />
                         <KpiCard title="Margen Bruto (%)" value={`${(kpiData.grossMarginRatio * 100)?.toFixed(2)}%`} />
-                        <KpiCard title="Comisión de Ventas" value={formatCurrency(kpiData.comisiones) + " (PEN)"} />
-                        <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion) + " (PEN)"} />
+                        <KpiCard title="Comisión de Ventas" value={formatCurrency(kpiData.comisiones)} currency="PEN" />
+                        <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion)} currency="PEN" />
                         <KpiCard title="Costo Instalación (%)" value={`${(kpiData.costoInstalacionRatio * 100)?.toFixed(2)}%`} />
                         </div>
                     </div>

@@ -80,8 +80,7 @@ export function EditableKpiCard({
     };
 
     const displayValue = formatCurrency(currentValue);
-    // NEW: Create a display value that includes the currency
-    const displayValueWithCurrency = `${displayValue} (${currentCurrency || 'N/A'})`;
+    // --- REMOVED: displayValueWithCurrency is no longer needed ---
 
     return (
         <div className="relative group">
@@ -120,9 +119,11 @@ export function EditableKpiCard({
             ) : (
                 /* --- Display View (KpiCard + Hover Edit Button) --- */
                 <>
+                    {/* --- MODIFIED: Pass currency prop separately --- */}
                     <KpiCard
                         title={title}
-                        value={displayValueWithCurrency} // Use the new value with currency
+                        value={displayValue}
+                        currency={currentCurrency || 'N/A'}
                         subtext={subtext}
                     />
                     {canEdit && (
