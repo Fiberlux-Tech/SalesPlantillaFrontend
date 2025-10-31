@@ -1,41 +1,38 @@
-// src/App.jsx
-
+// src/App.tsx
 import React, { useState, useEffect } from 'react';
-
-// --- Import Service Layer ---
 import { checkAuthStatus, loginUser, registerUser, logoutUser } from './features/auth/authService'; 
-
-// --- FEATURE IMPORTS (Standardized with @/) ---
 import AuthPage from '@/features/auth/AuthPage';
 import LandingPage from '@/features/landing/LandingPage';
 import SalesDashboard from '@/features/sales/SalesDashboard';
 import FinanceDashboard from '@/features/finance/FinanceDashboard';
 import { PermissionManagementModule } from '@/features/admin/AdminUserManagement';
 import MasterDataManagement from '@/features/masterdata/MasterDataManagement'; 
-
-// --- SHARED COMPONENT IMPORT ---
 import GlobalHeader from '@/components/shared/GlobalHeader'; 
+import type { User } from '@/types'; // Import our new User type!
 
-// Default state for sales actions until the SalesDashboard mounts and registers its handlers
-const defaultSalesActions = {
+// Define sales actions type
+interface SalesActions {
+    onUpload: () => void;
+    onExport: () => void;
+}
+
+const defaultSalesActions: SalesActions = {
     onUpload: () => console.log('Upload handler not yet mounted'),
     onExport: () => console.log('Export handler not yet mounted')
 };
 
 export default function App() {
-    const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState('landing'); 
-    // NEW STATE: Holds the action handlers provided by the mounted SalesDashboard component.
-    const [salesActions, setSalesActions] = useState(defaultSalesActions);
+    const [user, setUser] = useState<User | null>(null); // TYPED STATE
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [currentPage, setCurrentPage] = useState<string>('landing'); 
+    const [salesActions, setSalesActions] = useState<SalesActions>(defaultSalesActions); // TYPED STATE
 
-    // Check if user is logged in on initial load (uses Service Layer)
     useEffect(() => {
         const checkUser = async () => {
             try {
                 const data = await checkAuthStatus();
                 if (data.is_authenticated) {
-                    setUser({ username: data.username, role: data.role });
+                    setUser({ username: data.username, role: data.role } as User); // Cast to User
                 }
             } catch (error) {
                 console.error("Failed to fetch user", error);
@@ -45,21 +42,21 @@ export default function App() {
         checkUser();
     }, []);
 
-    // --- Auth Functions (remain the same) ---
-    const handleLogin = async (username, password) => {
+    // --- Auth Functions (Inputs are now typed) ---
+    const handleLogin = async (username: string, password: string) => {
         const result = await loginUser(username, password);
         if (result.success) {
-            setUser({ username: result.data.username, role: result.data.role });
+            setUser({ username: result.data.username, role: result.data.role } as User);
             setCurrentPage('landing');
         } else {
             throw new Error(result.error);
         }
     };
 
-    const handleRegister = async (username, email, password) => {
+    const handleRegister = async (username: string, email: string, password: string) => {
         const result = await registerUser(username, email, password);
         if (result.success) {
-            setUser({ username: result.data.username, role: result.data.role });
+            setUser({ username: result.data.username, role: result.data.role } as User);
             setCurrentPage('landing');
         } else {
             throw new Error(result.error);
@@ -72,12 +69,10 @@ export default function App() {
         setCurrentPage('landing');
     };
 
-    // --- Navigation (remain the same) ---
-    const handleNavigate = (page) => {
+    const handleNavigate = (page: string) => {
         if (!user) return; 
-        
         const role = user.role;
-        
+        // ... (switch logic remains the same) ...
         switch (page) {
             case 'sales':
                 if (role === 'SALES' || role === 'ADMIN') setCurrentPage('sales');
@@ -97,8 +92,8 @@ export default function App() {
         }
     };
     
-    // NEW: Centralized title lookup function
-    const getPageTitle = (page) => {
+    const getPageTitle = (page: string): string => {
+        // ... (switch logic remains the same) ...
         switch (page) {
             case 'sales':
                 return 'Plantillas Economicas';
@@ -114,7 +109,6 @@ export default function App() {
         }
     };
 
-    // --- Render Logic ---
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -127,20 +121,16 @@ export default function App() {
         return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />;
     }
 
-    let PageComponent;
+    let PageComponent: React.ReactNode; // Type the component
     switch (currentPage) {
         case 'sales':
-            // CRITICAL FIX: Pass user and setSalesActions for action registration and permissions
             PageComponent = <SalesDashboard 
-                onLogout={handleLogout} 
                 user={user} 
-                setSalesActions={setSalesActions} // Pass setter to register handlers
+                setSalesActions={setSalesActions} 
             />; 
             break;
         case 'finance':
-            // FIX: Pass user for DataPreviewModal permissions
             PageComponent = <FinanceDashboard 
-                onLogout={handleLogout} 
                 user={user} 
             />;
             break;
@@ -155,18 +145,16 @@ export default function App() {
             PageComponent = <LandingPage user={user} onNavigate={handleNavigate} />;
     }
 
-    // Get the title based on the current page
     const currentTitle = getPageTitle(currentPage);
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
-            {/* PASS THE TITLE AND ACTIONS TO GLOBAL HEADER */}
             <GlobalHeader 
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
                 currentPage={currentPage}
-                pageTitle={currentTitle} // Pass the centralized title string
-                salesActions={salesActions} // Pass the sales actions/handlers
+                pageTitle={currentTitle} 
+                salesActions={salesActions} 
             />
             <main className="flex-grow">
                  {PageComponent}

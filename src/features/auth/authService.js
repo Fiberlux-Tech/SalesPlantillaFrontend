@@ -52,13 +52,13 @@ export async function logoutUser() {
  */
 export async function checkAuthStatus() {
     try {
+        // api.get will now THROW an error if not authenticated (401)
         const data = await api.get('/auth/me'); 
-        // Note: api.get returns { success: false, message: 'Not authenticated' } on 401 
-        if (!data.success && data.message === 'Not authenticated') {
-             return { is_authenticated: false };
-        }
+        
+        // If the line above succeeds, we are authenticated
         return { is_authenticated: true, username: data.username, role: data.role };
     } catch (error) {
+        // If it throws (401 or network error), we are not authenticated
         return { is_authenticated: false, error: error.message || 'Failed to check authentication status.' };
     }
 }
