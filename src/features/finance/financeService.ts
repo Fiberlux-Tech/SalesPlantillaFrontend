@@ -37,27 +37,34 @@ interface GetFinanceTransactionsResult {
  */
 export async function getFinanceTransactions(page: number): Promise<GetFinanceTransactionsResult> {
     try {
-        const result = await api.get<FinanceTransactionListResponse['data']>(`/api/transactions?page=${page}&per_page=30`); 
+        // FIX 1: Change generic to the full response type
+        const result = await api.get<FinanceTransactionListResponse>(`/api/transactions?page=${page}&per_page=30`); 
  
-        // Data formatting logic moved here
-        const formattedTransactions: FormattedFinanceTransaction[] = result.transactions.map((tx: Transaction) => ({
-            id: tx.id,
-            unidadNegocio: tx.unidadNegocio,
-            clientName: tx.clientName,
-            salesman: tx.salesman,
-            MRC: tx.MRC,
-            plazoContrato: tx.plazoContrato,
-            grossMarginRatio: tx.grossMarginRatio,
-            payback: tx.payback,
-            submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
-            status: tx.ApprovalStatus,
-        }));
-        
-        return { 
-            success: true, 
-            data: formattedTransactions, 
-            pages: result.pages 
-        };
+        // FIX 2: Check for success
+        if (result.success) {
+            // FIX 3: Access .data.transactions for mapping
+            const formattedTransactions: FormattedFinanceTransaction[] = result.data.transactions.map((tx: Transaction) => ({
+                id: tx.id,
+                unidadNegocio: tx.unidadNegocio,
+                clientName: tx.clientName,
+                salesman: tx.salesman,
+                MRC: tx.MRC,
+                plazoContrato: tx.plazoContrato,
+                grossMarginRatio: tx.grossMarginRatio,
+                payback: tx.payback,
+                submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
+                status: tx.ApprovalStatus,
+            }));
+            
+            return { 
+                success: true, 
+                data: formattedTransactions, 
+                pages: result.data.pages // FIX 4: Access .data.pages
+            };
+        } else {
+             // FIX 5: Handle the API error case
+            return { success: false, error: result.error || 'Failed to fetch transactions.' };
+        }
  
  	} catch (error: any) {
         return { success: false, error: error.message || 'Failed to connect to the server.' };
