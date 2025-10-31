@@ -31,6 +31,8 @@ export default function FinanceDashboard({ onLogout }) {
     const [liveEdits, setLiveEdits] = useState(null); 
     const [liveKpis, setLiveKpis] = useState(null);
     const [editedFixedCosts, setEditedFixedCosts] = useState(null);
+    // --- NEW STATE for Recurring Services ---
+    const [editedRecurringServices, setEditedRecurringServices] = useState(null);
 
     // --- DATA FETCHING (CLEANED UP) ---
     const fetchTransactions = async () => {
@@ -103,6 +105,7 @@ export default function FinanceDashboard({ onLogout }) {
         setLiveEdits(null);
         setLiveKpis(null);
         setEditedFixedCosts(null); 
+        setEditedRecurringServices(null); // <-- NEW: Reset
         
         const result = await getTransactionDetails(transaction.id);
         
@@ -113,12 +116,27 @@ export default function FinanceDashboard({ onLogout }) {
 
         if (result.success) {
             setSelectedTransaction(result.data);
-            // NEW: Initialize the editable fixed costs state from the full data payload
+            // NEW: Initialize both editable states
             setEditedFixedCosts(result.data.fixed_costs || []); 
+            setEditedRecurringServices(result.data.recurring_services || []); // <-- NEW
             setIsDetailModalOpen(true);
         } else {
             setApiError(result.error);
         }
+    };
+
+    // --- NEW: Handler for recurring service changes ---
+    const handleRecurringServiceChange = (index, field, value) => {
+        if (!editedRecurringServices) return;
+
+        const newServices = [...editedRecurringServices];
+        newServices[index] = { ...newServices[index], [field]: value };
+        
+        // 1. Set the new array to state
+        setEditedRecurringServices(newServices);
+        
+        // 2. Trigger recalculation
+        handleRecalculate('recurring_services', newServices);
     };
 
     const handleFixedCostChange = (index, field, value) => {
@@ -145,7 +163,7 @@ export default function FinanceDashboard({ onLogout }) {
         setApiError(null);
         
         // 1. Update the local liveEdits state for all non-cost changes
-        if (key !== 'fixed_costs') {
+        if (key !== 'fixed_costs' && key !== 'recurring_services') { // <-- MODIFIED
             setLiveEdits(prev => ({ ...prev, [key]: value }));
         }
 
@@ -155,12 +173,20 @@ export default function FinanceDashboard({ onLogout }) {
         // Get the *most current* edits, including the one that just happened
         const currentEdits = { ...liveEdits, [key]: value }; 
 
-        // 3. Determine the *correct* fixed_costs array to send
+        // 3. Determine the *correct* fixed_costs and recurring_services arrays
         let costsForPayload;
         if (key === 'fixed_costs') {
-            costsForPayload = value; // The new array was passed in directly from handleFixedCostChange
+            costsForPayload = value; 
         } else {
-            costsForPayload = editedFixedCosts; // Use the existing state for other changes
+            costsForPayload = editedFixedCosts; 
+        }
+
+        // --- NEW: Logic for recurring_services payload ---
+        let servicesForPayload;
+        if (key === 'recurring_services') {
+            servicesForPayload = value;
+        } else {
+            servicesForPayload = editedRecurringServices;
         }
 
         // 4. Map keys to the backend 'transactions' payload
@@ -172,12 +198,15 @@ export default function FinanceDashboard({ onLogout }) {
              plazoContrato: currentEdits.plazoContrato ?? baseTransaction.plazoContrato,
              MRC: currentEdits.MRC ?? baseTransaction.MRC,
              NRC: currentEdits.NRC ?? baseTransaction.NRC,
+             mrc_currency: currentEdits.mrc_currency ?? baseTransaction.mrc_currency,
+             nrc_currency: currentEdits.nrc_currency ?? baseTransaction.nrc_currency,
         };
         
         // 5. Build the *full* recalculation payload
         const recalculationPayload = {
-            ...selectedTransaction,     // Includes original recurring_services
+            ...selectedTransaction,     
             fixed_costs: costsForPayload, // The new/current fixed costs array
+            recurring_services: servicesForPayload, // <-- NEW: The new/current recurring services
             transactions: {
                 ...baseTransaction,
                 ...payloadUpdates
@@ -220,13 +249,13 @@ export default function FinanceDashboard({ onLogout }) {
         };
         
         // 2. Call the service.
-        // The service function (as modified in Step 5) now takes
-        // 'editedFixedCosts' as its 4th argument.
+        // --- MODIFIED: Pass editedRecurringServices as the 5th argument ---
         const result = await updateTransactionStatus(
             transactionId, 
             status, 
             modifiedFields, 
-            editedFixedCosts 
+            editedFixedCosts,
+            editedRecurringServices // <-- NEW
         );
         
         if (result.status === 401) {
@@ -240,6 +269,7 @@ export default function FinanceDashboard({ onLogout }) {
             setLiveEdits(null); 
             setLiveKpis(null); 
             setEditedFixedCosts(null); 
+            setEditedRecurringServices(null); // <-- NEW: Reset
             fetchTransactions(); // Refresh the main list
         } else {
             setApiError(result.error);
@@ -259,6 +289,9 @@ export default function FinanceDashboard({ onLogout }) {
         if (result.success) { 
             // If recalculation is successful, update the detail modal data and refresh the list
             setSelectedTransaction(result.data); 
+            // --- NEW: Refresh local component state from new data ---
+            setEditedFixedCosts(result.data.fixed_costs || []);
+            setEditedRecurringServices(result.data.recurring_services || []);
             fetchTransactions(); 
         } else {
              // CRITICAL CHANGE: Catch the error from the service and display it.
@@ -306,6 +339,7 @@ export default function FinanceDashboard({ onLogout }) {
             {/* Modals and Toasts stay here, controlled by the parent */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             
+            {/* --- MODIFIED: Pass new props to DataPreviewModal --- */}
             <DataPreviewModal 
                 isOpen={isDetailModalOpen} 
                 onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); }} 
@@ -316,12 +350,15 @@ export default function FinanceDashboard({ onLogout }) {
                 onCalculateCommission={handleCalculateCommission}
             
                 liveKpis={liveKpis} 
-                gigalanInputs={liveEdits} // Pass liveEdits for Gigalan fields (region, type, old_mrc)
-                onGigalanInputChange={handleRecalculate} // Central handler for all KPI/Gigalan/Plazo edits
+                gigalanInputs={liveEdits} 
+                onGigalanInputChange={handleRecalculate} 
                 selectedUnidad={liveEdits?.unidadNegocio}
-                onUnidadChange={(value) => handleRecalculate('unidadNegocio', value)} // Central handler for Unidad edit
-                fixedCostsData={editedFixedCosts} // Pass the editable state
-                onFixedCostChange={handleFixedCostChange} // Pass the new handle
+                onUnidadChange={(value) => handleRecalculate('unidadNegocio', value)}
+                fixedCostsData={editedFixedCosts} 
+                onFixedCostChange={handleFixedCostChange}
+                // --- NEW PROPS ---
+                recurringServicesData={editedRecurringServices}
+                onRecurringServiceChange={handleRecurringServiceChange}
             />
         </>
     );

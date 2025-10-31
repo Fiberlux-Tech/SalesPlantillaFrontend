@@ -1,4 +1,4 @@
-// src/features/sales/SalesDashboard.jsx (Final Corrected Version)
+// src/features/sales/SalesDashboard.jsx (Full Updated Version)
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { SalesStatsGrid } from './components/SalesStatsGrid';
@@ -35,9 +35,13 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
     const [overrideFields, setOverrideFields] = useState({ 
         plazoContrato: null, 
         MRC: null, 
-        NRC: null 
+        mrc_currency: null,
+        NRC: null,
+        nrc_currency: null 
     });
     const [editedFixedCosts, setEditedFixedCosts] = useState(null);
+    // --- NEW STATE for Recurring Services ---
+    const [editedRecurringServices, setEditedRecurringServices] = useState(null);
 
     // --- NEW: Register Handlers with App.jsx (GlobalHeader) ---
     useEffect(() => {
@@ -129,7 +133,9 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
 
         // Reset all live states
         setLiveKpis(null);
-        setEditedFixedCosts(null); // NEW
+        setEditedFixedCosts(null); 
+        // --- NEW: Reset recurring services state ---
+        setEditedRecurringServices(null);
         setSelectedUnidad('');
 
         const result = await uploadExcelForPreview(file);
@@ -144,13 +150,16 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
             setIsModalOpen(false);
             setIsPreviewModalOpen(true);
 
-            // NEW: Initialize the editable fixed costs state
+            // --- MODIFIED: Initialize both editable states ---
             setEditedFixedCosts(result.data.fixed_costs || []); 
+            setEditedRecurringServices(result.data.recurring_services || []); // <-- NEW
 
             setOverrideFields({ 
                 plazoContrato: result.data.transactions.plazoContrato,
                 MRC: result.data.transactions.MRC,
+                mrc_currency: result.data.transactions.mrc_currency || 'PEN',
                 NRC: result.data.transactions.NRC,
+                nrc_currency: result.data.transactions.nrc_currency || 'PEN'
             });
             
             setGigalanCommissionInputs({
@@ -184,11 +193,11 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
             }
         }
 
+        // --- MODIFIED: Use edited states for payload ---
         const finalPayload = {
             ...uploadedData,
-            // NEW: Send the *edited* fixed costs array
-            fixed_costs: editedFixedCosts, 
-            recurring_services: uploadedData.recurring_services,
+            fixed_costs: editedFixedCosts, // Use edited fixed costs
+            recurring_services: editedRecurringServices, // <-- NEW: Use edited recurring services
             transactions: {
                 ...uploadedData.transactions,
                 ...gigalanCommissionInputs,
@@ -212,11 +221,26 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
             setIsPreviewModalOpen(false);
             setUploadedData(null);
             setSelectedUnidad('');
-            setEditedFixedCosts(null); // NEW: Reset state
-            setLiveKpis(null); // NEW: Reset state
+            setEditedFixedCosts(null); 
+            setEditedRecurringServices(null); // <-- NEW: Reset state
+            setLiveKpis(null); 
         } else {
             setApiError(result.error);
         }
+    };
+
+    // --- NEW: Handler for recurring service changes ---
+    const handleRecurringServiceChange = (index, field, value) => {
+        if (!editedRecurringServices) return;
+
+        const newServices = [...editedRecurringServices];
+        newServices[index] = { ...newServices[index], [field]: value };
+        
+        // 1. Set the new array to state
+        setEditedRecurringServices(newServices);
+        
+        // 2. Trigger recalculation
+        handleInputChangeAndRecalculate('recurring_services', newServices);
     };
 
     const handleFixedCostChange = (index, field, value) => {
@@ -228,7 +252,7 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
         // 1. Set the new array to state
         setEditedFixedCosts(newCosts);
         
-        // 2. Trigger recalculation, passing a special key and the *new* costs array
+        // 2. Trigger recalculation
         handleInputChangeAndRecalculate('fixed_costs', newCosts);
     };
 
@@ -241,8 +265,9 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
         let nextGigalanInputs = { ...gigalanCommissionInputs };
         let nextOverrideFields = { ...overrideFields };
         
-        // NEW: Use a variable to hold the fixed costs for the payload
+        // --- MODIFIED: Manage payloads for both lists ---
         let costsForPayload = editedFixedCosts; 
+        let servicesForPayload = editedRecurringServices; // <-- NEW
 
         if (inputKey === 'unidadNegocio') {
             nextUnidad = inputValue;
@@ -254,11 +279,12 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
             if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
                 nextGigalanInputs.gigalan_old_mrc = null;
             }
-        } else if (['plazoContrato', 'MRC', 'NRC'].includes(inputKey)) {
+        } else if (['plazoContrato', 'MRC', 'NRC', 'mrc_currency', 'nrc_currency'].includes(inputKey)) {
             nextOverrideFields[inputKey] = inputValue; 
         } else if (inputKey === 'fixed_costs') {
-            // NEW: If the change *was* fixed costs, use the new value
-            costsForPayload = inputValue;
+            costsForPayload = inputValue; // Use the new value passed in
+        } else if (inputKey === 'recurring_services') { // <-- NEW
+            servicesForPayload = inputValue; // Use the new value passed in
         }
 
         // Update local state
@@ -267,11 +293,11 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
         setOverrideFields(nextOverrideFields);
 
         // Build the *full* recalculation payload
+        // --- MODIFIED: Use payload-specific variables ---
         const payload = {
             ...uploadedData,
-            // NEW: Pass the correct fixed costs array
-            fixed_costs: costsForPayload, 
-            recurring_services: uploadedData.recurring_services,
+            fixed_costs: costsForPayload, // Pass the correct fixed costs
+            recurring_services: servicesForPayload, // <-- NEW: Pass the correct recurring services
             transactions: {
                 ...uploadedData.transactions,
                 unidadNegocio: nextUnidad,
@@ -339,6 +365,8 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
             {/* Modals stay here */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
+            
+            {/* --- MODIFIED: Pass new props to DataPreviewModal --- */}
             <DataPreviewModal
                 isOpen={isPreviewModalOpen}
                 onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} 
@@ -346,13 +374,16 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
                 data={uploadedData}
                 liveKpis={liveKpis}
 
-                gigalanInputs={gigalanCommissionInputs}
+                gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
                 onGigalanInputChange={(key, value) => handleInputChangeAndRecalculate(key, value)}
                 selectedUnidad={selectedUnidad}
                 onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
                 userRole={user.role}
-                fixedCostsData={editedFixedCosts} // Pass the editable state
-                onFixedCostChange={handleFixedCostChange} // Pass the new handler
+                fixedCostsData={editedFixedCosts} 
+                onFixedCostChange={handleFixedCostChange}
+                // --- NEW PROPS ---
+                recurringServicesData={editedRecurringServices}
+                onRecurringServiceChange={handleRecurringServiceChange}
             />
         </>
     );

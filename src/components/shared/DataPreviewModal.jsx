@@ -14,7 +14,7 @@ import {
 } from '@/components/shared/Icons';
 import FixedCostsTable from '@/components/shared/FixedCostsTable';
 import RecurringServicesTable from '@/components/shared/RecurringServicesTable';
-import CashFlowTimelineTable from '@/components/shared/CashFlowTimelineTable'; // <-- NEW IMPORT
+import CashFlowTimelineTable from '@/components/shared/CashFlowTimelineTable';
 // 👈 CLEANUP: Use @/ for feature-specific components
 import { GigaLanCommissionInputs } from '@/features/sales/components/GigaLanCommissionInputs';
 import {
@@ -32,7 +32,7 @@ import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants';
 import { SalesPreviewFooter } from '@/features/sales/components/SalesPreviewFooter';
 import { FinancePreviewFooter } from '@/features/finance/components/FinancePreviewFooter';
 
-import { EditableKpiCard } from '@/components/shared/EditableKpiCard'; // This local import is correct
+import { EditableKpiCard } from '@/components/shared/EditableKpiCard';
 
 function DataPreviewModal({ 
     isOpen, 
@@ -48,9 +48,11 @@ function DataPreviewModal({
     selectedUnidad, 
     onUnidadChange, 
     liveKpis,
-    // --- NEW PROPS ---
     fixedCostsData,
-    onFixedCostChange
+    onFixedCostChange,
+    // --- NEW PROPS ---
+    recurringServicesData,
+    onRecurringServiceChange
 }) {
     
     // --- 1. SAFE STATE INITIALIZATION (UNCONDITIONAL HOOKS) ---
@@ -73,7 +75,6 @@ function DataPreviewModal({
 
     
     // 💥 CRITICAL FIX: HOIST useEffect ABOVE THE CONDITIONAL RETURN
-    // The call to useEffect is UNCONDITIONAL, even if it returns early.
     useEffect(() => {
         if (!data || !data.transactions) return; // Logic inside the hook remains conditional
 
@@ -103,7 +104,6 @@ function DataPreviewModal({
         if (!isEditingSaleType || editedSaleType === null) {
             setEditedSaleType(currentSaleType || '');
         }
-    // Updated dependencies to ensure proper re-sync
     }, [data, liveKpis, selectedUnidad, gigalanInputs, isEditingPlazo, isEditingUnidad, isEditingRegion, isEditingSaleType, isFinanceView, editedPlazo, editedUnidad, editedRegion, editedSaleType]);
     // --- END HOISTED useEffect ---
 
@@ -123,9 +123,7 @@ function DataPreviewModal({
     const isPending = tx.ApprovalStatus === 'PENDING';
     const canEdit = isPending; 
     
-    // --- MODIFIED: kpiData and timeline definitions ---
     const kpiData = liveKpis || tx;
-    // Get timeline from liveKPIs first, fall back to base data (for finance view)
     const timeline = liveKpis?.timeline || data?.timeline; 
     
     // ... (All other functions, handlers, calculations, and return JSX remain the same) ...
@@ -201,11 +199,13 @@ function DataPreviewModal({
         { label: 'Status', value: <StatusBadge status={tx.ApprovalStatus} /> },
     ];
     
-    // --- MODIFIED: Calculations use fixedCostsData prop ---
+    // --- MODIFIED: Use new state props ---
     const currentFixedCosts = fixedCostsData || data.fixed_costs;
+    const currentRecurringServices = recurringServicesData || data.recurring_services; // <-- NEW
+    
     const totalFixedCosts = currentFixedCosts.reduce((acc, item) => acc + (item.total || 0), 0);
-    const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0);
-    const totalRecurringIncome = data.recurring_services.reduce((acc, item) => acc + (item.ingreso || 0), 0);
+    const totalRecurringCosts = currentRecurringServices.reduce((acc, item) => acc + (item.egreso || 0), 0); // <-- MODIFIED
+    const totalRecurringIncome = currentRecurringServices.reduce((acc, item) => acc + (item.ingreso || 0), 0); // <-- MODIFIED
 
 
     // --- JSX RETURN ---
@@ -224,42 +224,12 @@ function DataPreviewModal({
                 {/* Modal Body */}
                 <div className="p-6 bg-gray-50 max-h-[75vh] overflow-y-auto">
 
-                    {/* Warning Banners (Using user's improved logic) */}
+                    {/* Warning Banners (Unchanged) */}
                     {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">Transaction Status: {tx.ApprovalStatus}</p> <p className="text-sm text-red-700">Modification of key inputs is not allowed once a transaction has been reviewed.</p> </div> </div> )}
                     {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">Por favor revisar la data cargada de manera minuciosa</p> <p className="text-sm text-yellow-700">Asegúrate que toda la información sea correcta antes de confirmarla.</p> </div> </div> )}
-                    
-                    {/* PENDING (Finance Edit Mode) */}
-                    {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( 
-                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> 
-                            <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> 
-                            <div className="ml-3"> 
-                                <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> 
-                                <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> 
-                            </div> 
-                        </div> 
-                    )}
-
-                    {/* APPROVED */}
-                    {isFinanceView && tx.ApprovalStatus === 'APPROVED' && ( 
-                        <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> 
-                            <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> 
-                            <div className="ml-3"> 
-                                <p className="font-semibold text-green-800">Plantilla Aprobada!</p> 
-                                <p className="text-sm text-green-700">Esta plantilla ya fue aprobada. Felicidades</p> 
-                            </div> 
-                        </div> 
-                    )}
-
-                    {/* REJECTED */}
-                    {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( 
-                        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> 
-                            <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" />
-                            <div className="ml-3"> 
-                                <p className="font-semibold text-red-800">Plantilla Rechazada!</p> 
-                                <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> 
-                            </div> 
-                        </div> 
-                    )}
+                    {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> </div> </div> )}
+                    {isFinanceView && tx.ApprovalStatus === 'APPROVED' && ( <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">Plantilla Aprobada!</p> <p className="text-sm text-green-700">Esta plantilla ya fue aprobada. Felicidades</p> </div> </div> )}
+                    {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> </div> </div> )}
 
                     {/* Transaction Overview Section (Unchanged) */}
                     <div className="mb-6">
@@ -318,7 +288,7 @@ function DataPreviewModal({
                             </div>
                             {/* --- END EDITABLE PLAZO DE CONTRATO --- */}
 
-                            {/* --- GIGALAN FIELDS --- */}
+                            {/* --- GIGALAN FIELDS (Unchanged) --- */}
                             {confirmedUnidad === 'GIGALAN' && (
                                 <>
                                     {/* --- EDITABLE REGION --- */}
@@ -388,12 +358,24 @@ function DataPreviewModal({
                         </div>
                     </div>
 
-                    {/* --- MODIFIED: Detalle de Servicios Section --- */}
+                    {/* --- Detalle de Servicios Section --- */}
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Detalle de Servicios</h3>
                         <div className="space-y-3">
-                        <CostBreakdownRow title="Servicios Recurrentes" items={data.recurring_services.length} total={totalRecurringCosts} isOpen={openSections['recurringCosts']} onToggle={() => toggleSection('recurringCosts')} customTotalsNode={ <div className="flex space-x-4"> <div> <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> <p className="text-xs text-gray-500 text-right">Ingreso</p> </div> <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> <p className="text-xs text-gray-500 text-right">Egreso</p> </div> </div> } > 
-                            <RecurringServicesTable data={data.recurring_services} /> 
+                        {/* --- MODIFIED: RecurringServicesTable Row --- */}
+                        <CostBreakdownRow 
+                            title="Servicios Recurrentes" 
+                            items={currentRecurringServices.length} // Use edited state
+                            total={totalRecurringCosts} 
+                            isOpen={openSections['recurringCosts']} 
+                            onToggle={() => toggleSection('recurringCosts')} 
+                            customTotalsNode={ <div className="flex space-x-4"> <div> <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> <p className="text-xs text-gray-500 text-right">Ingreso</p> </div> <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> <p className="text-xs text-gray-500 text-right">Egreso</p> </div> </div> } 
+                        > 
+                            <RecurringServicesTable 
+                                data={currentRecurringServices} // Use edited state
+                                canEdit={canEdit}
+                                onServiceChange={onRecurringServiceChange} // Pass handler
+                            /> 
                         </CostBreakdownRow>
                             
                         {/* --- MODIFIED: FixedCostsTable Row --- */}
@@ -406,18 +388,18 @@ function DataPreviewModal({
                             customTotalsNode={ <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p> <p className="text-xs text-gray-500 text-right">Total</p> </div> } 
                         > 
                             <FixedCostsTable 
-                                data={currentFixedCosts} // Use the new prop
+                                data={currentFixedCosts} // Use the edited state
                                 canEdit={canEdit} // Pass edit status
                                 onCostChange={onFixedCostChange} // Pass the handler
                             /> 
                         </CostBreakdownRow>
 
-                        {/* --- NEW: CashFlowTimelineTable Row --- */}
+                        {/* --- CashFlowTimelineTable Row (Unchanged) --- */}
                         {timeline && (
                             <CostBreakdownRow
                                 title="Flujo"
                                 items={timeline.periods?.length || 0}
-                                total={null} // We don't show a single total for the flow
+                                total={null} 
                                 isOpen={openSections['cashFlow']}
                                 onToggle={() => toggleSection('cashFlow')}
                                 customTotalsNode={
@@ -432,7 +414,7 @@ function DataPreviewModal({
                         </div>
                     </div>
 
-                    {/* Key Performance Indicators Section - MODIFIED (Using the `canEdit` flag in EditableKpiCard) */}
+                    {/* Key Performance Indicators Section (Unchanged from last step) */}
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -441,30 +423,35 @@ function DataPreviewModal({
                             <EditableKpiCard
                                 title="MRC (Recurrente Mensual)"
                                 kpiKey="MRC"
+                                currencyKey="mrc_currency"
                                 currentValue={kpiData.MRC ?? tx.MRC}
+                                currentCurrency={kpiData.mrc_currency ?? tx.mrc_currency ?? 'PEN'}
                                 subtext="Métrica Clave"
                                 canEdit={canEdit} 
                                 onValueChange={onGigalanInputChange}
                             />
+                            
                             {/* --- EDITABLE NRC --- */}
                             <EditableKpiCard
                                 title="NRC (Pago Único)"
                                 kpiKey="NRC"
+                                currencyKey="nrc_currency"
                                 currentValue={kpiData.NRC ?? tx.NRC}
+                                currentCurrency={kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN'}
                                 canEdit={canEdit} 
                                 onValueChange={onGigalanInputChange}
                             />
 
-                        {/* --- Other KpiCards (Unchanged) --- */}
-                        <KpiCard title="VAN" value={formatCurrency(kpiData.VAN)} />
+                        {/* --- Other KpiCards (with PEN label) --- */}
+                        <KpiCard title="VAN" value={formatCurrency(kpiData.VAN) + " (PEN)"} />
                         <KpiCard title="TIR" value={`${(kpiData.TIR * 100)?.toFixed(2)}%`} />
                         <KpiCard title="Periodo de Payback" value={`${kpiData.payback} meses`} />
-                        <KpiCard title="Ingresos Totales" value={formatCurrency(kpiData.totalRevenue)} />
-                        <KpiCard title="Gastos Totales" value={formatCurrency(kpiData.totalExpense)} isNegative={true} />
-                        <KpiCard title="Utilidad Bruta" value={formatCurrency(kpiData.grossMargin)} />
+                        <KpiCard title="Ingresos Totales" value={formatCurrency(kpiData.totalRevenue) + " (PEN)"} />
+                        <KpiCard title="Gastos Totales" value={formatCurrency(kpiData.totalExpense) + " (PEN)"} isNegative={true} />
+                        <KpiCard title="Utilidad Bruta" value={formatCurrency(kpiData.grossMargin) + " (PEN)"} />
                         <KpiCard title="Margen Bruto (%)" value={`${(kpiData.grossMarginRatio * 100)?.toFixed(2)}%`} />
-                        <KpiCard title="Comisión de Ventas" value={formatCurrency(kpiData.comisiones)} />
-                        <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion)} />
+                        <KpiCard title="Comisión de Ventas" value={formatCurrency(kpiData.comisiones) + " (PEN)"} />
+                        <KpiCard title="Costo Instalación" value={formatCurrency(tx.costoInstalacion) + " (PEN)"} />
                         <KpiCard title="Costo Instalación (%)" value={`${(kpiData.costoInstalacionRatio * 100)?.toFixed(2)}%`} />
                         </div>
                     </div>

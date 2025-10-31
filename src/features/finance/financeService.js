@@ -75,12 +75,14 @@ export async function getTransactionDetails(transactionId) {
 /**
  * Sends a command to approve or reject a transaction, optionally including modified data.
  * @param {number} transactionId - The ID of the transaction.
- * @param {('approve'|'reject')} action - The action to take.
+ *m * @param {('approve'|'reject')} action - The action to take.
  * @param {object} [modifiedData] - Optional payload of modified transaction fields.
  * @param {Array} [fixedCosts] - Optional array of modified fixed costs.
+ * @param {Array} [recurringServices] - Optional array of modified recurring services.
  * @returns {Promise<{success: boolean, error: string, status: number}>}
  */
-export async function updateTransactionStatus(transactionId, action, modifiedData = {}, fixedCosts = null) { // MODIFIED to accept fixedCosts
+// --- MODIFIED: Added recurringServices parameter ---
+export async function updateTransactionStatus(transactionId, action, modifiedData = {}, fixedCosts = null, recurringServices = null) {
     const endpoint = action === 'approve' ? 'approve' : 'reject';
     
     // --- MODIFIED: Build a full payload ---
@@ -91,6 +93,11 @@ export async function updateTransactionStatus(transactionId, action, modifiedDat
     // If fixedCosts are provided (and not null), add them to the root of the payload
     if (fixedCosts) {
         payload.fixed_costs = fixedCosts;
+    }
+
+    // --- NEW: Add recurringServices to the payload ---
+    if (recurringServices) {
+        payload.recurring_services = recurringServices;
     }
     
     const body = JSON.stringify(payload);
