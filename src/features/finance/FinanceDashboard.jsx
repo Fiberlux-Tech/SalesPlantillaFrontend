@@ -4,9 +4,12 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { FinanceStatsGrid } from './components/FinanceStatsGrid';
 import { FinanceToolBar } from './components/FinanceToolBar';
 import { TransactionList } from './components/TransactionList';
+// Import the "dumb" modal shell
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
-import { api } from '@/lib/api';
-// Import the new Service Layer
+// Import the new "smart" content
+import { TransactionPreviewContent } from '../transactions/components/TransactionPreviewContent';
+// Import the footer
+import { FinancePreviewFooter } from './components/FinancePreviewFooter';
 import { 
     getFinanceTransactions, 
     getTransactionDetails, 
@@ -16,13 +19,13 @@ import {
 } from './financeService';
 
 export default function FinanceDashboard({ onLogout }) {
-    // --- ALL STATE REMAINS HERE ---
+    // --- ALL STATE REMAINS THE SAME ---
     const [transactions, setTransactions] = useState([]);
     const [filter, setFilter] = useState('');
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
     const datePickerRef = useRef(null);
-    const [apiError, setApiError] = useState(null); // <-- Error state remains
+    const [apiError, setApiError] = useState(null);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -31,7 +34,6 @@ export default function FinanceDashboard({ onLogout }) {
     const [liveEdits, setLiveEdits] = useState(null); 
     const [liveKpis, setLiveKpis] = useState(null);
     const [editedFixedCosts, setEditedFixedCosts] = useState(null);
-    // --- NEW STATE for Recurring Services ---
     const [editedRecurringServices, setEditedRecurringServices] = useState(null);
 
     // --- DATA FETCHING (CLEANED UP) ---
@@ -306,12 +308,9 @@ export default function FinanceDashboard({ onLogout }) {
     return (
         <>
             <div className="container mx-auto px-8 py-8">    
-            {/* 1. Render the Stats Grid Component */}
             <FinanceStatsGrid stats={stats} />
     
-            {/* This white box contains the toolbar and the table */}
             <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
-                {/* 2. Render the Toolbar Component */}
                 <FinanceToolBar
                     filter={filter}
                     setFilter={setFilter}
@@ -324,42 +323,49 @@ export default function FinanceDashboard({ onLogout }) {
                     onSelectToday={handleSelectToday}
                 />
                 
-                {/* 3. Render the Table List Component */}
                 <TransactionList
                     isLoading={isLoading}
                     transactions={filteredTransactions}
                     onRowClick={handleRowClick}
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage} // Pass the setter function
+                    onPageChange={setCurrentPage}
                 />
             </div>
             </div>
             
-            {/* Modals and Toasts stay here, controlled by the parent */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             
-            {/* --- MODIFIED: Pass new props to DataPreviewModal --- */}
-            <DataPreviewModal 
-                isOpen={isDetailModalOpen} 
-                onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); }} 
-                data={selectedTransaction} 
-                isFinanceView={true}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                onCalculateCommission={handleCalculateCommission}
-            
-                liveKpis={liveKpis} 
-                gigalanInputs={liveEdits} 
-                onGigalanInputChange={handleRecalculate} 
-                selectedUnidad={liveEdits?.unidadNegocio}
-                onUnidadChange={(value) => handleRecalculate('unidadNegocio', value)}
-                fixedCostsData={editedFixedCosts} 
-                onFixedCostChange={handleFixedCostChange}
-                // --- NEW PROPS ---
-                recurringServicesData={editedRecurringServices}
-                onRecurringServiceChange={handleRecurringServiceChange}
-            />
+            {/* --- MODIFIED: Use new compositional modal --- */}
+            {selectedTransaction && (
+                <DataPreviewModal 
+                    isOpen={isDetailModalOpen} 
+                    title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
+                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); }}
+                    footer={
+                        <FinancePreviewFooter 
+                            tx={selectedTransaction.transactions} 
+                            onApprove={handleApprove} 
+                            onReject={handleReject} 
+                            onCalculateCommission={handleCalculateCommission} 
+                        />
+                    }
+                >
+                    <TransactionPreviewContent
+                        isFinanceView={true}
+                        data={selectedTransaction} 
+                        liveKpis={liveKpis} 
+                        gigalanInputs={liveEdits} 
+                        onGigalanInputChange={handleRecalculate} 
+                        selectedUnidad={liveEdits?.unidadNegocio ?? selectedTransaction.transactions.unidadNegocio}
+                        onUnidadChange={(value) => handleRecalculate('unidadNegocio', value)}
+                        fixedCostsData={editedFixedCosts} 
+                        onFixedCostChange={handleFixedCostChange}
+                        recurringServicesData={editedRecurringServices}
+                        onRecurringServiceChange={handleRecurringServiceChange}
+                    />
+                </DataPreviewModal>
+            )}
         </>
     );
 }

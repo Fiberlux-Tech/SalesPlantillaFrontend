@@ -5,13 +5,16 @@ import { SalesStatsGrid } from './components/SalesStatsGrid';
 import { SalesToolbar } from './components/SalesToolBar';
 import { SalesTransactionList } from './components/SalesTransactionList';
 import FileUploadModal from './components/FileUploadModal';
+// Import the "dumb" modal shell
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
-import { UploadIcon, ExportIcon } from '../../components/shared/Icons';
+// Import the new "smart" content
+import { TransactionPreviewContent } from '../transactions/components/TransactionPreviewContent'; 
+// Import the footer
+import { SalesPreviewFooter } from './components/SalesPreviewFooter'; 
 import { getSalesTransactions, uploadExcelForPreview, submitFinalTransaction, calculatePreview } from './salesService'; 
 
-// CORRECTED PROPS: Accepts user and setSalesActions
 export default function SalesDashboard({ onLogout, user, setSalesActions }) { 
-    // --- ALL STATE REMAINS HERE ---
+    // --- ALL STATE REMAINS THE SAME ---
     const [transactions, setTransactions] = useState([]);
     const [filter, setFilter] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false); 
@@ -29,7 +32,6 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
         gigalan_sale_type: '',
         gigalan_old_mrc: null,
     });
-    // --- ADDED STATE ---
     const [selectedUnidad, setSelectedUnidad] = useState('');
     const [liveKpis, setLiveKpis] = useState(null);
     const [overrideFields, setOverrideFields] = useState({ 
@@ -40,7 +42,6 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
         nrc_currency: null 
     });
     const [editedFixedCosts, setEditedFixedCosts] = useState(null);
-    // --- NEW STATE for Recurring Services ---
     const [editedRecurringServices, setEditedRecurringServices] = useState(null);
 
     // --- NEW: Register Handlers with App.jsx (GlobalHeader) ---
@@ -331,14 +332,11 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
     };
 
     // --- RENDER ---
-    return (
+   return (
         <>
             <div className="container mx-auto px-8 py-8">
-            {/* 1. Render the Stats Grid Component */}
             <SalesStatsGrid stats={stats} />
-
             <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
-                {/* 2. Render the Toolbar Component */}
                 <SalesToolbar
                     filter={filter}
                     setFilter={setFilter}
@@ -350,8 +348,6 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
                     onClearDate={handleClearDate}
                     onSelectToday={handleSelectToday}
                 />
-
-                {/* 3. Render the Transaction List Component */}
                 <SalesTransactionList
                     isLoading={isLoading}
                     transactions={filteredTransactions}
@@ -362,29 +358,38 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
             </div>
             </div>
 
-            {/* Modals stay here */}
+            {/* Modals */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
             
-            {/* --- MODIFIED: Pass new props to DataPreviewModal --- */}
-            <DataPreviewModal
-                isOpen={isPreviewModalOpen}
-                onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} 
-                onConfirm={handleConfirmSubmission}
-                data={uploadedData}
-                liveKpis={liveKpis}
-
-                gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
-                onGigalanInputChange={(key, value) => handleInputChangeAndRecalculate(key, value)}
-                selectedUnidad={selectedUnidad}
-                onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
-                userRole={user.role}
-                fixedCostsData={editedFixedCosts} 
-                onFixedCostChange={handleFixedCostChange}
-                // --- NEW PROPS ---
-                recurringServicesData={editedRecurringServices}
-                onRecurringServiceChange={handleRecurringServiceChange}
-            />
+            {/* --- MODIFIED: Use new compositional modal --- */}
+            {uploadedData && (
+                <DataPreviewModal
+                    isOpen={isPreviewModalOpen}
+                    title={`Preview: ${uploadedData.fileName}`}
+                    onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} 
+                    footer={
+                        <SalesPreviewFooter 
+                            onConfirm={handleConfirmSubmission} 
+                            onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} 
+                        />
+                    }
+                >
+                    <TransactionPreviewContent
+                        isFinanceView={false}
+                        data={uploadedData}
+                        liveKpis={liveKpis}
+                        gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
+                        onGigalanInputChange={(key, value) => handleInputChangeAndRecalculate(key, value)}
+                        selectedUnidad={selectedUnidad}
+                        onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
+                        fixedCostsData={editedFixedCosts} 
+                        onFixedCostChange={handleFixedCostChange}
+                        recurringServicesData={editedRecurringServices}
+                        onRecurringServiceChange={handleRecurringServiceChange}
+                    />
+                </DataPreviewModal>
+            )}
         </>
     );
 }
