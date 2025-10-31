@@ -1,7 +1,7 @@
 // src/features/auth/authService.ts
 import { api } from '@/lib/api';
 // 1. Import shared types
-import type { User, UserRole, BaseApiResponse } from '@/types';
+import type { User } from '@/types'; // 1. Import shared types
 
 // FIX: This type is now an alias for the full User object, assuming the backend returns it.
 export interface AuthSuccessData extends User {}

@@ -1,5 +1,4 @@
 // src/features/landing/LandingPage.tsx
-import React from 'react';
 import { ModuleCard } from './components/ModuleCard'; // Will auto-resolve to .tsx or .jsx
 import type { User } from '@/types'; // 1. Import User type
 

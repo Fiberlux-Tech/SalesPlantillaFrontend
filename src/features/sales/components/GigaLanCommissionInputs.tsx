@@ -1,5 +1,5 @@
 // src/features/sales/components/GigaLanCommissionInputs.tsx
-import React from 'react';
+import type { ChangeEvent } from 'react'; // FIX: Import type explicitly
 import { Input } from "@/components/ui/input";
 
 // 1. Define the shape of the 'inputs' prop
@@ -28,7 +28,7 @@ export function GigaLanCommissionInputs({ inputs, onInputChange }: GigaLanCommis
                 placeholder="Enter amount"
                 value={inputs.gigalan_old_mrc ?? ""}
                 // 3. Type the event handler
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     const value = parseFloat(e.target.value);
                     onInputChange('gigalan_old_mrc', isNaN(value) ? null : value);
                 }}

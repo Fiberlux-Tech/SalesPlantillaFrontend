@@ -1,5 +1,4 @@
 // src/features/finance/components/FinancePreviewFooter.tsx
-import React from 'react';
 import type { Transaction } from '@/types'; // 1. Import the Transaction type
 
 // 2. Define the props interface

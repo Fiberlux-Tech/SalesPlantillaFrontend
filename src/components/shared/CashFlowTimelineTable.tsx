@@ -1,6 +1,6 @@
 // src/components/shared/CashFlowTimelineTable.tsx
-import React from 'react';
-import type { CashFlowTimeline } from '@/types'; // 1. Import the specific type
+import type { ReactNode } from 'react'; // FIX: Import type explicitly
+import type { CashFlowTimeline } from '@/types';
 
 // 2. Define the props interface
 interface CashFlowTimelineTableProps {
@@ -45,7 +45,7 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
         isNegative = false, 
         isBold = false, 
         isIndented = false
-    ): React.ReactNode => { // 5. Define return type
+    ): ReactNode => { // 5. Define return type (FIX: Use imported type)
         
         const formattedValues = values.map(formatFlowValue); 
         

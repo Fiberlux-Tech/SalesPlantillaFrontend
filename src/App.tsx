@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { checkAuthStatus, loginUser, registerUser, logoutUser } from './features/auth/authService'; 
 import AuthPage from '@/features/auth/AuthPage';
 import LandingPage from '@/features/landing/LandingPage';

@@ -1,5 +1,5 @@
 // src/features/auth/AuthPage.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AuthForm } from './components/AuthForm'; // This component also needs to be migrated
 
 // 1. Define the props interface for onLogin and onRegister

@@ -1,5 +1,4 @@
 // src/features/finance/components/FinanceStatsGrid.tsx
-import React from 'react';
 import StatsCard from '@/components/shared/StatsCard'; // Assumes StatsCard.tsx
 import { 
     ClockIcon,

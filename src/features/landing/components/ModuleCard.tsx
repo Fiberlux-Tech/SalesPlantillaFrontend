@@ -1,6 +1,4 @@
 // src/features/landing/components/ModuleCard.tsx
-import React from 'react';
-
 // 1. Define the shape of the 'module' prop
 interface Module {
     id: string;

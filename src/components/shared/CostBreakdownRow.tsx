@@ -1,5 +1,5 @@
 // src/components/shared/CostBreakdownRow.tsx
-import React from 'react';
+import type { ReactNode } from 'react'; // FIX: Import type explicitly
 import { ChevronRightIcon, ChevronDownIcon } from './Icons'; // Assumes Icons.tsx
 
 // 1. Define props interface
@@ -9,8 +9,8 @@ interface CostBreakdownRowProps {
     total: number | null; // Allow null for cases like CashFlow
     isOpen: boolean;
     onToggle: () => void;
-    children: React.ReactNode; // For the content
-    customTotalsNode?: React.ReactNode; // For the custom right-side element
+    children: ReactNode; // FIX: Use imported type
+    customTotalsNode?: ReactNode; // FIX: Use imported type
 }
 
 // 2. Apply props

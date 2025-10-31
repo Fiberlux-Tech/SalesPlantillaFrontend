@@ -1,5 +1,4 @@
 // src/features/masterdata/components/HistoryTable.tsx
-import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge'; 
 import type { VariantProps } from 'class-variance-authority';

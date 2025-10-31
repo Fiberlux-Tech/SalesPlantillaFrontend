@@ -1,17 +1,17 @@
 // src/components/shared/KpiCard.tsx
-import React from 'react';
+import type { FC, ReactNode } from 'react'; // FIX: Import types explicitly
 
 // 1. Define the props interface
 interface KpiCardProps {
   title: string;
-  value: React.ReactNode; // Use ReactNode for flexibility (can be string, number, or element)
+  value: ReactNode; // FIX: Use imported type
   subtext?: string; // Optional prop
   currency?: string; // Optional prop
   isNegative?: boolean; // Optional prop
 }
 
 // 2. Apply the interface using React.FC (Functional Component)
-const KpiCard: React.FC<KpiCardProps> = ({ 
+const KpiCard: FC<KpiCardProps> = ({ // FIX: Use imported type
     title, 
     value, 
     subtext, 

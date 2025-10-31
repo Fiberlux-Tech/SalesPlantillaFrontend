@@ -1,5 +1,5 @@
 // src/features/finance/FinanceDashboard.tsx
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { FinanceStatsGrid } from './components/FinanceStatsGrid'; // Assumes migration
 import { FinanceToolBar } from './components/FinanceToolBar'; // Assumes migration
 import { TransactionList } from './components/TransactionList'; // Assumes migration
@@ -31,7 +31,7 @@ interface FinanceDashboardProps {
 // 4. Define a type for the live edits
 type LiveEditState = Record<string, any> | null;
 
-export default function FinanceDashboard({ user, onLogout }: FinanceDashboardProps) {
+export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashboardProps) {
     // 5. Type all state hooks
     const [transactions, setTransactions] = useState<FormattedFinanceTransaction[]>([]);
     const [filter, setFilter] = useState<string>('');

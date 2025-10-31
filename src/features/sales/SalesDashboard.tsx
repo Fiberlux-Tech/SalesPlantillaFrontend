@@ -1,5 +1,5 @@
 // src/features/sales/SalesDashboard.tsx
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { SalesStatsGrid } from './components/SalesStatsGrid';
 import { SalesToolbar } from './components/SalesToolBar';
 import { SalesTransactionList } from './components/SalesTransactionList';
@@ -46,7 +46,7 @@ interface OverrideFields {
     nrc_currency: "PEN" | "USD" | null;
 }
 
-export default function SalesDashboard({ user, setSalesActions }: SalesDashboardProps) {
+export default function SalesDashboard({ user: _user, setSalesActions }: SalesDashboardProps) {
     // --- STATE IS NOW TYPED ---
     const [transactions, setTransactions] = useState<FormattedSalesTransaction[]>([]);
     const [filter, setFilter] = useState<string>('');
@@ -139,16 +139,6 @@ export default function SalesDashboard({ user, setSalesActions }: SalesDashboard
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
     const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
 
-    // This handler is now much safer
-    const handleGigalanInputChange = (key: keyof GigalanInputs, value: any) => {
-        setGigalanCommissionInputs(prev => {
-            const newState = { ...prev, [key]: value };
-            if (key === 'gigalan_sale_type' && value !== 'EXISTENTE') {
-                newState.gigalan_old_mrc = null;
-            }
-            return newState;
-        });
-    };
 
     const handleUploadNext = async (file: File | null) => {
         if (!file) return;

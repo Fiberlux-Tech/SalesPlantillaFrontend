@@ -1,5 +1,5 @@
 // src/features/masterdata/MasterDataManagement.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 // FIX: Import the explicit HistoryItem type from the service file
 import { getMasterVariableHistory, getEditableConfig, updateMasterVariable, type HistoryItem } from './masterDataService'; 
 import { VariableUpdateForm } from './components/VariableUpdateForm'; // Assumes migration

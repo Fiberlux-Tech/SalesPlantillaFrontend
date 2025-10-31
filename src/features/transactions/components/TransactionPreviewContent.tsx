@@ -1,5 +1,5 @@
 // src/features/transactions/components/TransactionPreviewContent.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import KpiCard from '@/components/shared/KpiCard';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CostBreakdownRow from '@/components/shared/CostBreakdownRow';
@@ -24,12 +24,15 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants';
+import { formatCurrency } from '@/lib/formatters'; 
 import type { 
     TransactionDetailResponse, 
     KpiCalculationResponse,
     FixedCost,
     RecurringService
 } from '@/types'; // 1. Import all necessary types
+
+type Currency = 'PEN' | 'USD';
 
 // 2. Define props interface
 interface TransactionPreviewContentProps {
@@ -41,9 +44,11 @@ interface TransactionPreviewContentProps {
     onUnidadChange: (value: string) => void;
     liveKpis: KpiCalculationResponse['data'] | null;
     fixedCostsData: FixedCost[] | null;
-    onFixedCostChange: (index: number, field: keyof FixedCost, value: any) => void;
+    // FIX 2a: Stronger type for value
+    onFixedCostChange: (index: number, field: keyof FixedCost, value: string | number | Currency) => void;
     recurringServicesData: RecurringService[] | null;
-    onRecurringServiceChange: (index: number, field: keyof RecurringService, value: any) => void;
+    // FIX 2b: Stronger type for value
+    onRecurringServiceChange: (index: number, field: keyof RecurringService, value: string | number | Currency) => void;
 }
 
 // 3. Define state types
@@ -108,12 +113,6 @@ export function TransactionPreviewContent({
 
 
     const tx = data.transactions;
-    
-    const formatCurrency = (value: string | number | null | undefined): string => {
-        const numValue = parseFloat(value as string);
-        if (typeof numValue !== 'number' || isNaN(numValue) || numValue === 0) return '-';
-        return numValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
 
     const isPending = tx.ApprovalStatus === 'PENDING';
     const canEdit = isPending;

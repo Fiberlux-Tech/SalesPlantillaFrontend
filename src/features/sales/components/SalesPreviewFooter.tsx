@@ -1,5 +1,4 @@
 // src/features/sales/components/SalesPreviewFooter.tsx
-import React from 'react';
 import { CheckCircleIcon } from '../../../components/shared/Icons'; // Assumes Icons.tsx
 
 // 1. Define the props interface

@@ -1,5 +1,4 @@
 // src/components/shared/GlobalHeader.tsx
-import React from 'react';
 import { LogOutIcon, ArrowLeftIcon, UploadIcon, ExportIcon } from './Icons'; // Assumes Icons.tsx
 
 // 1. Define the shape of the salesActions prop

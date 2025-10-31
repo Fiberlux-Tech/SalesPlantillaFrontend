@@ -1,5 +1,4 @@
 // src/components/shared/StatusBadge.tsx
-import React from 'react';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import type { VariantProps } from 'class-variance-authority'; // 1. Import VariantProps
 

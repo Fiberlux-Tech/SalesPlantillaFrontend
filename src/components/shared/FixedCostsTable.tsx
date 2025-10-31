@@ -1,5 +1,4 @@
 // src/components/shared/FixedCostsTable.tsx
-import React from 'react';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
 import { EditableTableCell } from '@/components/shared/EditableTableCell'; 
 import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell'; 

@@ -1,5 +1,5 @@
 // src/components/shared/EditableKpiCard.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import KpiCard from '@/components/shared/KpiCard';
 import { Input } from '@/components/ui/input';
 import {

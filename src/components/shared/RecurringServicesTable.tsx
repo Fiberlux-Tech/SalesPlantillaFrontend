@@ -1,5 +1,4 @@
 // src/components/shared/RecurringServicesTable.tsx
-import React from 'react';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
 import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell'; 
 import type { RecurringService } from '@/types'; // 1. Import the data type
