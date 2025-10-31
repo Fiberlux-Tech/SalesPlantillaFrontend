@@ -7,7 +7,6 @@ import { SalesTransactionList } from './components/SalesTransactionList';
 import FileUploadModal from './components/FileUploadModal';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 import { UploadIcon, ExportIcon } from '../../components/shared/Icons';
-// Import the new Service Layer
 import { getSalesTransactions, uploadExcelForPreview, submitFinalTransaction, calculatePreview } from './salesService'; 
 
 // CORRECTED PROPS: Accepts user and setSalesActions
@@ -33,12 +32,12 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
     // --- ADDED STATE ---
     const [selectedUnidad, setSelectedUnidad] = useState('');
     const [liveKpis, setLiveKpis] = useState(null);
-    // NEW: State for editable MRC, NRC, Plazo Contrato
     const [overrideFields, setOverrideFields] = useState({ 
         plazoContrato: null, 
         MRC: null, 
         NRC: null 
     });
+    const [editedFixedCosts, setEditedFixedCosts] = useState(null);
 
     // --- NEW: Register Handlers with App.jsx (GlobalHeader) ---
     useEffect(() => {
@@ -125,143 +124,185 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
     };
 
     const handleUploadNext = async (file) => {
-        if (!file) return;
-        setApiError(null);
+        if (!file) return;
+        setApiError(null);
 
-        const result = await uploadExcelForPreview(file);
+        // Reset all live states
+        setLiveKpis(null);
+        setEditedFixedCosts(null); // NEW
+        setSelectedUnidad('');
 
-        if (result.status === 401) {
-            onLogout();
-            return;
-        }
+        const result = await uploadExcelForPreview(file);
 
-        if (result.success) {
-            setUploadedData(result.data);
-            setIsModalOpen(false);
-            setIsPreviewModalOpen(true);
-            setSelectedUnidad('');
+        if (result.status === 401) {
+            onLogout();
+            return;
+        }
 
-            setOverrideFields({ 
-                plazoContrato: result.data.transactions.plazoContrato,
-                MRC: result.data.transactions.MRC,
-                NRC: result.data.transactions.NRC,
-            });
-            setLiveKpis(null); // Reset live KPIs for new preview
+        if (result.success) {
+            setUploadedData(result.data);
+            setIsModalOpen(false);
+            setIsPreviewModalOpen(true);
 
-            setGigalanCommissionInputs({
-                gigalan_region: '',
-                gigalan_sale_type: '',
-                gigalan_old_mrc: null,
-            });
-        } else {
-            setApiError(result.error);
-            setIsModalOpen(false);
-        }
-    };
+            // NEW: Initialize the editable fixed costs state
+            setEditedFixedCosts(result.data.fixed_costs || []); 
+
+            setOverrideFields({ 
+                plazoContrato: result.data.transactions.plazoContrato,
+                MRC: result.data.transactions.MRC,
+                NRC: result.data.transactions.NRC,
+            });
+            
+            setGigalanCommissionInputs({
+                gigalan_region: '',
+                gigalan_sale_type: '',
+                gigalan_old_mrc: null,
+            });
+        } else {
+            setApiError(result.error);
+            setIsModalOpen(false);
+        }
+    };
 
     const handleConfirmSubmission = async () => {
-        if (!uploadedData) return;
-        setApiError(null);
+        if (!uploadedData) return;
+        setApiError(null);
 
-        if (!selectedUnidad) {
-            setApiError('Por favor, selecciona una Unidad de Negocio.');
-            return;
-        }
+        if (!selectedUnidad) {
+            setApiError('Por favor, selecciona una Unidad de Negocio.');
+            return;
+        }
 
-        if (selectedUnidad === 'GIGALAN') {
-            if (!gigalanCommissionInputs.gigalan_region || !gigalanCommissionInputs.gigalan_sale_type) {
-                setApiError('GIGALAN transactions require Region and Type of Sale to be selected.');
-                return;
-            }
-            if (gigalanCommissionInputs.gigalan_sale_type === 'EXISTENTE' && (!gigalanCommissionInputs.gigalan_old_mrc || gigalanCommissionInputs.gigalan_old_mrc <= 0)) {
-                setApiError('GIGALAN Existing Sales require a valid Previous Monthly Charge amount.');
-                return;
-            }
-        }
+        if (selectedUnidad === 'GIGALAN') {
+            if (!gigalanCommissionInputs.gigalan_region || !gigalanCommissionInputs.gigalan_sale_type) {
+                setApiError('GIGALAN transactions require Region and Type of Sale to be selected.');
+                return;
+            }
+            if (gigalanCommissionInputs.gigalan_sale_type === 'EXISTENTE' && (!gigalanCommissionInputs.gigalan_old_mrc || gigalanCommissionInputs.gigalan_old_mrc <= 0)) {
+                setApiError('GIGALAN Existing Sales require a valid Previous Monthly Charge amount.');
+                return;
+            }
+        }
 
-        const finalPayload = {
-            ...uploadedData,
-            transactions: {
-                ...uploadedData.transactions,
-                ...gigalanCommissionInputs,
-                unidadNegocio: selectedUnidad,
-                ...overrideFields 
-            }
-        };
+        const finalPayload = {
+            ...uploadedData,
+            // NEW: Send the *edited* fixed costs array
+            fixed_costs: editedFixedCosts, 
+            recurring_services: uploadedData.recurring_services,
+            transactions: {
+                ...uploadedData.transactions,
+                ...gigalanCommissionInputs,
+                unidadNegocio: selectedUnidad,
+                ...overrideFields 
+            }
+        };
 
-        const result = await submitFinalTransaction(finalPayload);
+        // Clean up response-only keys before sending
+        delete finalPayload.timeline;
 
-        if (result.status === 401) {
-            onLogout();
-            return;
-        }
+        const result = await submitFinalTransaction(finalPayload);
 
-        if (result.success) {
-            fetchTransactions();
-            setIsPreviewModalOpen(false);
-            setUploadedData(null);
-            setSelectedUnidad('');
-        } else {
-            setApiError(result.error);
-        }
-    };
+        if (result.status === 401) {
+            onLogout();
+            return;
+        }
+
+        if (result.success) {
+            fetchTransactions();
+            setIsPreviewModalOpen(false);
+            setUploadedData(null);
+            setSelectedUnidad('');
+            setEditedFixedCosts(null); // NEW: Reset state
+            setLiveKpis(null); // NEW: Reset state
+        } else {
+            setApiError(result.error);
+        }
+    };
+
+    const handleFixedCostChange = (index, field, value) => {
+        if (!editedFixedCosts) return;
+
+        const newCosts = [...editedFixedCosts];
+        newCosts[index] = { ...newCosts[index], [field]: value };
+        
+        // 1. Set the new array to state
+        setEditedFixedCosts(newCosts);
+        
+        // 2. Trigger recalculation, passing a special key and the *new* costs array
+        handleInputChangeAndRecalculate('fixed_costs', newCosts);
+    };
 
     const handleInputChangeAndRecalculate = async (inputKey, inputValue) => {
-        if (!uploadedData) return;
+        if (!uploadedData) return;
 
-        setApiError(null);
+        setApiError(null);
 
-        let nextUnidad = selectedUnidad;
-        let nextGigalanInputs = { ...gigalanCommissionInputs };
-        let nextOverrideFields = { ...overrideFields };
+        let nextUnidad = selectedUnidad;
+        let nextGigalanInputs = { ...gigalanCommissionInputs };
+        let nextOverrideFields = { ...overrideFields };
+        
+        // NEW: Use a variable to hold the fixed costs for the payload
+        let costsForPayload = editedFixedCosts; 
 
-        if (inputKey === 'unidadNegocio') {
-            nextUnidad = inputValue;
-            if (inputValue !== 'GIGALAN') {
-                nextGigalanInputs = { gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null };
-            }
-        } else if (inputKey.startsWith('gigalan_')) {
-            nextGigalanInputs[inputKey] = inputValue;
-            if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
-                nextGigalanInputs.gigalan_old_mrc = null;
-            }
-        } else if (['plazoContrato', 'MRC', 'NRC'].includes(inputKey)) {
-            nextOverrideFields[inputKey] = inputValue; 
-        }
+        if (inputKey === 'unidadNegocio') {
+            nextUnidad = inputValue;
+            if (inputValue !== 'GIGALAN') {
+                nextGigalanInputs = { gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null };
+            }
+        } else if (inputKey.startsWith('gigalan_')) {
+            nextGigalanInputs[inputKey] = inputValue;
+            if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
+                nextGigalanInputs.gigalan_old_mrc = null;
+            }
+        } else if (['plazoContrato', 'MRC', 'NRC'].includes(inputKey)) {
+            nextOverrideFields[inputKey] = inputValue; 
+        } else if (inputKey === 'fixed_costs') {
+            // NEW: If the change *was* fixed costs, use the new value
+            costsForPayload = inputValue;
+        }
 
-        setSelectedUnidad(nextUnidad);
-        setGigalanCommissionInputs(nextGigalanInputs);
-        setOverrideFields(nextOverrideFields);
+        // Update local state
+        setSelectedUnidad(nextUnidad);
+        setGigalanCommissionInputs(nextGigalanInputs);
+        setOverrideFields(nextOverrideFields);
 
-        const payload = {
-            ...uploadedData,
-            transactions: {
-                ...uploadedData.transactions,
-                unidadNegocio: nextUnidad,
-                ...nextGigalanInputs,
-                ...nextOverrideFields
-            }
-        };
+        // Build the *full* recalculation payload
+        const payload = {
+            ...uploadedData,
+            // NEW: Pass the correct fixed costs array
+            fixed_costs: costsForPayload, 
+            recurring_services: uploadedData.recurring_services,
+            transactions: {
+                ...uploadedData.transactions,
+                unidadNegocio: nextUnidad,
+                ...nextGigalanInputs,
+                ...nextOverrideFields
+            }
+        };
 
-        try {
-            const result = await calculatePreview(payload);
+        // Clean up response-only keys before sending
+        delete payload.timeline;
 
-            if (result.status === 401) {
-                onLogout();
-                return;
-            }
+        // Call the service
+        try {
+            const result = await calculatePreview(payload);
 
-            if (result.success) {
-                setLiveKpis(result.data);
-            } else {
-                setApiError(result.error || 'Failed to update KPIs.');
-                setLiveKpis(null);
-            }
-        } catch (error) {
-            setApiError('Network error calculating preview.');
-            setLiveKpis(null);
-        } 
-    };
+            if (result.status === 401) {
+                onLogout();
+                return;
+            }
+
+            if (result.success) {
+                setLiveKpis(result.data);
+            } else {
+                setApiError(result.error || 'Failed to update KPIs.');
+                setLiveKpis(null);
+            }
+        } catch (error) {
+            setApiError('Network error calculating preview.');
+            setLiveKpis(null);
+        } 
+    };
 
     // --- RENDER ---
     return (
@@ -310,6 +351,8 @@ export default function SalesDashboard({ onLogout, user, setSalesActions }) {
                 selectedUnidad={selectedUnidad}
                 onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
                 userRole={user.role}
+                fixedCostsData={editedFixedCosts} // Pass the editable state
+                onFixedCostChange={handleFixedCostChange} // Pass the new handler
             />
         </>
     );

@@ -11,15 +11,15 @@ export async function getFinanceTransactions(page) {
     try {
         // Direct fetch is used here as a standard pattern, matching the original code style for handling 401.
         const response = await fetch(`/api/transactions?page=${page}&per_page=30`); 
-        
-        if (response.status === 401) {
-            return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
-        }
+         
+         if (response.status === 401) {
+             return { success: false, status: 401, error: 'Unauthorized. Logging out.' };
+         }
 
-        const result = await response.json();
+         const result = await response.json();
 
-        if (result.success) {
-            // Data formatting logic moved here from FinanceDashboard.jsx
+         if (result.success) {
+             // Data formatting logic moved here from FinanceDashboard.jsx
             const formattedTransactions = result.data.transactions.map(tx => ({
                 id: tx.id,
                 unidadNegocio: tx.unidadNegocio,
@@ -32,17 +32,17 @@ export async function getFinanceTransactions(page) {
                 submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
                 status: tx.ApprovalStatus,
             }));
-            return { 
+             return { 
                 success: true, 
                 data: formattedTransactions, 
                 pages: result.data.pages 
             };
-        } else {
-            return { success: false, error: result.error || 'Failed to fetch transactions.' };
-        }
-    } catch (error) {
-        return { success: false, error: 'Failed to connect to the server.' };
-    }
+         } else {
+             return { success: false, error: result.error || 'Failed to fetch transactions.' };
+         }
+     } catch (error) {
+         return { success: false, error: 'Failed to connect to the server.' };
+     }
 }
 
 
@@ -77,20 +77,30 @@ export async function getTransactionDetails(transactionId) {
  * @param {number} transactionId - The ID of the transaction.
  * @param {('approve'|'reject')} action - The action to take.
  * @param {object} [modifiedData] - Optional payload of modified transaction fields.
+ * @param {Array} [fixedCosts] - Optional array of modified fixed costs.
  * @returns {Promise<{success: boolean, error: string, status: number}>}
  */
-export async function updateTransactionStatus(transactionId, action, modifiedData = {}) { // MODIFIED to accept modifiedData
+export async function updateTransactionStatus(transactionId, action, modifiedData = {}, fixedCosts = null) { // MODIFIED to accept fixedCosts
     const endpoint = action === 'approve' ? 'approve' : 'reject';
     
-    // If there is modifiedData, send it as JSON body
-    const body = Object.keys(modifiedData).length > 0 ? JSON.stringify({ transactions: modifiedData }) : null;
-    const headers = body ? { 'Content-Type': 'application/json' } : {};
+    // --- MODIFIED: Build a full payload ---
+    const payload = {
+        transactions: modifiedData
+    };
+    
+    // If fixedCosts are provided (and not null), add them to the root of the payload
+    if (fixedCosts) {
+        payload.fixed_costs = fixedCosts;
+    }
+    
+    const body = JSON.stringify(payload);
+    const headers = { 'Content-Type': 'application/json' };
     
     try {
         const response = await fetch(`/api/transaction/${endpoint}/${transactionId}`, {
             method: 'POST',
-            headers: headers, // Pass headers if body exists
-            body: body, // Pass body if body exists
+            headers: headers, // Pass headers
+            body: body, // Pass body
         });
 
         if (response.status === 401) {

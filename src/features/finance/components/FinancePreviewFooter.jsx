@@ -27,15 +27,6 @@ export function FinancePreviewFooter({ tx, onApprove, onReject, onCalculateCommi
 
     return (
         <div className="flex justify-end items-center p-5 border-t bg-white space-x-3">
-            
-            {/* Display message if modification is blocked */}
-            <div className="flex-grow">
-                 {!canModify && (
-                    <p className="text-sm font-medium text-red-600">
-                        La transaccion esta {statusText}. No se puede modificar de nuevo.
-                    </p>
-                 )}
-            </div>
 
             {/* Recalculate Commission Button - Disabled if not PENDING */}
             <button 

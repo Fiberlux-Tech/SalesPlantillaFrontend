@@ -30,6 +30,7 @@ export default function FinanceDashboard({ onLogout }) {
     const [isLoading, setIsLoading] = useState(true);
     const [liveEdits, setLiveEdits] = useState(null); 
     const [liveKpis, setLiveKpis] = useState(null);
+    const [editedFixedCosts, setEditedFixedCosts] = useState(null);
 
     // --- DATA FETCHING (CLEANED UP) ---
     const fetchTransactions = async () => {
@@ -98,7 +99,11 @@ export default function FinanceDashboard({ onLogout }) {
 
     const handleRowClick = async (transaction) => {
         setApiError(null);
-        // Use the service function
+        // Reset all live states to ensure a clean modal
+        setLiveEdits(null);
+        setLiveKpis(null);
+        setEditedFixedCosts(null); 
+        
         const result = await getTransactionDetails(transaction.id);
         
         if (result.status === 401) {
@@ -108,10 +113,30 @@ export default function FinanceDashboard({ onLogout }) {
 
         if (result.success) {
             setSelectedTransaction(result.data);
+            // NEW: Initialize the editable fixed costs state from the full data payload
+            setEditedFixedCosts(result.data.fixed_costs || []); 
             setIsDetailModalOpen(true);
         } else {
             setApiError(result.error);
         }
+    };
+
+    const handleFixedCostChange = (index, field, value) => {
+        // Guard against race conditions
+        if (!editedFixedCosts) return;
+
+        // Create a new array with the updated item
+        const newCosts = [...editedFixedCosts]; 
+        newCosts[index] = { 
+            ...newCosts[index], 
+            [field]: value 
+        };
+        
+        // 1. Set the new array to state
+        setEditedFixedCosts(newCosts); 
+        
+        // 2. Trigger recalculation, passing a special key and the *new* costs array
+        handleRecalculate('fixed_costs', newCosts);
     };
 
     const handleRecalculate = async (key, value) => {
@@ -119,14 +144,26 @@ export default function FinanceDashboard({ onLogout }) {
 
         setApiError(null);
         
-        // 1. Update the local liveEdits state
-        setLiveEdits(prev => ({ ...prev, [key]: value }));
+        // 1. Update the local liveEdits state for all non-cost changes
+        if (key !== 'fixed_costs') {
+            setLiveEdits(prev => ({ ...prev, [key]: value }));
+        }
 
         // 2. Prepare the payload
         const baseTransaction = selectedTransaction.transactions;
-        const currentEdits = { ...liveEdits, [key]: value }; // Include the *new* value
+        
+        // Get the *most current* edits, including the one that just happened
+        const currentEdits = { ...liveEdits, [key]: value }; 
 
-        // 3. Map keys from component props to backend payload format (assuming keys match, e.g., MRC -> MRC)
+        // 3. Determine the *correct* fixed_costs array to send
+        let costsForPayload;
+        if (key === 'fixed_costs') {
+            costsForPayload = value; // The new array was passed in directly from handleFixedCostChange
+        } else {
+            costsForPayload = editedFixedCosts; // Use the existing state for other changes
+        }
+
+        // 4. Map keys to the backend 'transactions' payload
         const payloadUpdates = {
              unidadNegocio: currentEdits.unidadNegocio ?? baseTransaction.unidadNegocio,
              gigalan_region: currentEdits.gigalan_region ?? baseTransaction.gigalan_region,
@@ -137,15 +174,20 @@ export default function FinanceDashboard({ onLogout }) {
              NRC: currentEdits.NRC ?? baseTransaction.NRC,
         };
         
-        // The recalculation payload needs the full data structure, including fixed/recurring costs
+        // 5. Build the *full* recalculation payload
         const recalculationPayload = {
-            ...selectedTransaction,
+            ...selectedTransaction,     // Includes original recurring_services
+            fixed_costs: costsForPayload, // The new/current fixed costs array
             transactions: {
                 ...baseTransaction,
                 ...payloadUpdates
             }
         };
 
+        // Clean up response-only keys before sending
+        delete recalculationPayload.timeline;
+
+        // 6. Call the service
         try {
             const result = await calculatePreview(recalculationPayload); 
 
@@ -171,14 +213,21 @@ export default function FinanceDashboard({ onLogout }) {
     const handleUpdateStatus = async (transactionId, status) => {
         setApiError(null);
         
-        // 1. Prepare payload with updated transaction data for submission
+        // 1. Prepare 'transactions' object payload
         const modifiedFields = {
             ...selectedTransaction.transactions,
             ...liveEdits,
         };
         
-        // 2. Use the service function for update with the modified fields payload
-        const result = await updateTransactionStatus(transactionId, status, modifiedFields);
+        // 2. Call the service.
+        // The service function (as modified in Step 5) now takes
+        // 'editedFixedCosts' as its 4th argument.
+        const result = await updateTransactionStatus(
+            transactionId, 
+            status, 
+            modifiedFields, 
+            editedFixedCosts 
+        );
         
         if (result.status === 401) {
             onLogout();
@@ -187,9 +236,11 @@ export default function FinanceDashboard({ onLogout }) {
 
         if (result.success) {
             setIsDetailModalOpen(false);
+            // Reset all live states
             setLiveEdits(null); 
             setLiveKpis(null); 
-            fetchTransactions(); 
+            setEditedFixedCosts(null); 
+            fetchTransactions(); // Refresh the main list
         } else {
             setApiError(result.error);
         }
@@ -263,13 +314,14 @@ export default function FinanceDashboard({ onLogout }) {
                 onApprove={handleApprove}
                 onReject={handleReject}
                 onCalculateCommission={handleCalculateCommission}
-                
-                // NEW/MODIFIED PROPS for Finance Editing
+            
                 liveKpis={liveKpis} 
                 gigalanInputs={liveEdits} // Pass liveEdits for Gigalan fields (region, type, old_mrc)
                 onGigalanInputChange={handleRecalculate} // Central handler for all KPI/Gigalan/Plazo edits
                 selectedUnidad={liveEdits?.unidadNegocio}
                 onUnidadChange={(value) => handleRecalculate('unidadNegocio', value)} // Central handler for Unidad edit
+                fixedCostsData={editedFixedCosts} // Pass the editable state
+                onFixedCostChange={handleFixedCostChange} // Pass the new handle
             />
         </>
     );

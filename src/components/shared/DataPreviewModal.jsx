@@ -1,4 +1,4 @@
-// src/components/shared/DataPreviewModal.jsx
+// src/components/shared/DataPreviewModal.jsx (Full Updated Version)
 
 import React, { useState, useEffect } from 'react';
 import KpiCard from '@/components/shared/KpiCard';
@@ -14,6 +14,7 @@ import {
 } from '@/components/shared/Icons';
 import FixedCostsTable from '@/components/shared/FixedCostsTable';
 import RecurringServicesTable from '@/components/shared/RecurringServicesTable';
+import CashFlowTimelineTable from '@/components/shared/CashFlowTimelineTable'; // <-- NEW IMPORT
 // 👈 CLEANUP: Use @/ for feature-specific components
 import { GigaLanCommissionInputs } from '@/features/sales/components/GigaLanCommissionInputs';
 import {
@@ -33,10 +34,30 @@ import { FinancePreviewFooter } from '@/features/finance/components/FinancePrevi
 
 import { EditableKpiCard } from '@/components/shared/EditableKpiCard'; // This local import is correct
 
-function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = false, onApprove, onReject, onCalculateCommission, gigalanInputs, onGigalanInputChange, selectedUnidad, onUnidadChange, liveKpis }) {
+function DataPreviewModal({ 
+    isOpen, 
+    onClose, 
+    onConfirm, 
+    data, 
+    isFinanceView = false, 
+    onApprove, 
+    onReject, 
+    onCalculateCommission, 
+    gigalanInputs, 
+    onGigalanInputChange, 
+    selectedUnidad, 
+    onUnidadChange, 
+    liveKpis,
+    // --- NEW PROPS ---
+    fixedCostsData,
+    onFixedCostChange
+}) {
     
     // --- 1. SAFE STATE INITIALIZATION (UNCONDITIONAL HOOKS) ---
-    const [openSections, setOpenSections] = useState({});
+    const [openSections, setOpenSections] = useState({
+        // Default 'Flujo' to be open
+        'cashFlow': true 
+    });
 
     const [isEditingPlazo, setIsEditingPlazo] = useState(false);
     const [editedPlazo, setEditedPlazo] = useState(null); 
@@ -101,7 +122,11 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
     const tx = data.transactions;
     const isPending = tx.ApprovalStatus === 'PENDING';
     const canEdit = isPending; 
+    
+    // --- MODIFIED: kpiData and timeline definitions ---
     const kpiData = liveKpis || tx;
+    // Get timeline from liveKPIs first, fall back to base data (for finance view)
+    const timeline = liveKpis?.timeline || data?.timeline; 
     
     // ... (All other functions, handlers, calculations, and return JSX remain the same) ...
 
@@ -176,8 +201,9 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
         { label: 'Status', value: <StatusBadge status={tx.ApprovalStatus} /> },
     ];
     
-    // Calculations rely on data, safe after guard
-    const totalFixedCosts = data.fixed_costs.reduce((acc, item) => acc + (item.total || 0), 0);
+    // --- MODIFIED: Calculations use fixedCostsData prop ---
+    const currentFixedCosts = fixedCostsData || data.fixed_costs;
+    const totalFixedCosts = currentFixedCosts.reduce((acc, item) => acc + (item.total || 0), 0);
     const totalRecurringCosts = data.recurring_services.reduce((acc, item) => acc + (item.egreso || 0), 0);
     const totalRecurringIncome = data.recurring_services.reduce((acc, item) => acc + (item.ingreso || 0), 0);
 
@@ -198,14 +224,44 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                 {/* Modal Body */}
                 <div className="p-6 bg-gray-50 max-h-[75vh] overflow-y-auto">
 
-                    {/* Warning Banners (Updated for Finance Edit Mode) */}
+                    {/* Warning Banners (Using user's improved logic) */}
                     {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">Transaction Status: {tx.ApprovalStatus}</p> <p className="text-sm text-red-700">Modification of key inputs is not allowed once a transaction has been reviewed.</p> </div> </div> )}
                     {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">Por favor revisar la data cargada de manera minuciosa</p> <p className="text-sm text-yellow-700">Asegúrate que toda la información sea correcta antes de confirmarla.</p> </div> </div> )}
                     
-                    {/* NEW: Banner for Finance when editing is ENABLED */}
-                    {isFinanceView && canEdit && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan) antes de aprobar/rechazar.</p> </div> </div> )}
+                    {/* PENDING (Finance Edit Mode) */}
+                    {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( 
+                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> 
+                            <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> 
+                            <div className="ml-3"> 
+                                <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> 
+                                <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> 
+                            </div> 
+                        </div> 
+                    )}
 
-                    {/* Transaction Overview Section */}
+                    {/* APPROVED */}
+                    {isFinanceView && tx.ApprovalStatus === 'APPROVED' && ( 
+                        <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> 
+                            <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> 
+                            <div className="ml-3"> 
+                                <p className="font-semibold text-green-800">Plantilla Aprobada!</p> 
+                                <p className="text-sm text-green-700">Esta plantilla ya fue aprobada. Felicidades</p> 
+                            </div> 
+                        </div> 
+                    )}
+
+                    {/* REJECTED */}
+                    {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( 
+                        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> 
+                            <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" />
+                            <div className="ml-3"> 
+                                <p className="font-semibold text-red-800">Plantilla Rechazada!</p> 
+                                <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> 
+                            </div> 
+                        </div> 
+                    )}
+
+                    {/* Transaction Overview Section (Unchanged) */}
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Transaction Overview</h3>
                         <div className="bg-gray-100 p-4 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 items-start">
@@ -332,12 +388,47 @@ function DataPreviewModal({ isOpen, onClose, onConfirm, data, isFinanceView = fa
                         </div>
                     </div>
 
-                    {/* Detalle de Servicios Section (Unchanged) */}
+                    {/* --- MODIFIED: Detalle de Servicios Section --- */}
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-3 text-lg">Detalle de Servicios</h3>
                         <div className="space-y-3">
-                        <CostBreakdownRow title="Servicios Recurrentes" items={data.recurring_services.length} total={totalRecurringCosts} isOpen={openSections['recurringCosts']} onToggle={() => toggleSection('recurringCosts')} customTotalsNode={ <div className="flex space-x-4"> <div> <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> <p className="text-xs text-gray-500 text-right">Ingreso</p> </div> <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> <p className="text-xs text-gray-500 text-right">Egreso</p> </div> </div> } > <RecurringServicesTable data={data.recurring_services} /> </CostBreakdownRow>
-                            <CostBreakdownRow title="Inversión (Costos Fijos)" items={data.fixed_costs.length} total={totalFixedCosts} isOpen={openSections['fixedCosts']} onToggle={() => toggleSection('fixedCosts')} customTotalsNode={ <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p> <p className="text-xs text-gray-500 text-right">Total</p> </div> } > <FixedCostsTable data={data.fixed_costs} /> </CostBreakdownRow>
+                        <CostBreakdownRow title="Servicios Recurrentes" items={data.recurring_services.length} total={totalRecurringCosts} isOpen={openSections['recurringCosts']} onToggle={() => toggleSection('recurringCosts')} customTotalsNode={ <div className="flex space-x-4"> <div> <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> <p className="text-xs text-gray-500 text-right">Ingreso</p> </div> <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> <p className="text-xs text-gray-500 text-right">Egreso</p> </div> </div> } > 
+                            <RecurringServicesTable data={data.recurring_services} /> 
+                        </CostBreakdownRow>
+                            
+                        {/* --- MODIFIED: FixedCostsTable Row --- */}
+                        <CostBreakdownRow 
+                            title="Inversión (Costos Fijos)" 
+                            items={currentFixedCosts.length} 
+                            total={totalFixedCosts} 
+                            isOpen={openSections['fixedCosts']} 
+                            onToggle={() => toggleSection('fixedCosts')} 
+                            customTotalsNode={ <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p> <p className="text-xs text-gray-500 text-right">Total</p> </div> } 
+                        > 
+                            <FixedCostsTable 
+                                data={currentFixedCosts} // Use the new prop
+                                canEdit={canEdit} // Pass edit status
+                                onCostChange={onFixedCostChange} // Pass the handler
+                            /> 
+                        </CostBreakdownRow>
+
+                        {/* --- NEW: CashFlowTimelineTable Row --- */}
+                        {timeline && (
+                            <CostBreakdownRow
+                                title="Flujo"
+                                items={timeline.periods?.length || 0}
+                                total={null} // We don't show a single total for the flow
+                                isOpen={openSections['cashFlow']}
+                                onToggle={() => toggleSection('cashFlow')}
+                                customTotalsNode={
+                                    <div className="text-xs text-gray-500 text-right">
+                                        Valores por periodo
+                                    </div>
+                                }
+                            >
+                                <CashFlowTimelineTable timeline={timeline} />
+                            </CostBreakdownRow>
+                        )}
                         </div>
                     </div>
 
