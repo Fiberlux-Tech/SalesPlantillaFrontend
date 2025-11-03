@@ -1,87 +1,77 @@
 // src/features/finance/FinanceDashboard.tsx
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { FinanceStatsGrid } from './components/FinanceStatsGrid'; // Assumes migration
-import { FinanceToolBar } from './components/FinanceToolBar'; // Assumes migration
-import { TransactionList } from './components/TransactionList'; // Assumes migration
-import DataPreviewModal from '../../components/shared/DataPreviewModal'; // Assumes migration
-import { TransactionPreviewContent } from '../transactions/components/TransactionPreviewContent'; // Assumes migration
-import { FinancePreviewFooter } from './components/FinancePreviewFooter'; // Assumes migration
+import { useState, useMemo } from 'react';
+import { FinanceStatsGrid } from './components/FinanceStatsGrid'; 
+import { FinanceToolBar } from './components/FinanceToolBar'; 
+import { TransactionList } from './components/TransactionList'; 
+import DataPreviewModal from '../../components/shared/DataPreviewModal'; 
+import { TransactionPreviewContent } from '../transactions/components/TransactionPreviewContent'; 
+import { FinancePreviewFooter } from './components/FinancePreviewFooter'; 
 import { 
-    getFinanceTransactions, 
     getTransactionDetails, 
     updateTransactionStatus, 
     calculateCommission,
-    calculatePreview,
-    type FormattedFinanceTransaction // 1. Import the new local type
+    type FormattedFinanceTransaction 
 } from './financeService';
+import { useTransactionDashboard } from '@/hooks/useTransactionDashboard'; 
+
 import type { 
     User, 
     TransactionDetailResponse, 
     KpiCalculationResponse, 
     FixedCost, 
     RecurringService 
-} from '@/types'; // 2. Import all shared types
+} from '@/types'; 
 
-// 3. Define component props
+// Define component props
 interface FinanceDashboardProps {
     user: User; // Passed from App.tsx
     onLogout: () => void;
 }
 
-// 4. Define a type for the live edits
-type LiveEditState = Record<string, any> | null;
+type LiveEditState = Record<string, any> | null; 
 
-export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashboardProps) {
-    // 5. Type all state hooks
-    const [transactions, setTransactions] = useState<FormattedFinanceTransaction[]>([]);
-    const [filter, setFilter] = useState<string>('');
-    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const datePickerRef = useRef<HTMLDivElement>(null);
-    const [apiError, setApiError] = useState<string | null>(null);
+export default function FinanceDashboard({ user, onLogout }: FinanceDashboardProps) {
+    // --- LOCAL FINANCE-SPECIFIC STATE ---
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [totalPages, setTotalPages] = useState<number>(1);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [liveEdits, setLiveEdits] = useState<LiveEditState>(null); 
-    const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
-    const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(null);
-    const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(null);
-    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); //
+    const [liveEdits, setLiveEdits] = useState<LiveEditState>(null);
 
-    // 6. Type async functions
-    const fetchTransactions = async (): Promise<void> => {
-        setIsLoading(true);
-        setApiError(null);
-        
-        const result = await getFinanceTransactions(currentPage); //
-        
-        if (result.success) {
-            setTransactions(result.data || []); // Handle undefined
-            setTotalPages(result.pages || 1); // Handle undefined
-        } else {
-            // Check for 401 specifically, though api.ts should handle redirect
-            if ((result as any).status === 401) {
-                onLogout(); 
-                return;
-            }
-            setApiError(result.error || 'Unknown error');
-        }
-        setIsLoading(false);
+
+    // --- HOOK CONSUMPTION ---
+    const { 
+        transactions, isLoading, currentPage, totalPages, setCurrentPage,
+        filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
+        apiError, setApiError, liveKpis, setLiveKpis,
+        editedFixedCosts, setEditedFixedCosts, editedRecurringServices, setEditedRecurringServices,
+        isCodeManagerOpen, setIsCodeManagerOpen,
+        handleRecalculate, handleFixedCostAdd, handleFixedCostRemove, // These two handlers require baseTransaction now
+        fetchTransactions,
+    } = useTransactionDashboard({ user, view: 'FINANCE', onLogout });
+
+
+    // --- HOOK WRAPPERS (FIX) ---
+    
+    // FIX 1: Wrapper for the Fixed Cost removal handler
+    const handleFixedCostRemoveWrapper = (codeToRemove: string) => {
+        if (!selectedTransaction) return;
+        // Pass the base transaction data object as the second argument
+        handleFixedCostRemove(codeToRemove, selectedTransaction); 
     };
 
-    useEffect(() => {
-        fetchTransactions();
-    }, [currentPage, onLogout]); // Add onLogout to dependency array
+    // FIX 2: Wrapper for the Fixed Cost addition handler
+    const handleFixedCostAddWrapper = (newCosts: FixedCost[]) => {
+        if (!selectedTransaction) return;
+        // Pass the base transaction data object as the second argument
+        handleFixedCostAdd(newCosts, selectedTransaction);
+    };
 
-    // ... (stats calculation remains the same)
+    // ... (stats calculation remains the same) ...
     const stats = useMemo(() => {
-        const transactionList = transactions || []; // FIX: Defensive check against undefined/null
+        const transactionList = transactions as FormattedFinanceTransaction[];
 
         const totalApprovedValue = transactionList
             .filter(t => t.status === 'APPROVED')
-            .reduce((acc, t) => acc + (t.MRC || 0), 0); // Use MRC as a placeholder
+            .reduce((acc, t) => acc + (t.MRC || 0), 0); 
         const averageMargin = transactionList.length > 0
             ? transactionList.reduce((acc, t) => acc + t.grossMarginRatio, 0) / transactionList.length
             : 0;
@@ -101,45 +91,7 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
         };
     }, [transactions]);
     
-    // ... (filteredTransactions remains the same)
-    const filteredTransactions = useMemo(() => {
-        const transactionList = transactions || []; // FIX: Defensive check against undefined/null
-
-        return transactionList.filter(t => {
-            const clientMatch = t.clientName.toLowerCase().includes(filter.toLowerCase());
-            if (!selectedDate) return clientMatch;
-            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
-            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
-        });
-    }, [transactions, filter, selectedDate]);
-    
-    // --- NEW HANDLERS for Fixed Costs ---
-    const handleFixedCostRemove = (codeToRemove: string) => {
-        if (!editedFixedCosts) return;
-        
-        // Filter out ALL fixed cost entries that match the code/ticket
-        const combinedCosts = editedFixedCosts.filter(
-            cost => cost.ticket !== codeToRemove
-        );
-        
-        setEditedFixedCosts(combinedCosts);
-        handleRecalculate('fixed_costs', combinedCosts);
-    };
-
-    const handleFixedCostAdd = (newCosts: FixedCost[]) => {
-        if (!editedFixedCosts) return;
-
-        // 1. Merge the new costs with the existing ones
-        const combinedCosts = [...editedFixedCosts, ...newCosts];
-        
-        setEditedFixedCosts(combinedCosts);
-        handleRecalculate('fixed_costs', combinedCosts);
-    };
-    // --- End NEW HANDLERS ---
-
-    // 7. Type event handlers
-    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
-    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
+    // ... (rest of handlers like handleClearDate, handleSelectToday, handleRowClick remain the same) ...
 
     const handleRowClick = async (transaction: FormattedFinanceTransaction) => {
         setApiError(null);
@@ -147,9 +99,9 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
         setLiveKpis(null);
         setEditedFixedCosts(null); 
         setEditedRecurringServices(null);
-        setIsCodeManagerOpen(false); // Reset manager state
+        setIsCodeManagerOpen(false); 
         
-        const result = await getTransactionDetails(transaction.id); //
+        const result = await getTransactionDetails(transaction.id); 
         
         if (result.success) {
             setSelectedTransaction(result.data);
@@ -157,107 +109,25 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             setEditedRecurringServices(result.data.recurring_services || []);
             setIsDetailModalOpen(true);
         } else {
-            if ((result as any).status === 401) {
-                onLogout();
-                return;
-            }
             setApiError(result.error || 'Unknown error');
         }
     };
 
-    const handleRecurringServiceChange = (index: number, field: keyof RecurringService, value: any) => {
-        if (!editedRecurringServices) return;
-
-        const newServices = [...editedRecurringServices];
-        // A bit of type assertion to make this work
-        (newServices[index] as any)[field] = value;
-        
-        setEditedRecurringServices(newServices);
-        handleRecalculate('recurring_services', newServices);
-    };
-
-    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
-        if (!editedFixedCosts) return;
-
-        const newCosts = [...editedFixedCosts]; 
-        // The cast to 'any' here is still an anti-pattern (as discussed before) 
-        // but the value parameter is now correctly typed as string | number.
-        (newCosts[index] as any)[field] = value; 
-        
-        setEditedFixedCosts(newCosts); 
-        handleRecalculate('fixed_costs', newCosts);
-    };
-
-    const handleRecalculate = async (key: string, value: any) => {
+    // Handler for changes inside the preview modal
+    const handleRecalculateWrapper = async (key: string, value: any) => {
         if (!selectedTransaction) return;
-        setApiError(null);
-        
+
+        // Update local live edits state
         if (key !== 'fixed_costs' && key !== 'recurring_services') {
             setLiveEdits(prev => ({ ...prev, [key]: value }));
         }
-
-        const baseTransaction = selectedTransaction.transactions;
-        const currentEdits: LiveEditState = { ...liveEdits, [key]: value }; 
-
-        let costsForPayload: FixedCost[] | null;
-        if (key === 'fixed_costs') {
-            costsForPayload = value as FixedCost[]; 
-        } else {
-            costsForPayload = editedFixedCosts; 
-        }
-
-        let servicesForPayload: RecurringService[] | null;
-        if (key === 'recurring_services') {
-            servicesForPayload = value as RecurringService[];
-        } else {
-            servicesForPayload = editedRecurringServices;
-        }
-
-        const payloadUpdates = {
-             unidadNegocio: currentEdits?.unidadNegocio ?? baseTransaction.unidadNegocio,
-             gigalan_region: currentEdits?.gigalan_region ?? baseTransaction.gigalan_region,
-             gigalan_sale_type: currentEdits?.gigalan_sale_type ?? baseTransaction.gigalan_sale_type,
-             gigalan_old_mrc: currentEdits?.gigalan_old_mrc ?? baseTransaction.gigalan_old_mrc,
-             plazoContrato: currentEdits?.plazoContrato ?? baseTransaction.plazoContrato,
-             MRC: currentEdits?.MRC ?? baseTransaction.MRC,
-             NRC: currentEdits?.NRC ?? baseTransaction.NRC,
-             mrc_currency: currentEdits?.mrc_currency ?? baseTransaction.mrc_currency,
-             nrc_currency: currentEdits?.nrc_currency ?? baseTransaction.nrc_currency,
-        };
         
-        const recalculationPayload = {
-            ...selectedTransaction,     
-            fixed_costs: costsForPayload,
-            recurring_services: servicesForPayload,
-            transactions: {
-                ...baseTransaction,
-                ...payloadUpdates
-            }
-        };
-
-        delete (recalculationPayload as any).timeline;
-
-        try {
-            const result = await calculatePreview(recalculationPayload); //
-
-            if (result.success) {
-                setLiveKpis(result.data || null);
-            } else {
-                if ((result as any).status === 401) {
-                    onLogout();
-                    return;
-                }
-                setApiError(result.error || 'Failed to update KPIs.');
-                setLiveKpis(null);
-            }
-        } catch (error: any) {
-            setApiError('Network error calculating preview.');
-            setLiveKpis(null);
-        }
+        // Pass the base transaction data to the hook for calculation
+        await handleRecalculate(key, value, selectedTransaction);
     };
 
     const handleUpdateStatus = async (transactionId: number, status: 'approve' | 'reject') => {
-        if (!selectedTransaction) return; // Guard
+        if (!selectedTransaction) return; 
         setApiError(null);
         
         const modifiedFields = {
@@ -265,34 +135,24 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             ...liveEdits,
         };
         
-        const result = await updateTransactionStatus( //
-            transactionId, 
-            status, 
-            modifiedFields, 
-            editedFixedCosts,
-            editedRecurringServices
+        const result = await updateTransactionStatus( 
+            transactionId, status, modifiedFields, editedFixedCosts, editedRecurringServices
         );
         
         if (result.success) {
             setIsDetailModalOpen(false);
-            setLiveEdits(null); 
-            setLiveKpis(null); 
-            setEditedFixedCosts(null); 
-            setEditedRecurringServices(null);
-            setIsCodeManagerOpen(false); // Reset manager state
+            setLiveEdits(null); setLiveKpis(null); 
+            setEditedFixedCosts(null); setEditedRecurringServices(null);
+            setIsCodeManagerOpen(false);
             fetchTransactions(); 
         } else {
-             if ((result as any).status === 401) {
-                onLogout();
-                return;
-            }
             setApiError(result.error || 'Unknown error');
         }
     };
 
     const handleCalculateCommission = async (transactionId: number) => {
         setApiError(null);
-        const result = await calculateCommission(transactionId); //
+        const result = await calculateCommission(transactionId);
         
         if (result.success) { 
             setSelectedTransaction(result.data); 
@@ -300,16 +160,37 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             setEditedRecurringServices(result.data.recurring_services || []);
             fetchTransactions(); 
         } else {
-             if ((result as any).status === 401) {
-                onLogout();
-                return;
-             }
              setApiError(result.error || 'Unknown error');
         }
     };
 
     const handleApprove = (transactionId: number) => { handleUpdateStatus(transactionId, 'approve'); };
     const handleReject = (transactionId: number) => { handleUpdateStatus(transactionId, 'reject'); };
+    
+    // Handler for updates to Recurring Services table within modal
+    const handleRecurringServiceChange = (index: number, field: keyof RecurringService, value: any) => {
+        if (!editedRecurringServices) return;
+
+        setEditedRecurringServices(prev => {
+            const newServices = [...(prev || [])];
+            (newServices[index] as any)[field] = value;
+            handleRecalculateWrapper('recurring_services', newServices);
+            return newServices;
+        });
+    };
+    
+    // Handler for updates to Fixed Costs table within modal
+    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
+        if (!editedFixedCosts) return;
+
+        setEditedFixedCosts(prev => {
+            const newCosts = [...(prev || [])];
+            (newCosts[index] as any)[field] = value;
+            handleRecalculateWrapper('fixed_costs', newCosts);
+            return newCosts;
+        });
+    };
+
 
     return (
         <>
@@ -318,23 +199,18 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
         
                 <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
                     <FinanceToolBar
-                        filter={filter}
-                        setFilter={setFilter}
-                        isDatePickerOpen={isDatePickerOpen}
-                        setIsDatePickerOpen={setIsDatePickerOpen}
-                        selectedDate={selectedDate}
-                        setSelectedDate={setSelectedDate}
+                        filter={filter} setFilter={setFilter}
+                        isDatePickerOpen={isDatePickerOpen} setIsDatePickerOpen={setIsDatePickerOpen}
+                        selectedDate={selectedDate} setSelectedDate={setSelectedDate}
                         datePickerRef={datePickerRef}
-                        onClearDate={handleClearDate}
-                        onSelectToday={handleSelectToday}
+                        onClearDate={handleClearDate} onSelectToday={handleSelectToday}
                     />
                     
                     <TransactionList
                         isLoading={isLoading}
-                        transactions={filteredTransactions}
+                        transactions={filteredTransactions as FormattedFinanceTransaction[]}
                         onRowClick={handleRowClick}
-                        currentPage={currentPage}
-                        totalPages={totalPages}
+                        currentPage={currentPage} totalPages={totalPages}
                         onPageChange={setCurrentPage}
                     />
                 </div>
@@ -346,8 +222,7 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
                 <DataPreviewModal 
                     isOpen={isDetailModalOpen} 
                     title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
-                    // Ensure isCodeManagerOpen is reset here
-                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
+                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); setIsCodeManagerOpen(false); }}
                     footer={
                         <FinancePreviewFooter 
                             tx={selectedTransaction.transactions} 
@@ -362,18 +237,18 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
                         data={selectedTransaction} 
                         liveKpis={liveKpis} 
                         gigalanInputs={liveEdits} 
-                        onGigalanInputChange={handleRecalculate} 
+                        onGigalanInputChange={handleRecalculateWrapper} 
                         selectedUnidad={liveEdits?.unidadNegocio ?? selectedTransaction.transactions.unidadNegocio}
-                        onUnidadChange={(value: string) => handleRecalculate('unidadNegocio', value)}
+                        onUnidadChange={(value: string) => handleRecalculateWrapper('unidadNegocio', value)}
                         fixedCostsData={editedFixedCosts} 
                         onFixedCostChange={handleFixedCostChange}
                         recurringServicesData={editedRecurringServices}
                         onRecurringServiceChange={handleRecurringServiceChange}
-                        // --- NEW PROPS ---
+                        // HOOK-BASED PROPS (FIXED)
                         isCodeManagerOpen={isCodeManagerOpen}
                         setIsCodeManagerOpen={setIsCodeManagerOpen}
-                        onFixedCostAdd={handleFixedCostAdd}
-                        onFixedCostRemove={handleFixedCostRemove}
+                        onFixedCostAdd={handleFixedCostAddWrapper} // FIX: Use wrapper
+                        onFixedCostRemove={handleFixedCostRemoveWrapper} // FIX: Use wrapper
                     />
                 </DataPreviewModal>
             )}

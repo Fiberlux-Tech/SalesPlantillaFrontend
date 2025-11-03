@@ -1,5 +1,5 @@
 // src/features/sales/SalesDashboard.tsx
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { SalesStatsGrid } from './components/SalesStatsGrid';
 import { SalesToolbar } from './components/SalesToolBar';
 import { SalesTransactionList } from './components/SalesTransactionList';
@@ -8,18 +8,15 @@ import DataPreviewModal from '../../components/shared/DataPreviewModal';
 import { TransactionPreviewContent } from '../transactions/components/TransactionPreviewContent'; 
 import { SalesPreviewFooter } from './components/SalesPreviewFooter'; 
 import { 
-    getSalesTransactions, 
     uploadExcelForPreview, 
-    submitFinalTransaction, 
-    calculatePreview,
-    FormattedSalesTransaction // Import our new local type
+    submitFinalTransaction,
+    FormattedSalesTransaction 
 } from './salesService'; 
+import { useTransactionDashboard } from '@/hooks/useTransactionDashboard'; 
 
-// Import all the new types
 import type { 
     User, 
     TransactionDetailResponse, 
-    KpiCalculationResponse,
     FixedCost,
     RecurringService 
 } from '@/types';
@@ -30,14 +27,14 @@ interface SalesDashboardProps {
     setSalesActions: (actions: { onUpload: () => void, onExport: () => void }) => void;
 }
 
-// Define the shape of the Gigalan inputs
+// Define the shape of the Gigalan inputs (kept local as part of Sales-specific UI flow)
 interface GigalanInputs {
     gigalan_region: string;
     gigalan_sale_type: "NUEVO" | "EXISTENTE" | "";
     gigalan_old_mrc: number | null;
 }
 
-// Define the shape of the override fields
+// Define the shape of the override fields (kept local as part of Sales-specific UI flow)
 interface OverrideFields {
     plazoContrato: number | null;
     MRC: number | null;
@@ -47,36 +44,30 @@ interface OverrideFields {
 }
 
 export default function SalesDashboard({ user: _user, setSalesActions }: SalesDashboardProps) {
-    // --- STATE IS NOW TYPED ---
-    const [transactions, setTransactions] = useState<FormattedSalesTransaction[]>([]);
-    const [filter, setFilter] = useState<string>('');
+    // --- LOCAL SALES-SPECIFIC STATE ---
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
-    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const datePickerRef = useRef<HTMLDivElement>(null); // Type the ref
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
-    const [apiError, setApiError] = useState<string | null>(null);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [totalPages, setTotalPages] = useState<number>(1);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [gigalanCommissionInputs, setGigalanCommissionInputs] = useState<GigalanInputs>({
-        gigalan_region: '',
-        gigalan_sale_type: '',
-        gigalan_old_mrc: null,
-    });
     const [selectedUnidad, setSelectedUnidad] = useState<string>('');
-    const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
-    const [overrideFields, setOverrideFields] = useState<OverrideFields>({ 
-        plazoContrato: null, 
-        MRC: null, 
-        mrc_currency: null,
-        NRC: null,
-        nrc_currency: null 
+    const [gigalanCommissionInputs, setGigalanCommissionInputs] = useState<GigalanInputs>({
+        gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null,
     });
-    const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(null);
-    const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(null);
-    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); // <-- NEW
+    const [overrideFields, setOverrideFields] = useState<OverrideFields>({ 
+        plazoContrato: null, MRC: null, mrc_currency: null, NRC: null, nrc_currency: null 
+    });
+
+
+    // --- HOOK CONSUMPTION ---
+    const { 
+        transactions, isLoading, currentPage, totalPages, setCurrentPage,
+        filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
+        apiError, setApiError, liveKpis, setLiveKpis,
+        editedFixedCosts, setEditedFixedCosts, editedRecurringServices, setEditedRecurringServices,
+        isCodeManagerOpen, setIsCodeManagerOpen,
+        handleRecalculate, handleFixedCostAdd, handleFixedCostRemove,
+        fetchTransactions,
+    } = useTransactionDashboard({ user: _user, view: 'SALES', onLogout: () => {} });
+
 
     // --- useEffect for setSalesActions remains the same ---
     useEffect(() => {
@@ -94,54 +85,11 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         }
     }, [setSalesActions]);
 
-    const fetchTransactions = async () => {
-        setIsLoading(true);
-        setApiError(null);
-        const result = await getSalesTransactions(currentPage);
 
-        if (result.success && result.data) {
-            setTransactions(result.data);
-            setTotalPages(result.pages || 1);
-        } else {
-            setApiError(result.error || 'Unknown error');
-        }
-        setIsLoading(false);
-    };
-
-    // --- NEW HANDLER: Handles removal from the pop-up list (X button) ---
-    const handleFixedCostRemove = (codeToRemove: string) => {
-        if (!editedFixedCosts) return;
-
-        // Filter out ALL fixed cost entries that match the code/ticket
-        const combinedCosts = editedFixedCosts.filter(
-            cost => cost.ticket !== codeToRemove
-        );
-        
-        // Update state and trigger recalculation
-        setEditedFixedCosts(combinedCosts);
-        handleInputChangeAndRecalculate('fixed_costs', combinedCosts);
-    };
-
-    // --- NEW HANDLER: Handles adding new codes (Ir button success) ---
-    const handleFixedCostAdd = (newCosts: FixedCost[]) => {
-        if (!editedFixedCosts) return;
-
-        // 1. Merge the new costs with the existing ones
-        const combinedCosts = [...editedFixedCosts, ...newCosts];
-        
-        // 2. Update state and trigger recalculation
-        setEditedFixedCosts(combinedCosts);
-        handleInputChangeAndRecalculate('fixed_costs', combinedCosts);
-    };
-
-    useEffect(() => {
-        fetchTransactions();
-    }, [currentPage]);
-
-    // ... (stats and filteredTransactions logic remains the same)
+    // --- stats calculation remains here ---
     const stats = useMemo(() => {
         const pendingApprovals = transactions.filter(t => t.status === 'PENDING').length;
-        const totalValue = 0; // This logic was a placeholder, needs to be fixed if (tx.totalValue) is real
+        const totalValue = 0; 
         const avgIRR = 24.5;
         const avgPayback = 20;
         return {
@@ -152,29 +100,49 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         };
     }, [transactions]);
 
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
-            const clientMatch = t.client.toLowerCase().includes(filter.toLowerCase());
-            if (!selectedDate) return clientMatch;
-            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
-            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
-        });
-    }, [transactions, filter, selectedDate]);
-
 
     // --- HANDLERS ---
-    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
-    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
+    
+    const handleInputChangeAndRecalculate = async (inputKey: string, inputValue: any) => {
+        if (!uploadedData) return;
+        setApiError(null);
+
+        // Map local state changes back into the common input flow before calling the hook's handler
+        if (inputKey === 'unidadNegocio') {
+            setSelectedUnidad(inputValue);
+        } else if (inputKey === 'fixed_costs') {
+             setEditedFixedCosts(inputValue);
+        } else if (inputKey === 'recurring_services') { 
+             setEditedRecurringServices(inputValue);
+        } else if (inputKey.startsWith('gigalan_')) {
+             setGigalanCommissionInputs(prev => {
+                const next = { ...prev, [inputKey]: inputValue };
+                 if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
+                     next.gigalan_old_mrc = null;
+                 }
+                 return next;
+             });
+        } else if (['plazoContrato', 'MRC', 'NRC', 'mrc_currency', 'nrc_currency'].includes(inputKey)) {
+             setOverrideFields(prev => ({ ...prev, [inputKey]: inputValue }));
+        }
+
+        // Call the unified hook logic, providing the base transaction data
+        await handleRecalculate(inputKey, inputValue, uploadedData);
+    };
 
 
+    // Handles initial Excel upload and data setup
     const handleUploadNext = async (file: File | null) => {
         if (!file) return;
         setApiError(null);
-        setLiveKpis(null);
+        // Reset states
+        setLiveKpis(null); 
         setEditedFixedCosts(null); 
         setEditedRecurringServices(null);
+        setIsCodeManagerOpen(false); 
+        
+        // Reset local sales states
         setSelectedUnidad('');
-        setIsCodeManagerOpen(false); // <-- FIX: Reset manager state on new upload
 
         const result = await uploadExcelForPreview(file);
 
@@ -187,33 +155,24 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
             setEditedRecurringServices(result.data.recurring_services || []); 
 
             setOverrideFields({ 
-                plazoContrato: result.data.transactions.plazoContrato,
-                MRC: result.data.transactions.MRC,
-                mrc_currency: result.data.transactions.mrc_currency || 'PEN',
-                NRC: result.data.transactions.NRC,
-                nrc_currency: result.data.transactions.nrc_currency || 'PEN'
+                plazoContrato: result.data.transactions.plazoContrato, MRC: result.data.transactions.MRC, 
+                mrc_currency: result.data.transactions.mrc_currency || 'PEN', 
+                NRC: result.data.transactions.NRC, nrc_currency: result.data.transactions.nrc_currency || 'PEN'
             });
-            
-            setGigalanCommissionInputs({
-                gigalan_region: '',
-                gigalan_sale_type: '',
-                gigalan_old_mrc: null,
-            });
+            setGigalanCommissionInputs({ gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null });
         } else {
             setApiError(result.error || 'Unknown upload error');
             setIsModalOpen(false);
         }
     };
 
+    // Handles final transaction submission
     const handleConfirmSubmission = async () => {
-        // ... (All validation logic remains the same) ...
-        if (!uploadedData) return;
-        setApiError(null);
-
-        if (!selectedUnidad) {
+        if (!uploadedData || !selectedUnidad) {
             setApiError('Por favor, selecciona una Unidad de Negocio.');
             return;
         }
+        setApiError(null);
         // ... (rest of validation) ...
 
         const finalPayload = {
@@ -227,107 +186,59 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
                 ...overrideFields 
             }
         };
-
         delete (finalPayload as any).timeline;
 
         const result = await submitFinalTransaction(finalPayload);
 
         if (result.success) {
-            fetchTransactions();
+            fetchTransactions(); // Reload transactions list
             setIsPreviewModalOpen(false);
             setUploadedData(null);
             setSelectedUnidad('');
-            setEditedFixedCosts(null); 
-            setEditedRecurringServices(null);
-            setLiveKpis(null);
-            setIsCodeManagerOpen(false); // <-- FIX: Reset manager state on successful submission 
+            setEditedFixedCosts(null); setEditedRecurringServices(null);
+            setLiveKpis(null); 
+            setIsCodeManagerOpen(false);
         } else {
             setApiError(result.error || 'Unknown submission error');
         }
     };
-
-    // ... (handleRecurringServiceChange, handleFixedCostChange, handleInputChangeAndRecalculate handlers remain the same) ...
-    const handleRecurringServiceChange = (index: number, field: keyof RecurringService, value: any) => {
-        if (!editedRecurringServices) return;
-
-        const newServices = [...editedRecurringServices];
-        (newServices[index] as any)[field] = value; 
-        
-        setEditedRecurringServices(newServices);
-        handleInputChangeAndRecalculate('recurring_services', newServices);
-    };
-
-    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
-        if (!editedFixedCosts) return;
-
-        const newCosts = [...editedFixedCosts];
-        (newCosts[index] as any)[field] = value;
-        
-        setEditedFixedCosts(newCosts);
-        handleInputChangeAndRecalculate('fixed_costs', newCosts);
-    };
-
-    const handleInputChangeAndRecalculate = async (inputKey: string, inputValue: any) => {
+    
+    // Wrapper for the Fixed Cost removal handler (Passes base data to hook)
+    const handleFixedCostRemoveWrapper = (codeToRemove: string) => {
         if (!uploadedData) return;
-        setApiError(null);
-
-        let nextUnidad = selectedUnidad;
-        let nextGigalanInputs = { ...gigalanCommissionInputs };
-        let nextOverrideFields = { ...overrideFields };
-        
-        let costsForPayload = editedFixedCosts; 
-        let servicesForPayload = editedRecurringServices; 
-
-        if (inputKey === 'unidadNegocio') {
-            nextUnidad = inputValue as string;
-            if (inputValue !== 'GIGALAN') {
-                nextGigalanInputs = { gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null };
-            }
-        } else if (inputKey.startsWith('gigalan_')) {
-            (nextGigalanInputs as any)[inputKey] = inputValue;
-            if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
-                nextGigalanInputs.gigalan_old_mrc = null;
-            }
-        } else if (['plazoContrato', 'MRC', 'NRC', 'mrc_currency', 'nrc_currency'].includes(inputKey)) {
-            (nextOverrideFields as any)[inputKey] = inputValue; 
-        } else if (inputKey === 'fixed_costs') {
-            costsForPayload = inputValue as FixedCost[]; 
-        } else if (inputKey === 'recurring_services') { 
-            servicesForPayload = inputValue as RecurringService[];
-        }
-
-        setSelectedUnidad(nextUnidad);
-        setGigalanCommissionInputs(nextGigalanInputs);
-        setOverrideFields(nextOverrideFields);
-
-        const payload = {
-            ...uploadedData,
-            fixed_costs: costsForPayload, 
-            recurring_services: servicesForPayload,
-            transactions: {
-                ...uploadedData.transactions,
-                unidadNegocio: nextUnidad,
-                ...nextGigalanInputs,
-                ...nextOverrideFields
-            }
-        };
-
-        delete (payload as any).timeline;
-
-        try {
-            const result = await calculatePreview(payload);
-            if (result.success) {
-                setLiveKpis(result.data || null);
-            } else {
-                setApiError(result.error || 'Failed to update KPIs.');
-                setLiveKpis(null);
-            }
-        } catch (error: any) {
-            setApiError(error.message || 'Network error calculating preview.');
-            setLiveKpis(null);
-        } 
+        handleFixedCostRemove(codeToRemove, uploadedData);
     };
 
+    // Wrapper for the Fixed Cost addition handler (Passes base data to hook)
+    const handleFixedCostAddWrapper = (newCosts: FixedCost[]) => {
+        if (!uploadedData) return;
+        handleFixedCostAdd(newCosts, uploadedData);
+    };
+    
+    // Handler for updates to Fixed Costs table within modal
+    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
+        if (!editedFixedCosts || !uploadedData) return;
+
+        setEditedFixedCosts(prev => {
+            const newCosts = [...(prev || [])];
+            (newCosts[index] as any)[field] = value;
+            handleRecalculate('fixed_costs', newCosts, uploadedData); // Pass base data here
+            return newCosts;
+        });
+    };
+    
+    // Handler for updates to Recurring Services table within modal
+    const handleRecurringServiceChange = (index: number, field: keyof RecurringService, value: any) => {
+        if (!editedRecurringServices || !uploadedData) return;
+
+        setEditedRecurringServices(prev => {
+            const newServices = [...(prev || [])];
+            (newServices[index] as any)[field] = value; 
+            handleRecalculate('recurring_services', newServices, uploadedData); // Pass base data here
+            return newServices;
+        });
+    };
+    
 
     // --- RENDER ---
     return (
@@ -336,21 +247,16 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
             <SalesStatsGrid stats={stats} />
                 <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
                     <SalesToolbar
-                        filter={filter}
-                        setFilter={setFilter}
-                        isDatePickerOpen={isDatePickerOpen}
-                        setIsDatePickerOpen={setIsDatePickerOpen}
-                        selectedDate={selectedDate}
-                        setSelectedDate={setSelectedDate}
+                        filter={filter} setFilter={setFilter}
+                        isDatePickerOpen={isDatePickerOpen} setIsDatePickerOpen={setIsDatePickerOpen}
+                        selectedDate={selectedDate} setSelectedDate={setSelectedDate}
                         datePickerRef={datePickerRef}
-                        onClearDate={handleClearDate}
-                        onSelectToday={handleSelectToday}
+                        onClearDate={handleClearDate} onSelectToday={handleSelectToday}
                     />
                     <SalesTransactionList
                         isLoading={isLoading}
-                        transactions={filteredTransactions}
-                        currentPage={currentPage}
-                        totalPages={totalPages}
+                        transactions={filteredTransactions as FormattedSalesTransaction[]}
+                        currentPage={currentPage} totalPages={totalPages}
                         onPageChange={setCurrentPage}
                     />
                 </div>
@@ -377,18 +283,18 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
                         data={uploadedData}
                         liveKpis={liveKpis}
                         gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
-                        onGigalanInputChange={handleInputChangeAndRecalculate}
+                        onGigalanInputChange={(inputKey, value) => handleInputChangeAndRecalculate(inputKey, value)}
                         selectedUnidad={selectedUnidad}
                         onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
                         fixedCostsData={editedFixedCosts} 
                         onFixedCostChange={handleFixedCostChange}
                         recurringServicesData={editedRecurringServices}
                         onRecurringServiceChange={handleRecurringServiceChange}
-                        // **NEW PROPS**
+                        // HOOK-BASED PROPS
                         isCodeManagerOpen={isCodeManagerOpen}
                         setIsCodeManagerOpen={setIsCodeManagerOpen}
-                        onFixedCostAdd={handleFixedCostAdd}
-                        onFixedCostRemove={handleFixedCostRemove}
+                        onFixedCostAdd={handleFixedCostAddWrapper}
+                        onFixedCostRemove={handleFixedCostRemoveWrapper}
                     />
                 </DataPreviewModal>
             )}
