@@ -1,11 +1,10 @@
 // src/components/shared/FixedCostCodeManager.tsx
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CloseIcon } from './Icons';
 import { getFixedCostsByCodes } from '@/features/sales/salesService'; 
 import type { FixedCost } from '@/types';
-import type { ReactNode } from 'react';
 
 // FIX: Define the shape of the component's state and props clearly before use
 interface FixedCostCodeManagerProps {

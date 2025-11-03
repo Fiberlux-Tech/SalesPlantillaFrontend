@@ -1,6 +1,5 @@
 // src/features/transactions/components/TransactionPreviewContent.tsx
 import { useState, useMemo } from 'react';
-import StatusBadge from '@/components/shared/StatusBadge';
 import CostBreakdownRow from '@/components/shared/CostBreakdownRow';
 import {
     WarningIcon,

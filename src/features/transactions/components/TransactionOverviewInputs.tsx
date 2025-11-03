@@ -23,7 +23,6 @@ import type {
 // *** NEW IMPORT ***
 import { formatCurrency } from '@/lib/formatters'; 
 
-type Currency = 'PEN' | 'USD';
 
 interface OverviewInputsProps {
     tx: Transaction; // Base transaction data

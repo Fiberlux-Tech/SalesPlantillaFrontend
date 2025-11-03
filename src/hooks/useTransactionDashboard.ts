@@ -73,7 +73,7 @@ interface DashboardReturn {
 
 // --- Hook Implementation ---
 
-export function useTransactionDashboard({ user, view, onLogout }: DashboardOptions): DashboardReturn {
+export function useTransactionDashboard({ view, onLogout }: DashboardOptions): DashboardReturn {
     // --- State Initialization ---
     const [transactions, setTransactions] = useState<DashboardTransaction[]>([]);
     const [filter, setFilter] = useState<string>('');

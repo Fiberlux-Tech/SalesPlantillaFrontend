@@ -17,7 +17,6 @@ import { useTransactionDashboard } from '@/hooks/useTransactionDashboard';
 import type { 
     User, 
     TransactionDetailResponse, 
-    KpiCalculationResponse, 
     FixedCost, 
     RecurringService 
 } from '@/types'; 
