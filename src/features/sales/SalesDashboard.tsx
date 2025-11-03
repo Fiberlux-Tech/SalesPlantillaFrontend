@@ -1,5 +1,5 @@
 // src/features/sales/SalesDashboard.tsx
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { SalesStatsGrid } from './components/SalesStatsGrid';
 import { SalesToolbar } from './components/SalesToolBar';
 import { SalesTransactionList } from './components/SalesTransactionList';
@@ -55,6 +55,8 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
     const [overrideFields, setOverrideFields] = useState<OverrideFields>({ 
         plazoContrato: null, MRC: null, mrc_currency: null, NRC: null, nrc_currency: null 
     });
+    const salesOnLogout = useCallback(() => {
+    }, []);
 
 
     // --- HOOK CONSUMPTION ---
@@ -66,7 +68,7 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         isCodeManagerOpen, setIsCodeManagerOpen,
         handleRecalculate, handleFixedCostAdd, handleFixedCostRemove,
         fetchTransactions,
-    } = useTransactionDashboard({ user: _user, view: 'SALES', onLogout: () => {} });
+    } = useTransactionDashboard({ user: _user, view: 'SALES', onLogout: salesOnLogout }); // 3. Pass the stable function
 
 
     // --- useEffect for setSalesActions remains the same ---
