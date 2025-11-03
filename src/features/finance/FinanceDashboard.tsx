@@ -48,15 +48,14 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
     const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
     const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(null);
     const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(null);
-    // --- NEW STATE ---
-    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); // <-- NEW
+    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); //
 
     // 6. Type async functions
     const fetchTransactions = async (): Promise<void> => {
         setIsLoading(true);
         setApiError(null);
         
-        const result = await getFinanceTransactions(currentPage); 
+        const result = await getFinanceTransactions(currentPage); //
         
         if (result.success) {
             setTransactions(result.data || []); // Handle undefined
@@ -70,18 +69,6 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             setApiError(result.error || 'Unknown error');
         }
         setIsLoading(false);
-    };
-
-    // --- NEW HANDLER ---
-    const handleFixedCostAdd = (newCosts: FixedCost[]) => {
-        if (!editedFixedCosts) return;
-
-        // 1. Merge the new costs with the existing ones
-        const combinedCosts = [...editedFixedCosts, ...newCosts];
-        
-        // 2. Update state and trigger recalculation (using finance's recalculate function)
-        setEditedFixedCosts(combinedCosts);
-        handleRecalculate('fixed_costs', combinedCosts);
     };
 
     useEffect(() => {
@@ -125,6 +112,30 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
         });
     }, [transactions, filter, selectedDate]);
+    
+    // --- NEW HANDLERS for Fixed Costs ---
+    const handleFixedCostRemove = (codeToRemove: string) => {
+        if (!editedFixedCosts) return;
+        
+        // Filter out ALL fixed cost entries that match the code/ticket
+        const combinedCosts = editedFixedCosts.filter(
+            cost => cost.ticket !== codeToRemove
+        );
+        
+        setEditedFixedCosts(combinedCosts);
+        handleRecalculate('fixed_costs', combinedCosts);
+    };
+
+    const handleFixedCostAdd = (newCosts: FixedCost[]) => {
+        if (!editedFixedCosts) return;
+
+        // 1. Merge the new costs with the existing ones
+        const combinedCosts = [...editedFixedCosts, ...newCosts];
+        
+        setEditedFixedCosts(combinedCosts);
+        handleRecalculate('fixed_costs', combinedCosts);
+    };
+    // --- End NEW HANDLERS ---
 
     // 7. Type event handlers
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
@@ -136,8 +147,9 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
         setLiveKpis(null);
         setEditedFixedCosts(null); 
         setEditedRecurringServices(null);
+        setIsCodeManagerOpen(false); // Reset manager state
         
-        const result = await getTransactionDetails(transaction.id);
+        const result = await getTransactionDetails(transaction.id); //
         
         if (result.success) {
             setSelectedTransaction(result.data);
@@ -226,7 +238,7 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
         delete (recalculationPayload as any).timeline;
 
         try {
-            const result = await calculatePreview(recalculationPayload); 
+            const result = await calculatePreview(recalculationPayload); //
 
             if (result.success) {
                 setLiveKpis(result.data || null);
@@ -253,7 +265,7 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             ...liveEdits,
         };
         
-        const result = await updateTransactionStatus(
+        const result = await updateTransactionStatus( //
             transactionId, 
             status, 
             modifiedFields, 
@@ -267,6 +279,7 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             setLiveKpis(null); 
             setEditedFixedCosts(null); 
             setEditedRecurringServices(null);
+            setIsCodeManagerOpen(false); // Reset manager state
             fetchTransactions(); 
         } else {
              if ((result as any).status === 401) {
@@ -279,7 +292,7 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
 
     const handleCalculateCommission = async (transactionId: number) => {
         setApiError(null);
-        const result = await calculateCommission(transactionId);
+        const result = await calculateCommission(transactionId); //
         
         if (result.success) { 
             setSelectedTransaction(result.data); 
@@ -333,7 +346,8 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
                 <DataPreviewModal 
                     isOpen={isDetailModalOpen} 
                     title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
-                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); setIsCodeManagerOpen(false); }} // <-- Close manager on modal close
+                    // Ensure isCodeManagerOpen is reset here
+                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
                     footer={
                         <FinancePreviewFooter 
                             tx={selectedTransaction.transactions} 
@@ -355,10 +369,11 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
                         onFixedCostChange={handleFixedCostChange}
                         recurringServicesData={editedRecurringServices}
                         onRecurringServiceChange={handleRecurringServiceChange}
-                        // **NEW PROPS**
+                        // --- NEW PROPS ---
                         isCodeManagerOpen={isCodeManagerOpen}
                         setIsCodeManagerOpen={setIsCodeManagerOpen}
-                        onFixedCostAdd={handleFixedCostAdd} // Finance can add costs too
+                        onFixedCostAdd={handleFixedCostAdd}
+                        onFixedCostRemove={handleFixedCostRemove}
                     />
                 </DataPreviewModal>
             )}

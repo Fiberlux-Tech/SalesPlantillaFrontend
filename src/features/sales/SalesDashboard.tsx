@@ -48,32 +48,32 @@ interface OverrideFields {
 
 export default function SalesDashboard({ user: _user, setSalesActions }: SalesDashboardProps) {
     // --- STATE IS NOW TYPED ---
-    const [transactions, setTransactions] = useState<FormattedSalesTransaction[]>([]);
-    const [filter, setFilter] = useState<string>('');
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
-    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const datePickerRef = useRef<HTMLDivElement>(null); // Type the ref
-    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
-    const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
-    const [apiError, setApiError] = useState<string | null>(null);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [totalPages, setTotalPages] = useState<number>(1);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [gigalanCommissionInputs, setGigalanCommissionInputs] = useState<GigalanInputs>({
-        gigalan_region: '',
-        gigalan_sale_type: '',
-        gigalan_old_mrc: null,
-    });
-    const [selectedUnidad, setSelectedUnidad] = useState<string>('');
-    const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
-    const [overrideFields, setOverrideFields] = useState<OverrideFields>({ 
-        plazoContrato: null, 
-        MRC: null, 
+    const [transactions, setTransactions] = useState<FormattedSalesTransaction[]>([]);
+    const [filter, setFilter] = useState<string>('');
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const datePickerRef = useRef<HTMLDivElement>(null); // Type the ref
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
+    const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
+    const [apiError, setApiError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [gigalanCommissionInputs, setGigalanCommissionInputs] = useState<GigalanInputs>({
+        gigalan_region: '',
+        gigalan_sale_type: '',
+        gigalan_old_mrc: null,
+    });
+    const [selectedUnidad, setSelectedUnidad] = useState<string>('');
+    const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
+    const [overrideFields, setOverrideFields] = useState<OverrideFields>({ 
+        plazoContrato: null, 
+        MRC: null, 
         mrc_currency: null,
-        NRC: null,
+        NRC: null,
         nrc_currency: null 
-    });
+    });
     const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(null);
     const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(null);
     const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); // <-- NEW
@@ -94,21 +94,35 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         }
     }, [setSalesActions]);
 
-    const fetchTransactions = async () => {
-        setIsLoading(true);
-        setApiError(null);
-        const result = await getSalesTransactions(currentPage);
+    const fetchTransactions = async () => {
+        setIsLoading(true);
+        setApiError(null);
+        const result = await getSalesTransactions(currentPage);
 
-        if (result.success && result.data) {
-            setTransactions(result.data);
-            setTotalPages(result.pages || 1);
-        } else {
-            setApiError(result.error || 'Unknown error');
-        }
-        setIsLoading(false);
-    };
+        if (result.success && result.data) {
+            setTransactions(result.data);
+            setTotalPages(result.pages || 1);
+        } else {
+            setApiError(result.error || 'Unknown error');
+        }
+        setIsLoading(false);
+    };
 
-    // --- NEW HANDLER ---
+    // --- NEW HANDLER: Handles removal from the pop-up list (X button) ---
+    const handleFixedCostRemove = (codeToRemove: string) => {
+        if (!editedFixedCosts) return;
+
+        // Filter out ALL fixed cost entries that match the code/ticket
+        const combinedCosts = editedFixedCosts.filter(
+            cost => cost.ticket !== codeToRemove
+        );
+        
+        // Update state and trigger recalculation
+        setEditedFixedCosts(combinedCosts);
+        handleInputChangeAndRecalculate('fixed_costs', combinedCosts);
+    };
+
+    // --- NEW HANDLER: Handles adding new codes (Ir button success) ---
     const handleFixedCostAdd = (newCosts: FixedCost[]) => {
         if (!editedFixedCosts) return;
 
@@ -120,46 +134,47 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         handleInputChangeAndRecalculate('fixed_costs', combinedCosts);
     };
 
-    useEffect(() => {
-        fetchTransactions();
-    }, [currentPage]);
+    useEffect(() => {
+        fetchTransactions();
+    }, [currentPage]);
 
     // ... (stats and filteredTransactions logic remains the same)
     const stats = useMemo(() => {
-        const pendingApprovals = transactions.filter(t => t.status === 'PENDING').length;
-        const totalValue = 0; // This logic was a placeholder, needs to be fixed if (tx.totalValue) is real
-        const avgIRR = 24.5;
-        const avgPayback = 20;
-        return {
-            pendingApprovals,
-            totalValue: `${(totalValue / 1000000).toFixed(2)}M`,
-            avgIRR: `${avgIRR}%`,
-            avgPayback: `${avgPayback} mo`,
-        };
-    }, [transactions]);
+        const pendingApprovals = transactions.filter(t => t.status === 'PENDING').length;
+        const totalValue = 0; // This logic was a placeholder, needs to be fixed if (tx.totalValue) is real
+        const avgIRR = 24.5;
+        const avgPayback = 20;
+        return {
+            pendingApprovals,
+            totalValue: `${(totalValue / 1000000).toFixed(2)}M`,
+            avgIRR: `${avgIRR}%`,
+            avgPayback: `${avgPayback} mo`,
+        };
+    }, [transactions]);
 
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
-            const clientMatch = t.client.toLowerCase().includes(filter.toLowerCase());
-            if (!selectedDate) return clientMatch;
-            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
-            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
-        });
-    }, [transactions, filter, selectedDate]);
-
-
-    // --- HANDLERS (Now with stricter types) ---
-    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
-    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+            const clientMatch = t.client.toLowerCase().includes(filter.toLowerCase());
+            if (!selectedDate) return clientMatch;
+            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
+            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
+        });
+    }, [transactions, filter, selectedDate]);
 
 
-    const handleUploadNext = async (file: File | null) => {
+    // --- HANDLERS ---
+    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
+    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
+
+
+    const handleUploadNext = async (file: File | null) => {
         if (!file) return;
         setApiError(null);
         setLiveKpis(null);
         setEditedFixedCosts(null); 
         setEditedRecurringServices(null);
         setSelectedUnidad('');
+        setIsCodeManagerOpen(false); // <-- FIX: Reset manager state on new upload
 
         const result = await uploadExcelForPreview(file);
 
@@ -190,7 +205,7 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         }
     };
 
-    const handleConfirmSubmission = async () => {
+    const handleConfirmSubmission = async () => {
         // ... (All validation logic remains the same) ...
         if (!uploadedData) return;
         setApiError(null);
@@ -224,18 +239,18 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
             setSelectedUnidad('');
             setEditedFixedCosts(null); 
             setEditedRecurringServices(null);
-            setLiveKpis(null); 
+            setLiveKpis(null);
+            setIsCodeManagerOpen(false); // <-- FIX: Reset manager state on successful submission 
         } else {
             setApiError(result.error || 'Unknown submission error');
         }
     };
 
-    // --- Typed Handlers ---
+    // ... (handleRecurringServiceChange, handleFixedCostChange, handleInputChangeAndRecalculate handlers remain the same) ...
     const handleRecurringServiceChange = (index: number, field: keyof RecurringService, value: any) => {
         if (!editedRecurringServices) return;
 
         const newServices = [...editedRecurringServices];
-        // This is a bit of a hack for typing, a reducer would be cleaner
         (newServices[index] as any)[field] = value; 
         
         setEditedRecurringServices(newServices);
@@ -252,7 +267,7 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         handleInputChangeAndRecalculate('fixed_costs', newCosts);
     };
 
-    const handleInputChangeAndRecalculate = async (inputKey: string, inputValue: any) => {
+    const handleInputChangeAndRecalculate = async (inputKey: string, inputValue: any) => {
         if (!uploadedData) return;
         setApiError(null);
 
@@ -313,57 +328,58 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         } 
     };
 
-    // --- RENDER (no changes, just type-safe) ---
-   return (
-        <>
-            <div className="container mx-auto px-8 py-8">
-            <SalesStatsGrid stats={stats} />
-            <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
-                <SalesToolbar
-                    filter={filter}
-                    setFilter={setFilter}
-                    isDatePickerOpen={isDatePickerOpen}
-                    setIsDatePickerOpen={setIsDatePickerOpen}
-                    selectedDate={selectedDate}
-                    setSelectedDate={setSelectedDate}
-                    datePickerRef={datePickerRef}
-                    onClearDate={handleClearDate}
-                    onSelectToday={handleSelectToday}
-                />
-                <SalesTransactionList
-                    isLoading={isLoading}
-                    transactions={filteredTransactions}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                />
-          .</div>
-            </div>
 
-            {/* Modals */}
-            {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
-            <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
+    // --- RENDER ---
+    return (
+        <>
+            <div className="container mx-auto px-8 py-8">
+            <SalesStatsGrid stats={stats} />
+                <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
+                    <SalesToolbar
+                        filter={filter}
+                        setFilter={setFilter}
+                        isDatePickerOpen={isDatePickerOpen}
+                        setIsDatePickerOpen={setIsDatePickerOpen}
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                        datePickerRef={datePickerRef}
+                        onClearDate={handleClearDate}
+                        onSelectToday={handleSelectToday}
+                    />
+                    <SalesTransactionList
+                        isLoading={isLoading}
+                        transactions={filteredTransactions}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
+                </div>
+            </div>
+
+            {/* Modals */}
+            {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
+            <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
             
             {uploadedData && (
                 <DataPreviewModal
-                    isOpen={isPreviewModalOpen}
+                    isOpen={isPreviewModalOpen}
                     title={`Preview: ${uploadedData.fileName}`}
-                    onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
+                    onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
                     footer={
                         <SalesPreviewFooter 
                             onConfirm={handleConfirmSubmission} 
                             onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
                         />
                     }
-                >
+                >
                     <TransactionPreviewContent
                         isFinanceView={false}
-                        data={uploadedData}
-                        liveKpis={liveKpis}
-                        gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
-                        onGigalanInputChange={handleInputChangeAndRecalculate}
-                        selectedUnidad={selectedUnidad}
-                        onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
+                        data={uploadedData}
+                        liveKpis={liveKpis}
+                        gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
+                        onGigalanInputChange={handleInputChangeAndRecalculate}
+                        selectedUnidad={selectedUnidad}
+                        onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
                         fixedCostsData={editedFixedCosts} 
                         onFixedCostChange={handleFixedCostChange}
                         recurringServicesData={editedRecurringServices}
@@ -372,9 +388,10 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
                         isCodeManagerOpen={isCodeManagerOpen}
                         setIsCodeManagerOpen={setIsCodeManagerOpen}
                         onFixedCostAdd={handleFixedCostAdd}
+                        onFixedCostRemove={handleFixedCostRemove}
                     />
                 </DataPreviewModal>
             )}
-        </>
-    );
+        </>
+    );
 }
