@@ -1,5 +1,4 @@
 // src/components/shared/FixedCostsTable.tsx
-import { formatCurrency, formatCellData } from '@/lib/formatters';
 import { EditableTableCell } from '@/components/shared/EditableTableCell'; 
 import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell'; 
 import type { FixedCost } from '@/types'; 

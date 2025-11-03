@@ -2,10 +2,6 @@
 import KpiCard from '@/components/shared/KpiCard';
 import { EditableKpiCard } from '@/components/shared/EditableKpiCard';
 import { formatCurrency } from '@/lib/formatters'; 
-import type { 
-    Transaction, 
-    KpiCalculationResponse,
-} from '@/types'; 
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; // <-- NEW IMPORT
 
 // --- REMOVED PROPS INTERFACE ---
