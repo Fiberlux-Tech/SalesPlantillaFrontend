@@ -1,5 +1,5 @@
 // src/features/transactions/components/TransactionOverviewInputs.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react'; // <-- useEffect removed
 import StatusBadge from '@/components/shared/StatusBadge';
 import {
     EditPencilIcon,
@@ -51,30 +51,6 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     const [isEditingSaleType, setIsEditingSaleType] = useState<boolean>(false);
     const [editedSaleType, setEditedSaleType] = useState<string | null>(null);
 
-    // --- useEffect for initializing local state (uses context values) ---
-    useEffect(() => {
-        // FIX: Add parentheses to resolve operator precedence
-        const plazo = (kpiData.plazoContrato ?? tx.plazoContrato) || '';
-        if (!isEditingPlazo) setEditedPlazo(plazo);
-
-        // FIX: Add parentheses
-        const unidad = (liveEdits?.unidadNegocio ?? tx.unidadNegocio) || '';
-        if (!isEditingUnidad) setEditedUnidad(unidad);
-
-        // FIX: Add parentheses
-        const region = (liveEdits?.gigalan_region ?? tx.gigalan_region) || '';
-        if (!isEditingRegion) setEditedRegion(region);
-
-        // FIX: Add parentheses
-        const saleType = (liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type) || '';
-        if (!isEditingSaleType) setEditedSaleType(saleType);
-        
-    }, [
-        tx, kpiData, liveEdits, 
-        isEditingPlazo, isEditingUnidad, isEditingRegion, isEditingSaleType
-    ]);
-
-
     // --- Local Handlers (Now call context handlers, passing baseTransaction) ---
     const handleEditPlazoSubmit = () => {
         const newPlazo = parseInt(editedPlazo as string, 10);
@@ -86,8 +62,10 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
             alert("Please enter a valid whole number greater than 0 for Plazo Contrato.");
         }
     };
+
+    // REFACTOR: Cancel handler is now simpler
     const handleCancelEditPlazo = () => {
-        setEditedPlazo((kpiData.plazoContrato ?? tx.plazoContrato) || '');
+        // No need to reset editedPlazo, it will be re-set on next edit click
         setIsEditingPlazo(false);
     };
     
@@ -100,8 +78,9 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
         handleUnidadChange(editedUnidad, baseTransaction); 
         setIsEditingUnidad(false);
     };
+
+    // REFACTOR: Cancel handler is now simpler
     const handleCancelEditUnidad = () => {
-        setEditedUnidad((liveEdits?.unidadNegocio ?? tx.unidadNegocio) || '');
         setIsEditingUnidad(false);
     };
 
@@ -113,8 +92,9 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
         handleGigalanInputChange('gigalan_region', editedRegion, baseTransaction);
         setIsEditingRegion(false);
     };
+
+    // REFACTOR: Cancel handler is now simpler
     const handleCancelEditRegion = () => {
-        setEditedRegion((liveEdits?.gigalan_region ?? tx.gigalan_region) || '');
         setIsEditingRegion(false);
     };
 
@@ -126,12 +106,13 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
         handleGigalanInputChange('gigalan_sale_type', editedSaleType, baseTransaction);
         setIsEditingSaleType(false);
     };
+
+    // REFACTOR: Cancel handler is now simpler
     const handleCancelEditSaleType = () => {
-        setEditedSaleType((liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type) || '');
         setIsEditingSaleType(false);
     };
 
-    // Wrapper function for GigaLanCommissionInputs
+    // Wrapper function for GigaLanCommissionInputs (This logic was already correct)
     const handleGigaLanOldMrcChange = (key: string, value: number | null) => {
         // This wrapper calls the context handler with the extra baseTransaction argument
         handleGigalanInputChange(key, value, baseTransaction);
@@ -167,7 +148,11 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                                 <button onClick={handleCancelEditUnidad} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                             </div>
                         ) : ( 
-                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { setIsEditingUnidad(true); }}>
+                            // REFACTOR: onClick now initializes the draft state
+                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { 
+                                setEditedUnidad((liveEdits?.unidadNegocio ?? tx.unidadNegocio) || '');
+                                setIsEditingUnidad(true); 
+                            }}>
                                 <p className={`font-semibold ${confirmedUnidad ? 'text-gray-900' : 'text-red-600'}`}> {confirmedUnidad || "Selecciona obligatorio"} </p>
                                 <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                             </div>
@@ -196,7 +181,11 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                                 <button onClick={handleCancelEditPlazo} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                             </div>
                         ) : ( 
-                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { setIsEditingPlazo(true); }}>
+                            // REFACTOR: onClick now initializes the draft state
+                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { 
+                                setEditedPlazo((kpiData.plazoContrato ?? tx.plazoContrato) || '');
+                                setIsEditingPlazo(true); 
+                            }}>
                                 <p className="font-semibold text-gray-900">{kpiData.plazoContrato ?? tx.plazoContrato ?? '-'} meses</p>
                                 <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                             </div>
@@ -221,7 +210,11 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                                         <button onClick={handleCancelEditRegion} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                                     </div>
                                 ) : ( 
-                                    <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { setIsEditingRegion(true); }}>
+                                    // REFACTOR: onClick now initializes the draft state
+                                    <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
+                                        setEditedRegion((liveEdits?.gigalan_region ?? tx.gigalan_region) || '');
+                                        setIsEditingRegion(true); 
+                                    }}>
                                         <p className={`font-semibold ${confirmedRegion ? 'text-gray-900' : 'text-red-600'}`}> {confirmedRegion || "Selecciona obligatorio"} </p>
                                         <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                                     </div>
@@ -243,7 +236,11 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                                         <button onClick={handleCancelEditSaleType} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                                     </div>
                                 ) : ( 
-                                    <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { setIsEditingSaleType(true); }}>
+                                    // REFACTOR: onClick now initializes the draft state
+                                    <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
+                                        setEditedSaleType((liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type) || '');
+                                        setIsEditingSaleType(true); 
+                                    }}>
                                         <p className={`font-semibold ${confirmedSaleType ? 'text-gray-900' : 'text-red-600'}`}> {confirmedSaleType || "Selecciona obligatorio"} </p>
                                         <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                                     </div>
