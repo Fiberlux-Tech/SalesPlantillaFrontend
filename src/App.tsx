@@ -1,14 +1,14 @@
 // src/App.tsx
 import { useState, useEffect } from 'react';
-import { checkAuthStatus, loginUser, registerUser, logoutUser } from './features/auth/authService'; 
+// --- FIX: Use alias paths for all imports ---
+import { checkAuthStatus, loginUser, registerUser, logoutUser } from '@/features/auth/authService'; 
 import AuthPage from '@/features/auth/AuthPage';
 import LandingPage from '@/features/landing/LandingPage';
-import SalesDashboard from '@/features/sales/SalesDashboard';
-import FinanceDashboard from '@/features/finance/FinanceDashboard';
+import TransactionDashboardPage from '@/features/transactions/TransactionDashboardPage'; 
 import { PermissionManagementModule } from '@/features/admin/AdminUserManagement';
 import MasterDataManagement from '@/features/masterdata/MasterDataManagement'; 
 import GlobalHeader from '@/components/shared/GlobalHeader'; 
-import type { User } from '@/types'; // Import our new User type!
+import type { User } from '@/types';
 
 // Define sales actions type
 interface SalesActions {

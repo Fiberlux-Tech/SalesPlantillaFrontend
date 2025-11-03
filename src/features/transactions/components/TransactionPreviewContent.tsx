@@ -12,9 +12,7 @@ import { formatCurrency } from '@/lib/formatters';
 import { FixedCostCodeManager, FixedCostEmptyState } from '@/components/shared/FixedCostCodeManager'; 
 import { TransactionOverviewInputs } from './TransactionOverviewInputs';
 import { KpiMetricsGrid } from './KpiMetricsGrid';
-import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
-
-// --- REMOVED PROPS INTERFACE ---
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; // It imports the context
 
 // Define the type for the openSections state
 type OpenSectionsState = Record<string, boolean>;
@@ -35,7 +33,6 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     } = useTransactionPreview();
 
     // --- STATE IS NOW SMALLER ---
-    // Apply the OpenSectionsState type to useState
     const [openSections, setOpenSections] = useState<OpenSectionsState>({ 
         'cashFlow': true,
         'recurringCosts': false,
@@ -43,12 +40,8 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     });
 
     const tx = baseTransaction.transactions;
-    const kpiData = liveKpis || tx;
     const timeline = liveKpis?.timeline || baseTransaction?.timeline;
-
-    // --- THIS IS THE FIX ---
     const isPending = tx.ApprovalStatus === 'PENDING';
-    // --- END FIX ---
 
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -64,7 +57,6 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             .filter((code, index, self) => code && self.indexOf(code) === index);
     }, [currentFixedCosts]);
 
-    // This component now uses handlers from context
     const CustomFixedCostTotalsNode = () => {
         const showCodeManagerUI = !isFinanceView || canEdit; 
         
@@ -103,27 +95,22 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
         );
     };
 
-
     return (
         <>
-            {/* --- Transaction Status Banners (Now Correct) --- */}
+            {/* --- Transaction Status Banners --- */}
             {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">Transaction Status: {tx.ApprovalStatus}</p> <p className="text-sm text-red-700">Modification of key inputs is not allowed once a transaction has been reviewed.</p> </div> </div> )}
             {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">Por favor revisar la data cargada de manera minuciosa</p> <p className="text-sm text-yellow-700">Asegúrate que toda la información sea correcta antes de confirmarla.</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'APPROVED' && ( <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">Plantilla Aprobada!</p> <p className="text-sm text-green-700">Esta plantilla ya fue aprobada. Felicidades</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> </div> </div> )}
 
-
-            {/* --- 1. NO PROPS NEEDED --- */}
             <TransactionOverviewInputs
                 isFinanceView={isFinanceView}
             />
 
-            {/* --- Detalle de Servicios Section --- */}
             <div className="mb-6">
                 <h3 className="font-semibold text-gray-800 mb-3 text-lg">Detalle de Servicios</h3>
                 <div className="space-y-3">
-                    {/* --- 2. RECURRING TABLE NO LONGER NEEDS PROPS --- */}
                     <CostBreakdownRow 
                         title="Servicios Recurrentes" 
                         items={(currentRecurringServices || []).length} 
@@ -135,7 +122,6 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         <RecurringServicesTable /> 
                     </CostBreakdownRow>
                         
-                    {/* --- 3. FIXED COSTS TABLE NO LONGER NEEDS PROPS --- */}
                     <CostBreakdownRow 
                         title="Inversión (Costos Fijos)" 
                         items={(currentFixedCosts || []).length} 
@@ -149,7 +135,6 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         /> 
                     </CostBreakdownRow>
 
-                    {/* --- Cash Flow Row (Unchanged) --- */}
                     {timeline && (
                         <CostBreakdownRow
                             title="Flujo"
@@ -169,7 +154,6 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                 </div>
             </div>
 
-            {/* --- 4. NO PROPS NEEDED --- */}
             <KpiMetricsGrid />
         </>
     );

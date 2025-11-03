@@ -1,9 +1,15 @@
 // src/hooks/useTransactionDashboard.ts
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { getSalesTransactions, FormattedSalesTransaction } from '@/features/sales/salesService';
-import { getFinanceTransactions, FormattedFinanceTransaction } from '@/features/finance/financeService';
+// --- FIX THE IMPORT PATHS ---
+import { 
+    getSalesTransactions, 
+    FormattedSalesTransaction,
+    getFinanceTransactions,
+    FormattedFinanceTransaction
+} from '@/features/transactions/transactionService';
+// --- (End of fix) ---
 import type { User } from '@/types';
-import type { RefObject } from 'react'; 
+import type { RefObject } from 'react';
 
 // --- Type Definitions for the Hook ---
 

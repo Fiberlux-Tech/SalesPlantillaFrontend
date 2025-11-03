@@ -1,8 +1,8 @@
-// src/features/finance/components/TransactionList.tsx
+// src/features/transactions/components/FinanceTransactionList.tsx
 import React from 'react';
-import StatusBadge from '@/components/shared/StatusBadge'; // Assumes StatusBadge.tsx
-// 1. Import the formatted type from the service file
-import type { FormattedFinanceTransaction } from '../financeService';
+import StatusBadge from '@/components/shared/StatusBadge';
+// 1. Import the formatted type from the *new* service file
+import type { FormattedFinanceTransaction } from '../transactionService';
 
 // 2. Define the props interface
 interface TransactionListProps {

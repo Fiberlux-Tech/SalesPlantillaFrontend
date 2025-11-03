@@ -1,11 +1,8 @@
 // src/contexts/TransactionPreviewContext.tsx
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { 
-    calculatePreview as salesCalculatePreview 
-} from '@/features/sales/salesService';
-import { 
-    calculatePreview as financeCalculatePreview 
-} from '@/features/finance/financeService';
+    calculatePreview
+} from '@/features/transactions/transactionService';
 import type { 
     TransactionDetailResponse, 
     KpiCalculationResponse, 
@@ -13,7 +10,6 @@ import type {
     RecurringService 
 } from '@/types';
 
-// Define the shape of the data and functions our context will provide
 interface ITransactionPreviewContext {
     view: 'SALES' | 'FINANCE';
     baseTransaction: TransactionDetailResponse['data'];
@@ -43,10 +39,8 @@ interface ITransactionPreviewContext {
     currentRecurringServices: RecurringService[];
 }
 
-// Create the context
 const TransactionPreviewContext = createContext<ITransactionPreviewContext | null>(null);
 
-// Create the Provider component
 interface ProviderProps {
     children: React.ReactNode;
     baseTransaction: TransactionDetailResponse['data'];
@@ -54,7 +48,6 @@ interface ProviderProps {
 }
 
 export function TransactionPreviewProvider({ children, baseTransaction, view }: ProviderProps) {
-    // All state that was in the dashboards is now managed *here*
     const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
     const [liveEdits, setLiveEdits] = useState<Record<string, any> | null>(null);
     const [apiError, setApiError] = useState<string | null>(null);
@@ -67,12 +60,10 @@ export function TransactionPreviewProvider({ children, baseTransaction, view }: 
     );
     const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false);
 
-    // Derived state
     const canEdit = useMemo(() => baseTransaction.transactions.ApprovalStatus === 'PENDING', [baseTransaction]);
     const currentFixedCosts = useMemo(() => editedFixedCosts || [], [editedFixedCosts]);
     const currentRecurringServices = useMemo(() => editedRecurringServices || [], [editedRecurringServices]);
 
-    // All handler logic is also moved *here*
     const handleRecalculate = useCallback(async (
         inputKey: string, 
         inputValue: any,
@@ -81,9 +72,8 @@ export function TransactionPreviewProvider({ children, baseTransaction, view }: 
         if (!baseTxData) return;
         setApiError(null);
 
-        const calculator = view === 'SALES' ? salesCalculatePreview : financeCalculatePreview;
+        const calculator = calculatePreview;
         
-        // Determine current state values for the payload
         const currentEdits: Record<string, any> = { ...liveEdits, [inputKey]: inputValue }; 
         const baseTx = baseTxData.transactions;
         const costsForPayload = inputKey === 'fixed_costs' ? inputValue : editedFixedCosts; 
@@ -124,7 +114,7 @@ export function TransactionPreviewProvider({ children, baseTransaction, view }: 
             setApiError('Network error calculating preview.');
             setLiveKpis(null);
         }
-    }, [view, liveEdits, editedFixedCosts, editedRecurringServices]);
+    }, [liveEdits, editedFixedCosts, editedRecurringServices]);
 
     const handleFixedCostRemove = useCallback((codeToRemove: string, baseTxData: TransactionDetailResponse['data']) => {
         const newCosts = (editedFixedCosts || []).filter(cost => cost.ticket !== codeToRemove);
@@ -163,7 +153,6 @@ export function TransactionPreviewProvider({ children, baseTransaction, view }: 
     }, [handleRecalculate]);
 
 
-    // The value provided to all children
     const value = {
         view,
         baseTransaction,
@@ -194,7 +183,6 @@ export function TransactionPreviewProvider({ children, baseTransaction, view }: 
     );
 }
 
-// Create the consumer hook
 export const useTransactionPreview = (): ITransactionPreviewContext => {
     const context = useContext(TransactionPreviewContext);
     if (!context) {

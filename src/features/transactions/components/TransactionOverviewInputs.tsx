@@ -6,7 +6,7 @@ import {
     EditCheckIcon,
     EditXIcon
 } from '@/components/shared/Icons';
-import { GigaLanCommissionInputs } from '@/features/sales/components/GigaLanCommissionInputs';
+import { GigaLanCommissionInputs } from '@/features/transactions/components/GigaLanCommissionInputs';
 import {
     Select,
     SelectContent,
