@@ -6,20 +6,28 @@ import type {
     Transaction, 
     KpiCalculationResponse,
 } from '@/types'; 
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; // <-- NEW IMPORT
 
-interface KpiMetricsGridProps {
-    tx: Transaction;
-    kpiData: KpiCalculationResponse['data'] | Transaction;
-    canEdit: boolean;
-    onGigalanInputChange: (key: string, value: any) => void;
-}
+// --- REMOVED PROPS INTERFACE ---
 
-export function KpiMetricsGrid({
-    tx,
-    kpiData,
-    canEdit,
-    onGigalanInputChange
-}: KpiMetricsGridProps) {
+export function KpiMetricsGrid() {
+
+    // +++ GET PROPS FROM CONTEXT +++
+    const {
+        baseTransaction,
+        liveKpis,
+        canEdit,
+        handleGigalanInputChange
+    } = useTransactionPreview();
+
+    const tx = baseTransaction.transactions;
+    const kpiData = liveKpis || tx;
+    
+    // +++ Create the onValueChange handler to pass down +++
+    const onValueChange = (key: string, newValue: string | number) => {
+        handleGigalanInputChange(key, newValue, baseTransaction);
+    }
+
     return (
         <div>
             <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
@@ -32,7 +40,7 @@ export function KpiMetricsGrid({
                     currentCurrency={kpiData.mrc_currency ?? tx.mrc_currency ?? 'PEN'}
                     subtext="Métrica Clave"
                     canEdit={canEdit} 
-                    onValueChange={onGigalanInputChange}
+                    onValueChange={onValueChange} // Pass the new handler
                 />
                 
                 <EditableKpiCard
@@ -42,7 +50,7 @@ export function KpiMetricsGrid({
                     currentValue={kpiData.NRC ?? tx.NRC}
                     currentCurrency={kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN'}
                     canEdit={canEdit} 
-                    onValueChange={onGigalanInputChange}
+                    onValueChange={onValueChange} // Pass the new handler
                 />
 
                 <KpiCard title="VAN" value={formatCurrency(kpiData.VAN)} currency="PEN" />

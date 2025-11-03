@@ -1,15 +1,8 @@
 // src/hooks/useTransactionDashboard.ts
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { getSalesTransactions, calculatePreview as salesCalculatePreview, FormattedSalesTransaction } from '@/features/sales/salesService';
-import { getFinanceTransactions, calculatePreview as financeCalculatePreview, FormattedFinanceTransaction } from '@/features/finance/financeService';
-import type { 
-    User, 
-    TransactionDetailResponse, 
-    KpiCalculationResponse,
-    FixedCost,
-    RecurringService 
-} from '@/types';
-// Import RefObject explicitly for better typing
+import { getSalesTransactions, FormattedSalesTransaction } from '@/features/sales/salesService';
+import { getFinanceTransactions, FormattedFinanceTransaction } from '@/features/finance/financeService';
+import type { User } from '@/types';
 import type { RefObject } from 'react'; 
 
 // --- Type Definitions for the Hook ---
@@ -17,7 +10,6 @@ import type { RefObject } from 'react';
 type DashboardTransaction = FormattedSalesTransaction | FormattedFinanceTransaction;
 type DashboardStats = { [key: string]: string | number };
 type DashboardView = 'SALES' | 'FINANCE';
-type LiveEditState = Record<string, any> | null;
 
 // Define inputs that are common to both dashboards
 interface DashboardOptions {
@@ -26,7 +18,7 @@ interface DashboardOptions {
     onLogout: () => void;
 }
 
-// FIX 1: Update DashboardReturn to correctly type Fixed Cost handlers
+// FIX 1: The return type is NOW MUCH SMALLER
 interface DashboardReturn {
     // Data & Pagination
     transactions: DashboardTransaction[];
@@ -35,7 +27,7 @@ interface DashboardReturn {
     currentPage: number;
     totalPages: number;
     setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
-    fetchTransactions: () => Promise<void>;
+    fetchTransactions: (pageToFetch: number) => Promise<void>; // Modified to accept page
 
     // Filtering
     filter: string;
@@ -44,31 +36,14 @@ interface DashboardReturn {
     setIsDatePickerOpen: React.Dispatch<React.SetStateAction<boolean>>;
     selectedDate: Date | null;
     setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
-    // Ref type is now fixed to be RefObject<HTMLDivElement>
     datePickerRef: RefObject<HTMLDivElement>; 
     handleClearDate: () => void;
     handleSelectToday: () => void;
     filteredTransactions: DashboardTransaction[];
-
-    // Preview/Editing State (Shared across both views)
+    
+    // API Error for the *list* page
     apiError: string | null;
     setApiError: React.Dispatch<React.SetStateAction<string | null>>;
-    liveKpis: KpiCalculationResponse['data'] | null;
-    liveEdits: LiveEditState;
-    setLiveKpis: React.Dispatch<React.SetStateAction<KpiCalculationResponse['data'] | null>>;
-    editedFixedCosts: FixedCost[] | null;
-    setEditedFixedCosts: React.Dispatch<React.SetStateAction<FixedCost[] | null>>;
-    editedRecurringServices: RecurringService[] | null;
-    setEditedRecurringServices: React.Dispatch<React.SetStateAction<RecurringService[] | null>>;
-    isCodeManagerOpen: boolean;
-    setIsCodeManagerOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    
-    // Core Logic Handlers
-    handleRecalculate: (inputKey: string, inputValue: any, baseTransaction?: TransactionDetailResponse['data']) => Promise<void>;
-    // FIX: Add baseTransaction to the signature
-    handleFixedCostAdd: (newCosts: FixedCost[], baseTransaction: TransactionDetailResponse['data'] | undefined) => void;
-    // FIX: Add baseTransaction to the signature
-    handleFixedCostRemove: (codeToRemove: string, baseTransaction: TransactionDetailResponse['data'] | undefined) => void;
 }
 
 // --- Hook Implementation ---
@@ -85,28 +60,25 @@ export function useTransactionDashboard({ view, onLogout }: DashboardOptions): D
     const [totalPages, setTotalPages] = useState<number>(1);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     
-    // Preview/Editing States
-    const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
-    const [liveEdits, setLiveEdits] = useState<LiveEditState>(null);
-    const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(null);
-    const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(null);
-    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); 
+    // REMOVED ALL MODAL-RELATED STATE:
+    // liveKpis, liveEdits, editedFixedCosts, editedRecurringServices, isCodeManagerOpen
 
-    // --- Core Logic: Fetching Transactions (Unchanged) ---
-    const fetchTransactions = useCallback(async () => {
+    // --- Core Logic: Fetching Transactions (Modified to take page) ---
+    const fetchTransactions = useCallback(async (pageToFetch: number) => {
         setIsLoading(true);
         setApiError(null);
         
         let result;
         if (view === 'SALES') {
-            result = await getSalesTransactions(currentPage);
+            result = await getSalesTransactions(pageToFetch);
         } else {
-            result = await getFinanceTransactions(currentPage);
+            result = await getFinanceTransactions(pageToFetch);
         }
 
         if (result.success) {
             setTransactions(result.data || []); 
             setTotalPages(result.pages || 1);
+            setCurrentPage(pageToFetch); // Set current page after successful fetch
         } else {
             if (view === 'FINANCE' && (result as any).status === 401) {
                 onLogout(); 
@@ -115,105 +87,28 @@ export function useTransactionDashboard({ view, onLogout }: DashboardOptions): D
             setApiError(result.error || 'Unknown error');
         }
         setIsLoading(false);
-    }, [currentPage, view, onLogout]);
+    }, [view, onLogout]); // Removed currentPage from dependencies
 
+    // Initial fetch
     useEffect(() => {
-        fetchTransactions();
-    }, [currentPage, fetchTransactions]);
+        fetchTransactions(1); // Fetch page 1 on mount
+    }, [fetchTransactions]); // Runs once on mount
 
-    // --- Core Logic: Recalculation (Unified Handler) ---
-    const handleRecalculate = useCallback(async (
-        inputKey: string, 
-        inputValue: any, 
-        baseTransaction: TransactionDetailResponse['data'] | undefined
-    ) => {
-        const payloadSource = baseTransaction;
-        if (!payloadSource) return;
-        setApiError(null);
-
-        if (inputKey !== 'fixed_costs' && inputKey !== 'recurring_services') {
-            setLiveEdits(prev => ({ ...prev, [inputKey]: inputValue }));
-        }
-
-        const calculator = view === 'SALES' ? salesCalculatePreview : financeCalculatePreview;
-        const currentEdits: LiveEditState = { ...liveEdits, [inputKey]: inputValue }; 
-        const baseTx = payloadSource.transactions;
-
-        const costsForPayload = inputKey === 'fixed_costs' ? inputValue as FixedCost[] : editedFixedCosts; 
-        const servicesForPayload = inputKey === 'recurring_services' ? inputValue as RecurringService[] : editedRecurringServices;
-        
-        const payloadUpdates = {
-             unidadNegocio: currentEdits?.unidadNegocio ?? baseTx.unidadNegocio,
-             plazoContrato: currentEdits?.plazoContrato ?? baseTx.plazoContrato,
-             MRC: currentEdits?.MRC ?? baseTx.MRC,
-             NRC: currentEdits?.NRC ?? baseTx.NRC,
-             mrc_currency: currentEdits?.mrc_currency ?? baseTx.mrc_currency,
-             nrc_currency: currentEdits?.nrc_currency ?? baseTx.nrc_currency,
-             gigalan_region: currentEdits?.gigalan_region ?? baseTx.gigalan_region,
-             gigalan_sale_type: currentEdits?.gigalan_sale_type ?? baseTx.gigalan_sale_type,
-             gigalan_old_mrc: currentEdits?.gigalan_old_mrc ?? baseTx.gigalan_old_mrc,
-        };
-        
-        const recalculationPayload = {
-            ...payloadSource,     
-            fixed_costs: costsForPayload,
-            recurring_services: servicesForPayload,
-            transactions: {
-                ...baseTx,
-                ...payloadUpdates
-            }
-        };
-
-        delete (recalculationPayload as any).timeline;
-
-        try {
-            const result = await calculator(recalculationPayload);
-            if (result.success) {
-                setLiveKpis(result.data || null);
-            } else {
-                setApiError(result.error || 'Failed to update KPIs.');
-                setLiveKpis(null);
-            }
-        } catch (error: any) {
-            setApiError('Network error calculating preview.');
-            setLiveKpis(null);
-        }
-    }, [editedFixedCosts, editedRecurringServices, liveEdits, view, onLogout]);
-
-    // --- Core Logic: Fixed Cost Management (UPDATED TO RECEIVE BASE TRANSACTION) ---
-
-    // FIX: Updated signature to receive baseTransaction
-    const handleFixedCostRemove = useCallback((codeToRemove: string, baseTransaction: TransactionDetailResponse['data'] | undefined) => {
-        if (!editedFixedCosts) return;
-        const combinedCosts = editedFixedCosts.filter(
-            cost => cost.ticket !== codeToRemove
-        );
-        setEditedFixedCosts(combinedCosts);
-        // FIX: Pass baseTransaction to handleRecalculate
-        handleRecalculate('fixed_costs', combinedCosts, baseTransaction);
-    }, [editedFixedCosts, handleRecalculate]);
-
-    // FIX: Updated signature to receive baseTransaction
-    const handleFixedCostAdd = useCallback((newCosts: FixedCost[], baseTransaction: TransactionDetailResponse['data'] | undefined) => {
-        if (!editedFixedCosts) return;
-        const combinedCosts = [...editedFixedCosts, ...newCosts];
-        setEditedFixedCosts(combinedCosts);
-        // FIX: Pass baseTransaction to handleRecalculate
-        handleRecalculate('fixed_costs', combinedCosts, baseTransaction);
-    }, [editedFixedCosts, handleRecalculate]);
+    
+    // REMOVED ALL HANDLERS FOR MODAL LOGIC:
+    // handleRecalculate, handleFixedCostRemove, handleFixedCostAdd
 
 
     // --- Memoized Values (Shared) ---
-
     const handleClearDate = useCallback(() => { setSelectedDate(null); setIsDatePickerOpen(false); }, []);
     const handleSelectToday = useCallback(() => { setSelectedDate(new Date()); setIsDatePickerOpen(false); }, []);
 
+    // Filter logic remains the same
     const filteredTransactions = useMemo(() => {
+        // ... (filter logic is unchanged) ...
         return transactions.filter(t => {
             const filterLower = filter.toLowerCase();
-            
             const isFinanceTx = (t as FormattedFinanceTransaction).unidadNegocio !== undefined;
-            
             let clientMatch = false;
 
             if (isFinanceTx) {
@@ -231,15 +126,21 @@ export function useTransactionDashboard({ view, onLogout }: DashboardOptions): D
         });
     }, [transactions, filter, selectedDate]);
     
-    // --- Return Hook State and Handlers ---
+    // --- Return Hook State and Handlers (Much smaller) ---
     return {
         transactions,
         stats: {} as DashboardStats,
         isLoading,
         currentPage,
         totalPages,
-        setCurrentPage,
-        fetchTransactions,
+        setCurrentPage: (pageAction) => {
+            // New setCurrentPage logic to trigger fetch
+            const newPage = typeof pageAction === 'function' ? pageAction(currentPage) : pageAction;
+            if (newPage !== currentPage) {
+                fetchTransactions(newPage);
+            }
+        },
+        fetchTransactions: () => fetchTransactions(currentPage), // Add a way to refresh current page
 
         filter,
         setFilter,
@@ -254,18 +155,5 @@ export function useTransactionDashboard({ view, onLogout }: DashboardOptions): D
 
         apiError,
         setApiError,
-        liveKpis,
-        setLiveKpis,
-        liveEdits,
-        editedFixedCosts,
-        setEditedFixedCosts,
-        editedRecurringServices,
-        setEditedRecurringServices,
-        isCodeManagerOpen,
-        setIsCodeManagerOpen,
-        
-        handleRecalculate,
-        handleFixedCostAdd, // Now expects two arguments
-        handleFixedCostRemove, // Now expects two arguments
     };
 }

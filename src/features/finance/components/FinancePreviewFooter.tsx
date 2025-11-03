@@ -1,33 +1,45 @@
 // src/features/finance/components/FinancePreviewFooter.tsx
-import type { Transaction } from '@/types'; // 1. Import the Transaction type
+import type { Transaction, FixedCost, RecurringService } from '@/types'; // Import types
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; // <-- NEW IMPORT
 
-// 2. Define the props interface
+// --- MODIFIED PROPS ---
+// These props now expect the complex 5-argument function signature
 interface FinancePreviewFooterProps {
-    tx: Transaction; // Use the imported type
-    onApprove: (transactionId: number) => void;
-    onReject: (transactionId: number) => void;
+    onApprove: (transactionId: number, status: 'approve' | 'reject', modifiedData: Partial<Transaction>, fixedCosts: FixedCost[] | null, recurringServices: RecurringService[] | null) => void;
+    onReject: (transactionId: number, status: 'approve' | 'reject', modifiedData: Partial<Transaction>, fixedCosts: FixedCost[] | null, recurringServices: RecurringService[] | null) => void;
     onCalculateCommission: (transactionId: number) => void;
 }
 
 export function FinancePreviewFooter({ 
-    tx, 
     onApprove, 
     onReject, 
     onCalculateCommission 
 }: FinancePreviewFooterProps) {
     
+    // --- GET DATA FROM CONTEXT ---
+    // No longer needs 'tx' passed as a prop
+    const {
+        baseTransaction,
+        liveEdits,
+        editedFixedCosts,
+        editedRecurringServices
+    } = useTransactionPreview();
+    
+    const tx = baseTransaction.transactions;
     const canModify = tx.ApprovalStatus === 'PENDING';
     
-    // 3. Type event handlers
+    // These handlers now get the live data from context to pass up
     const handleApproveClick = () => {
         if (window.confirm('¿Estás seguro/a de aprobar esta transacción?')) {
-            onApprove(tx.id);
+            const modifiedFields = { ...tx, ...liveEdits };
+            onApprove(tx.id, 'approve', modifiedFields, editedFixedCosts, editedRecurringServices);
         }
     };
 
     const handleRejectClick = () => {
         if (window.confirm('¿Estás seguro/a de rechazar esta transacción?')) {
-            onReject(tx.id);
+            const modifiedFields = { ...tx, ...liveEdits };
+            onReject(tx.id, 'reject', modifiedFields, editedFixedCosts, editedRecurringServices);
         }
     };
 

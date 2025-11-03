@@ -8,81 +8,51 @@ import {
 import FixedCostsTable from '@/components/shared/FixedCostsTable';
 import RecurringServicesTable from '@/components/shared/RecurringServicesTable';
 import CashFlowTimelineTable from '@/components/shared/CashFlowTimelineTable';
-
 import { formatCurrency } from '@/lib/formatters'; 
-import type { 
-    TransactionDetailResponse, 
-    KpiCalculationResponse,
-    FixedCost,
-    RecurringService
-} from '@/types'; 
 import { FixedCostCodeManager, FixedCostEmptyState } from '@/components/shared/FixedCostCodeManager'; 
-
-// --- NEW COMPONENT IMPORTS ---
 import { TransactionOverviewInputs } from './TransactionOverviewInputs';
 import { KpiMetricsGrid } from './KpiMetricsGrid';
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 
-type Currency = 'PEN' | 'USD';
+// --- REMOVED PROPS INTERFACE ---
 
-// 3. Define state types (Local state is now small)
-interface OpenSectionsState {
-    [key: string]: boolean;
-}
+// Define the type for the openSections state
+type OpenSectionsState = Record<string, boolean>;
 
-// 2. Define props interface (Simplified, removed editing-related state/handlers)
-interface TransactionPreviewContentProps {
-    data: TransactionDetailResponse['data'];
-    isFinanceView?: boolean;
-    gigalanInputs: Record<string, any> | null; 
-    onGigalanInputChange: (key: string, value: any) => void;
-    selectedUnidad: string;
-    onUnidadChange: (value: string) => void;
-    liveKpis: KpiCalculationResponse['data'] | null;
-    fixedCostsData: FixedCost[] | null;
-    onFixedCostChange: (index: number, field: keyof FixedCost, value: string | number | Currency) => void;
-    recurringServicesData: RecurringService[] | null;
-    onRecurringServiceChange: (index: number, field: keyof RecurringService, value: string | number | Currency) => void;
-    isCodeManagerOpen: boolean;
-    setIsCodeManagerOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    onFixedCostAdd: (newCosts: FixedCost[]) => void;
-    onFixedCostRemove: (codeToRemove: string) => void;
-}
+export function TransactionPreviewContent({ isFinanceView = false }: { isFinanceView?: boolean }) {
 
-export function TransactionPreviewContent({
-    data,
-    isFinanceView = false,
-    gigalanInputs,
-    onGigalanInputChange,
-    selectedUnidad,
-    onUnidadChange,
-    liveKpis,
-    fixedCostsData,
-    onFixedCostChange,
-    recurringServicesData,
-    onRecurringServiceChange,
-    isCodeManagerOpen, 
-    setIsCodeManagerOpen, 
-    onFixedCostAdd,
-    onFixedCostRemove // Passed directly to FixedCostCodeManager
-}: TransactionPreviewContentProps) {
+    // +++ GET EVERYTHING FROM CONTEXT +++
+    const {
+        baseTransaction,
+        liveKpis,
+        isCodeManagerOpen,
+        setIsCodeManagerOpen,
+        handleFixedCostAdd,
+        handleFixedCostRemove,
+        currentFixedCosts,
+        currentRecurringServices,
+        canEdit
+    } = useTransactionPreview();
 
     // --- STATE IS NOW SMALLER ---
-    const [openSections, setOpenSections] = useState<OpenSectionsState>({
-        'cashFlow': true
+    // Apply the OpenSectionsState type to useState
+    const [openSections, setOpenSections] = useState<OpenSectionsState>({ 
+        'cashFlow': true,
+        'recurringCosts': false,
+        'fixedCosts': false
     });
 
-    const tx = data.transactions;
-    const isPending = tx.ApprovalStatus === 'PENDING';
-    const canEdit = isPending;
+    const tx = baseTransaction.transactions;
     const kpiData = liveKpis || tx;
-    const timeline = liveKpis?.timeline || data?.timeline;
+    const timeline = liveKpis?.timeline || baseTransaction?.timeline;
+
+    // --- THIS IS THE FIX ---
+    const isPending = tx.ApprovalStatus === 'PENDING';
+    // --- END FIX ---
 
     const toggleSection = (section: string) => {
-        setOpenSections((prev: OpenSectionsState) => ({ ...prev, [section]: !prev[section] }));
+        setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
-    
-    const currentFixedCosts = fixedCostsData || data.fixed_costs;
-    const currentRecurringServices = recurringServicesData || data.recurring_services; 
     
     const totalFixedCosts = useMemo(() => (currentFixedCosts || []).reduce((acc, item) => acc + (item.total || 0), 0), [currentFixedCosts]);
     const totalRecurringCosts = useMemo(() => (currentRecurringServices || []).reduce((acc, item) => acc + (item.egreso || 0), 0), [currentRecurringServices]); 
@@ -94,7 +64,7 @@ export function TransactionPreviewContent({
             .filter((code, index, self) => code && self.indexOf(code) === index);
     }, [currentFixedCosts]);
 
-    // **Custom Totals Node (Implements "Cargar" button layout fix)**
+    // This component now uses handlers from context
     const CustomFixedCostTotalsNode = () => {
         const showCodeManagerUI = !isFinanceView || canEdit; 
         
@@ -109,27 +79,24 @@ export function TransactionPreviewContent({
         
         return (
             <div className="flex items-center space-x-3 relative"> 
-                {/* Total Text */}
                 <div className="text-right"> 
                     <p className="font-semibold text-red-600">{formatCurrency(totalFixedCosts)}</p> 
                     <p className="text-xs text-gray-500">Total</p> 
                 </div>
                 
-                {/* Cargar Button */}
                 <button 
-                    onClick={(e) => { e.stopPropagation(); setIsCodeManagerOpen(prev => !prev); }}
+                    onClick={(e) => { e.stopPropagation(); setIsCodeManagerOpen(true); }}
                     className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
                     Cargar
                 </button>
                 
-                {/* Manager Pop-up */}
                 {isCodeManagerOpen && (
                     <FixedCostCodeManager 
                         loadedCodes={loadedFixedCostCodes} 
-                        onFixedCostAdd={onFixedCostAdd} 
+                        onFixedCostAdd={(newCosts) => handleFixedCostAdd(newCosts, baseTransaction)} 
                         onToggle={() => setIsCodeManagerOpen(false)} 
-                        onCodeRemove={onFixedCostRemove} // Passed removal handler
+                        onCodeRemove={(code) => handleFixedCostRemove(code, baseTransaction)}
                     />
                 )}
             </div>
@@ -139,7 +106,7 @@ export function TransactionPreviewContent({
 
     return (
         <>
-            {/* --- Transaction Status Banners (Unchanged) --- */}
+            {/* --- Transaction Status Banners (Now Correct) --- */}
             {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">Transaction Status: {tx.ApprovalStatus}</p> <p className="text-sm text-red-700">Modification of key inputs is not allowed once a transaction has been reviewed.</p> </div> </div> )}
             {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">Por favor revisar la data cargada de manera minuciosa</p> <p className="text-sm text-yellow-700">Asegúrate que toda la información sea correcta antes de confirmarla.</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> </div> </div> )}
@@ -147,56 +114,42 @@ export function TransactionPreviewContent({
             {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> </div> </div> )}
 
 
-            {/* --- 1. REPLACED: Transaction Overview Inputs --- */}
+            {/* --- 1. NO PROPS NEEDED --- */}
             <TransactionOverviewInputs
-                tx={tx}
-                kpiData={kpiData}
                 isFinanceView={isFinanceView}
-                canEdit={canEdit}
-                gigalanInputs={gigalanInputs}
-                selectedUnidad={selectedUnidad}
-                onGigalanInputChange={onGigalanInputChange}
-                onUnidadChange={onUnidadChange}
             />
 
             {/* --- Detalle de Servicios Section --- */}
             <div className="mb-6">
                 <h3 className="font-semibold text-gray-800 mb-3 text-lg">Detalle de Servicios</h3>
                 <div className="space-y-3">
-                    {/* Recurring Services Row (Unchanged) */}
+                    {/* --- 2. RECURRING TABLE NO LONGER NEEDS PROPS --- */}
                     <CostBreakdownRow 
                         title="Servicios Recurrentes" 
                         items={(currentRecurringServices || []).length} 
                         total={totalRecurringCosts} 
-                        isOpen={openSections['recurringCosts']} 
+                        isOpen={openSections['recurringCosts']}
                         onToggle={() => toggleSection('recurringCosts')} 
                         customTotalsNode={ <div className="flex space-x-4"> <div> <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> <p className="text-xs text-gray-500 text-right">Ingreso</p> </div> <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> <p className="text-xs text-gray-500 text-right">Egreso</p> </div> </div> } 
                     > 
-                        <RecurringServicesTable 
-                            data={currentRecurringServices} 
-                            canEdit={canEdit}
-                            onServiceChange={onRecurringServiceChange} 
-                        /> 
+                        <RecurringServicesTable /> 
                     </CostBreakdownRow>
                         
-                    {/* Fixed Costs Row (Unchanged) */}
+                    {/* --- 3. FIXED COSTS TABLE NO LONGER NEEDS PROPS --- */}
                     <CostBreakdownRow 
                         title="Inversión (Costos Fijos)" 
                         items={(currentFixedCosts || []).length} 
                         total={totalFixedCosts} 
-                        isOpen={openSections['fixedCosts']} 
+                        isOpen={openSections['fixedCosts']}
                         onToggle={() => toggleSection('fixedCosts')} 
                         customTotalsNode={CustomFixedCostTotalsNode()} 
                     > 
                         <FixedCostsTable 
-                            data={currentFixedCosts} 
-                            canEdit={canEdit} 
-                            onCostChange={onFixedCostChange} 
                             EmptyStateComponent={() => <FixedCostEmptyState onToggle={() => setIsCodeManagerOpen(true)} />}
                         /> 
                     </CostBreakdownRow>
 
-                    {/* Cash Flow Row (Unchanged) */}
+                    {/* --- Cash Flow Row (Unchanged) --- */}
                     {timeline && (
                         <CostBreakdownRow
                             title="Flujo"
@@ -216,13 +169,8 @@ export function TransactionPreviewContent({
                 </div>
             </div>
 
-            {/* --- 2. REPLACED: Key Performance Indicators Section --- */}
-            <KpiMetricsGrid 
-                tx={tx}
-                kpiData={kpiData}
-                canEdit={canEdit}
-                onGigalanInputChange={onGigalanInputChange}
-            />
+            {/* --- 4. NO PROPS NEEDED --- */}
+            <KpiMetricsGrid />
         </>
     );
 }

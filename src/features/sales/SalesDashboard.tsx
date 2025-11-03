@@ -1,8 +1,8 @@
 // src/features/sales/SalesDashboard.tsx
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { SalesStatsGrid } from './components/SalesStatsGrid';
-import { SalesToolbar } from './components/SalesToolBar';
 import { SalesTransactionList } from './components/SalesTransactionList';
+import { DashboardToolbar } from '@/components/shared/DashboardToolBar'; // Use shared toolbar
 import FileUploadModal from './components/FileUploadModal';
 import DataPreviewModal from '../../components/shared/DataPreviewModal';
 import { TransactionPreviewContent } from '../transactions/components/TransactionPreviewContent'; 
@@ -13,6 +13,7 @@ import {
     FormattedSalesTransaction 
 } from './salesService'; 
 import { useTransactionDashboard } from '@/hooks/useTransactionDashboard'; 
+import { TransactionPreviewProvider } from '@/contexts/TransactionPreviewContext'; // <-- NEW IMPORT
 
 import type { 
     User, 
@@ -27,14 +28,12 @@ interface SalesDashboardProps {
     setSalesActions: (actions: { onUpload: () => void, onExport: () => void }) => void;
 }
 
-// Define the shape of the Gigalan inputs (kept local as part of Sales-specific UI flow)
+// These local interfaces remain as they are part of the *Sales-specific* UI flow
 interface GigalanInputs {
     gigalan_region: string;
     gigalan_sale_type: "NUEVO" | "EXISTENTE" | "";
     gigalan_old_mrc: number | null;
 }
-
-// Define the shape of the override fields (kept local as part of Sales-specific UI flow)
 interface OverrideFields {
     plazoContrato: number | null;
     MRC: number | null;
@@ -43,35 +42,26 @@ interface OverrideFields {
     nrc_currency: "PEN" | "USD" | null;
 }
 
+
 export default function SalesDashboard({ user: _user, setSalesActions }: SalesDashboardProps) {
-    // --- LOCAL SALES-SPECIFIC STATE ---
+    // --- LOCAL SALES-SPECIFIC STATE (Modal state is removed) ---
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
-    const [selectedUnidad, setSelectedUnidad] = useState<string>('');
-    const [gigalanCommissionInputs, setGigalanCommissionInputs] = useState<GigalanInputs>({
-        gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null,
-    });
-    const [overrideFields, setOverrideFields] = useState<OverrideFields>({ 
-        plazoContrato: null, MRC: null, mrc_currency: null, NRC: null, nrc_currency: null 
-    });
-    const salesOnLogout = useCallback(() => {
-    }, []);
+    // --- All 'live', 'edited', 'apiError' states are REMOVED ---
+    const salesOnLogout = useCallback(() => {}, []);
 
 
-    // --- HOOK CONSUMPTION ---
+    // --- HOOK CONSUMPTION (Simplified: modal logic is removed) ---
     const { 
         transactions, isLoading, currentPage, totalPages, setCurrentPage,
         filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
-        apiError, setApiError, liveKpis, setLiveKpis,
-        editedFixedCosts, setEditedFixedCosts, editedRecurringServices, setEditedRecurringServices,
-        isCodeManagerOpen, setIsCodeManagerOpen,
-        handleRecalculate, handleFixedCostAdd, handleFixedCostRemove,
-        fetchTransactions,
-    } = useTransactionDashboard({ user: _user, view: 'SALES', onLogout: salesOnLogout }); // 3. Pass the stable function
+        apiError, setApiError, // This is the API error for the *list*
+        fetchTransactions, // Use this to refetch the list
+    } = useTransactionDashboard({ user: _user, view: 'SALES', onLogout: salesOnLogout });
+    
 
-
-    // --- useEffect for setSalesActions remains the same ---
+    // useEffect for setSalesActions remains the same
     useEffect(() => {
         if (setSalesActions) {
             setSalesActions({
@@ -88,7 +78,7 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
     }, [setSalesActions]);
 
 
-    // --- stats calculation remains here ---
+    // stats calculation remains the same
     const stats = useMemo(() => {
         const pendingApprovals = transactions.filter(t => t.status === 'PENDING').length;
         const totalValue = 0; 
@@ -103,89 +93,37 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
     }, [transactions]);
 
 
-    // --- HANDLERS ---
+    // --- HANDLERS (Simplified) ---
     
-    const handleInputChangeAndRecalculate = async (inputKey: string, inputValue: any) => {
-        if (!uploadedData) return;
-        setApiError(null);
-
-        // Map local state changes back into the common input flow before calling the hook's handler
-        if (inputKey === 'unidadNegocio') {
-            setSelectedUnidad(inputValue);
-        } else if (inputKey === 'fixed_costs') {
-             setEditedFixedCosts(inputValue);
-        } else if (inputKey === 'recurring_services') { 
-             setEditedRecurringServices(inputValue);
-        } else if (inputKey.startsWith('gigalan_')) {
-             setGigalanCommissionInputs(prev => {
-                const next = { ...prev, [inputKey]: inputValue };
-                 if (inputKey === 'gigalan_sale_type' && inputValue !== 'EXISTENTE') {
-                     next.gigalan_old_mrc = null;
-                 }
-                 return next;
-             });
-        } else if (['plazoContrato', 'MRC', 'NRC', 'mrc_currency', 'nrc_currency'].includes(inputKey)) {
-             setOverrideFields(prev => ({ ...prev, [inputKey]: inputValue }));
-        }
-
-        // Call the unified hook logic, providing the base transaction data
-        await handleRecalculate(inputKey, inputValue, uploadedData);
-    };
-
-
     // Handles initial Excel upload and data setup
     const handleUploadNext = async (file: File | null) => {
         if (!file) return;
-        setApiError(null);
-        // Reset states
-        setLiveKpis(null); 
-        setEditedFixedCosts(null); 
-        setEditedRecurringServices(null);
-        setIsCodeManagerOpen(false); 
+        setApiError(null); // Clear list error
         
-        // Reset local sales states
-        setSelectedUnidad('');
-
         const result = await uploadExcelForPreview(file);
 
         if (result.success && result.data) {
-            setUploadedData(result.data);
+            setUploadedData(result.data); // Just set the base data for the context
             setIsModalOpen(false);
             setIsPreviewModalOpen(true);
-
-            setEditedFixedCosts(result.data.fixed_costs || []); 
-            setEditedRecurringServices(result.data.recurring_services || []); 
-
-            setOverrideFields({ 
-                plazoContrato: result.data.transactions.plazoContrato, MRC: result.data.transactions.MRC, 
-                mrc_currency: result.data.transactions.mrc_currency || 'PEN', 
-                NRC: result.data.transactions.NRC, nrc_currency: result.data.transactions.nrc_currency || 'PEN'
-            });
-            setGigalanCommissionInputs({ gigalan_region: '', gigalan_sale_type: '', gigalan_old_mrc: null });
         } else {
+            // This error is for the *upload*, show it locally
             setApiError(result.error || 'Unknown upload error');
             setIsModalOpen(false);
         }
     };
 
-    // Handles final transaction submission
-    const handleConfirmSubmission = async () => {
-        if (!uploadedData || !selectedUnidad) {
-            setApiError('Por favor, selecciona una Unidad de Negocio.');
-            return;
-        }
+    // This handler is passed to the footer, which gets context data
+    const handleConfirmSubmission = async (
+        finalData: TransactionDetailResponse['data'] // Receives payload from context-aware footer
+    ) => {
         setApiError(null);
-        // ... (rest of validation) ...
-
+        
+        // The final payload is passed up from the context-aware footer
         const finalPayload = {
-            ...uploadedData,
-            fixed_costs: editedFixedCosts, 
-            recurring_services: editedRecurringServices,
+            ...finalData,
             transactions: {
-                ...uploadedData.transactions,
-                ...gigalanCommissionInputs,
-                unidadNegocio: selectedUnidad,
-                ...overrideFields 
+                ...finalData.transactions
             }
         };
         delete (finalPayload as any).timeline;
@@ -193,52 +131,19 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         const result = await submitFinalTransaction(finalPayload);
 
         if (result.success) {
-            fetchTransactions(); // Reload transactions list
+            fetchTransactions(1); // Reload transactions list (go to page 1)
             setIsPreviewModalOpen(false);
             setUploadedData(null);
-            setSelectedUnidad('');
-            setEditedFixedCosts(null); setEditedRecurringServices(null);
-            setLiveKpis(null); 
-            setIsCodeManagerOpen(false);
         } else {
-            setApiError(result.error || 'Unknown submission error');
+            // In a real app, we'd set this error in the context
+            alert(result.error || 'Unknown submission error');
         }
     };
     
-    // Wrapper for the Fixed Cost removal handler (Passes base data to hook)
-    const handleFixedCostRemoveWrapper = (codeToRemove: string) => {
-        if (!uploadedData) return;
-        handleFixedCostRemove(codeToRemove, uploadedData);
-    };
-
-    // Wrapper for the Fixed Cost addition handler (Passes base data to hook)
-    const handleFixedCostAddWrapper = (newCosts: FixedCost[]) => {
-        if (!uploadedData) return;
-        handleFixedCostAdd(newCosts, uploadedData);
-    };
-    
-    // Handler for updates to Fixed Costs table within modal
-    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
-        if (!editedFixedCosts || !uploadedData) return;
-
-        setEditedFixedCosts(prev => {
-            const newCosts = [...(prev || [])];
-            (newCosts[index] as any)[field] = value;
-            handleRecalculate('fixed_costs', newCosts, uploadedData); // Pass base data here
-            return newCosts;
-        });
-    };
-    
-    // Handler for updates to Recurring Services table within modal
-    const handleRecurringServiceChange = (index: number, field: keyof RecurringService, value: any) => {
-        if (!editedRecurringServices || !uploadedData) return;
-
-        setEditedRecurringServices(prev => {
-            const newServices = [...(prev || [])];
-            (newServices[index] as any)[field] = value; 
-            handleRecalculate('recurring_services', newServices, uploadedData); // Pass base data here
-            return newServices;
-        });
+    // Modal close handler
+    const handleCloseModal = () => {
+        setIsPreviewModalOpen(false);
+        setUploadedData(null);
     };
     
 
@@ -248,12 +153,14 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
             <div className="container mx-auto px-8 py-8">
             <SalesStatsGrid stats={stats} />
                 <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
-                    <SalesToolbar
+                    {/* Use the new shared DashboardToolbar */}
+                    <DashboardToolbar
                         filter={filter} setFilter={setFilter}
                         isDatePickerOpen={isDatePickerOpen} setIsDatePickerOpen={setIsDatePickerOpen}
                         selectedDate={selectedDate} setSelectedDate={setSelectedDate}
                         datePickerRef={datePickerRef}
                         onClearDate={handleClearDate} onSelectToday={handleSelectToday}
+                        placeholder="Filtra por nombre de cliente..."
                     />
                     <SalesTransactionList
                         isLoading={isLoading}
@@ -265,40 +172,33 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
             </div>
 
             {/* Modals */}
+            {/* This is the API error for the *list* or *upload* */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onNext={handleUploadNext} />
             
+            {/* --- WRAP THE MODAL IN THE PROVIDER --- */}
             {uploadedData && (
-                <DataPreviewModal
-                    isOpen={isPreviewModalOpen}
-                    title={`Preview: ${uploadedData.fileName}`}
-                    onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
-                    footer={
-                        <SalesPreviewFooter 
-                            onConfirm={handleConfirmSubmission} 
-                            onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
-                        />
-                    }
+                <TransactionPreviewProvider
+                    baseTransaction={uploadedData}
+                    view="SALES"
                 >
-                    <TransactionPreviewContent
-                        isFinanceView={false}
-                        data={uploadedData}
-                        liveKpis={liveKpis}
-                        gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
-                        onGigalanInputChange={(inputKey, value) => handleInputChangeAndRecalculate(inputKey, value)}
-                        selectedUnidad={selectedUnidad}
-                        onUnidadChange={(value) => handleInputChangeAndRecalculate('unidadNegocio', value)}
-                        fixedCostsData={editedFixedCosts} 
-                        onFixedCostChange={handleFixedCostChange}
-                        recurringServicesData={editedRecurringServices}
-                        onRecurringServiceChange={handleRecurringServiceChange}
-                        // HOOK-BASED PROPS
-                        isCodeManagerOpen={isCodeManagerOpen}
-                        setIsCodeManagerOpen={setIsCodeManagerOpen}
-                        onFixedCostAdd={handleFixedCostAddWrapper}
-                        onFixedCostRemove={handleFixedCostRemoveWrapper}
-                    />
-                </DataPreviewModal>
+                    <DataPreviewModal
+                        isOpen={isPreviewModalOpen}
+                        title={`Preview: ${uploadedData.fileName}`}
+                        onClose={handleCloseModal} 
+                        footer={
+                            <SalesPreviewFooter 
+                                onConfirm={handleConfirmSubmission} 
+                                onClose={handleCloseModal} 
+                            />
+                        }
+                    >
+                        {/* --- CONTENT COMPONENT NO LONGER NEEDS PROPS --- */}
+                        <TransactionPreviewContent
+                            isFinanceView={false}
+                        />
+                    </DataPreviewModal>
+                </TransactionPreviewProvider>
             )}
         </>
     );

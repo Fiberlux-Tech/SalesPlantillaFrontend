@@ -16,37 +16,32 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants';
-import type { 
-    Transaction,
-    KpiCalculationResponse
-} from '@/types'; 
-// *** NEW IMPORT ***
 import { formatCurrency } from '@/lib/formatters'; 
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 
-
-interface OverviewInputsProps {
-    tx: Transaction; // Base transaction data
-    kpiData: KpiCalculationResponse['data'] | Transaction; // Live/recalculated data
+// --- PROPS ARE NOW MINIMAL ---
+interface TransactionOverviewInputsProps {
     isFinanceView: boolean;
-    canEdit: boolean;
-    gigalanInputs: Record<string, any> | null;
-    selectedUnidad: string;
-    onGigalanInputChange: (key: string, value: any) => void;
-    onUnidadChange: (value: string) => void;
 }
 
-export function TransactionOverviewInputs({
-    tx,
-    kpiData,
-    isFinanceView,
-    canEdit,
-    gigalanInputs,
-    selectedUnidad,
-    onGigalanInputChange,
-    onUnidadChange,
-}: OverviewInputsProps) {
+export function TransactionOverviewInputs({ isFinanceView }: TransactionOverviewInputsProps) {
 
-    // --- Local Editing State (Lifted from TransactionPreviewContent) ---
+    // +++ GET EVERYTHING FROM CONTEXT +++
+    const {
+        baseTransaction,
+        liveKpis,
+        liveEdits, // This replaces 'gigalanInputs'
+        handleGigalanInputChange,
+        handleUnidadChange,
+        canEdit
+    } = useTransactionPreview();
+
+    // --- ADAPT PROPS TO INTERNAL VARIABLE NAMES ---
+    const tx = baseTransaction.transactions;
+    const kpiData = liveKpis || tx;
+    const gigalanInputs = liveEdits; // Use 'liveEdits' from context
+
+    // --- Local Editing State (remains the same) ---
     const [isEditingPlazo, setIsEditingPlazo] = useState<boolean>(false);
     const [editedPlazo, setEditedPlazo] = useState<string | number | null>(null);
     const [isEditingUnidad, setIsEditingUnidad] = useState<boolean>(false);
@@ -56,96 +51,96 @@ export function TransactionOverviewInputs({
     const [isEditingSaleType, setIsEditingSaleType] = useState<boolean>(false);
     const [editedSaleType, setEditedSaleType] = useState<string | null>(null);
 
-    // --- useEffect for initializing local state ---
+    // --- useEffect for initializing local state (uses context values) ---
     useEffect(() => {
-        const currentPlazo = kpiData.plazoContrato ?? tx.plazoContrato ?? '';
-        if (!isEditingPlazo || editedPlazo === null) {
-            setEditedPlazo(currentPlazo);
-        }
+        // FIX: Add parentheses to resolve operator precedence
+        const plazo = (kpiData.plazoContrato ?? tx.plazoContrato) || '';
+        if (!isEditingPlazo) setEditedPlazo(plazo);
+
+        // FIX: Add parentheses
+        const unidad = (liveEdits?.unidadNegocio ?? tx.unidadNegocio) || '';
+        if (!isEditingUnidad) setEditedUnidad(unidad);
+
+        // FIX: Add parentheses
+        const region = (liveEdits?.gigalan_region ?? tx.gigalan_region) || '';
+        if (!isEditingRegion) setEditedRegion(region);
+
+        // FIX: Add parentheses
+        const saleType = (liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type) || '';
+        if (!isEditingSaleType) setEditedSaleType(saleType);
         
-        const currentUnidad = isFinanceView ? (gigalanInputs?.unidadNegocio ?? tx.unidadNegocio) : selectedUnidad;
-        if (!isEditingUnidad || editedUnidad === null) {
-            setEditedUnidad(currentUnidad || '');
-        }
-        
-        const currentRegion = isFinanceView ? (gigalanInputs?.gigalan_region ?? tx.gigalan_region) : gigalanInputs?.gigalan_region;
-        if (!isEditingRegion || editedRegion === null) {
-            setEditedRegion(currentRegion || '');
-        }
-        
-        const currentSaleType = isFinanceView ? (gigalanInputs?.gigalan_sale_type ?? tx.gigalan_sale_type) : gigalanInputs?.gigalan_sale_type;
-        if (!isEditingSaleType || editedSaleType === null) {
-            setEditedSaleType(currentSaleType || '');
-        }
-    }, [tx, kpiData, selectedUnidad, gigalanInputs, isEditingPlazo, isEditingUnidad, isEditingRegion, isEditingSaleType, isFinanceView, editedPlazo, editedUnidad, editedRegion, editedSaleType]);
+    }, [
+        tx, kpiData, liveEdits, 
+        isEditingPlazo, isEditingUnidad, isEditingRegion, isEditingSaleType
+    ]);
 
 
-    // --- Local Handlers (Lifted from TransactionPreviewContent) ---
+    // --- Local Handlers (Now call context handlers, passing baseTransaction) ---
     const handleEditPlazoSubmit = () => {
         const newPlazo = parseInt(editedPlazo as string, 10);
         if (!isNaN(newPlazo) && newPlazo > 0 && Number.isInteger(newPlazo)) {
-            onGigalanInputChange('plazoContrato', newPlazo);
+            // Call the CONTEXT handler
+            handleGigalanInputChange('plazoContrato', newPlazo, baseTransaction); 
             setIsEditingPlazo(false);
         } else {
             alert("Please enter a valid whole number greater than 0 for Plazo Contrato.");
         }
     };
     const handleCancelEditPlazo = () => {
-        setEditedPlazo(kpiData.plazoContrato ?? tx.plazoContrato ?? '');
+        setEditedPlazo((kpiData.plazoContrato ?? tx.plazoContrato) || '');
         setIsEditingPlazo(false);
     };
+    
     const handleEditUnidadSubmit = () => {
         if (!editedUnidad || !UNIDADES_NEGOCIO.includes(editedUnidad)) {
              alert("Selección obligatoria: Por favor, selecciona una Unidad de Negocio válida.");
              return;
         }
-        onUnidadChange(editedUnidad); 
+        // Call the CONTEXT handler
+        handleUnidadChange(editedUnidad, baseTransaction); 
         setIsEditingUnidad(false);
     };
     const handleCancelEditUnidad = () => {
-        const currentUnidad = isFinanceView ? (gigalanInputs?.unidadNegocio ?? tx.unidadNegocio) : selectedUnidad;
-        setEditedUnidad(currentUnidad || '');
+        setEditedUnidad((liveEdits?.unidadNegocio ?? tx.unidadNegocio) || '');
         setIsEditingUnidad(false);
     };
+
     const handleEditRegionSubmit = () => {
         if (!editedRegion || !REGIONS.includes(editedRegion)) {
             alert("Selección obligatoria: Por favor, selecciona una Región válida.");
             return;
         }
-        onGigalanInputChange('gigalan_region', editedRegion);
+        handleGigalanInputChange('gigalan_region', editedRegion, baseTransaction);
         setIsEditingRegion(false);
     };
     const handleCancelEditRegion = () => {
-        const currentRegion = isFinanceView ? (gigalanInputs?.gigalan_region ?? tx.gigalan_region) : gigalanInputs?.gigalan_region;
-        setEditedRegion(currentRegion || '');
+        setEditedRegion((liveEdits?.gigalan_region ?? tx.gigalan_region) || '');
         setIsEditingRegion(false);
     };
-    const handleEditSaleTypeSubmit = () => {
-         if (!editedSaleType) {
-            alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
-            return;
-        }
-        
-        const saleType = editedSaleType as ('NUEVO' | 'EXISTENTE');
 
-        if (!SALE_TYPES.includes(saleType)) {
+    const handleEditSaleTypeSubmit = () => {
+         if (!editedSaleType || !SALE_TYPES.includes(editedSaleType as any)) {
             alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
             return;
         }
-        
-        onGigalanInputChange('gigalan_sale_type', saleType);
+        handleGigalanInputChange('gigalan_sale_type', editedSaleType, baseTransaction);
         setIsEditingSaleType(false);
     };
     const handleCancelEditSaleType = () => {
-        const currentSaleType = isFinanceView ? (gigalanInputs?.gigalan_sale_type ?? tx.gigalan_sale_type) : gigalanInputs?.gigalan_sale_type;
-        setEditedSaleType(currentSaleType || '');
+        setEditedSaleType((liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type) || '');
         setIsEditingSaleType(false);
     };
 
+    // Wrapper function for GigaLanCommissionInputs
+    const handleGigaLanOldMrcChange = (key: string, value: number | null) => {
+        // This wrapper calls the context handler with the extra baseTransaction argument
+        handleGigalanInputChange(key, value, baseTransaction);
+    };
 
-    const confirmedUnidad = isFinanceView ? (gigalanInputs?.unidadNegocio ?? tx.unidadNegocio) : selectedUnidad;
-    const confirmedRegion = isFinanceView ? (gigalanInputs?.gigalan_region ?? tx.gigalan_region) : gigalanInputs?.gigalan_region;
-    const confirmedSaleType = isFinanceView ? (gigalanInputs?.gigalan_sale_type ?? tx.gigalan_sale_type) : gigalanInputs?.gigalan_sale_type;
+    // --- Derived Values (use context state) ---
+    const confirmedUnidad = liveEdits?.unidadNegocio ?? tx.unidadNegocio;
+    const confirmedRegion = liveEdits?.gigalan_region ?? tx.gigalan_region;
+    const confirmedSaleType = liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type;
 
     const baseOverviewData = useMemo(() => [
         { label: 'Transaction ID', value: tx.transactionID || '-' },
@@ -155,6 +150,7 @@ export function TransactionOverviewInputs({
         { label: 'Tipo de Cambio', value: tx.tipoCambio },
         { label: 'Status', value: <StatusBadge status={tx.ApprovalStatus} /> },
     ], [tx.transactionID, tx.clientName, tx.companyID, tx.orderID, tx.tipoCambio, tx.ApprovalStatus]);
+
 
     return (
         <div className="mb-6">
@@ -263,7 +259,7 @@ export function TransactionOverviewInputs({
                             <div className="min-h-[60px]">
                                 <GigaLanCommissionInputs
                                     inputs={{ ...gigalanInputs, gigalan_sale_type: confirmedSaleType }}
-                                    onInputChange={onGigalanInputChange}
+                                    onInputChange={handleGigaLanOldMrcChange} // <-- Use the wrapper
                                 />
                             </div>
                         )}
@@ -271,7 +267,6 @@ export function TransactionOverviewInputs({
                         {!canEdit && tx.gigalan_sale_type === 'EXISTENTE' && (
                             <div className="min-h-[60px]">
                                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">MRC Previo</p>
-                                {/* FIX: Apply formatCurrency to the MRC value */}
                                 <p className="font-semibold text-gray-900">{tx.gigalan_old_mrc ? formatCurrency(tx.gigalan_old_mrc) : '-'}</p>
                             </div>
                         )}

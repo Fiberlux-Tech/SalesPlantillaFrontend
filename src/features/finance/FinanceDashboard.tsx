@@ -1,8 +1,8 @@
 // src/features/finance/FinanceDashboard.tsx
 import { useState, useMemo } from 'react';
 import { FinanceStatsGrid } from './components/FinanceStatsGrid'; 
-import { FinanceToolBar } from './components/FinanceToolBar'; 
 import { TransactionList } from './components/TransactionList'; 
+import { DashboardToolbar } from '@/components/shared/DashboardToolBar';
 import DataPreviewModal from '../../components/shared/DataPreviewModal'; 
 import { TransactionPreviewContent } from '../transactions/components/TransactionPreviewContent'; 
 import { FinancePreviewFooter } from './components/FinancePreviewFooter'; 
@@ -13,9 +13,11 @@ import {
     type FormattedFinanceTransaction 
 } from './financeService';
 import { useTransactionDashboard } from '@/hooks/useTransactionDashboard'; 
+import { TransactionPreviewProvider } from '@/contexts/TransactionPreviewContext';
 
 import type { 
     User, 
+    Transaction, // <-- THIS FIXES THE ERROR IN SCREENSHOT 1
     TransactionDetailResponse, 
     FixedCost, 
     RecurringService 
@@ -27,44 +29,20 @@ interface FinanceDashboardProps {
     onLogout: () => void;
 }
 
-type LiveEditState = Record<string, any> | null; 
-
 export default function FinanceDashboard({ user, onLogout }: FinanceDashboardProps) {
-    // --- LOCAL FINANCE-SPECIFIC STATE ---
+    // --- LOCAL FINANCE-SPECIFIC STATE (Modal state is removed) ---
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
-    const [liveEdits, setLiveEdits] = useState<LiveEditState>(null);
 
-
-    // --- HOOK CONSUMPTION ---
+    // --- HOOK CONSUMPTION (Simplified: modal logic is removed) ---
     const { 
         transactions, isLoading, currentPage, totalPages, setCurrentPage,
         filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
-        apiError, setApiError, liveKpis, setLiveKpis,
-        editedFixedCosts, setEditedFixedCosts, editedRecurringServices, setEditedRecurringServices,
-        isCodeManagerOpen, setIsCodeManagerOpen,
-        handleRecalculate, handleFixedCostAdd, handleFixedCostRemove, // These two handlers require baseTransaction now
-        fetchTransactions,
+        apiError, setApiError, // This is the API error for the *list*
+        fetchTransactions, // Use this to refetch the list
     } = useTransactionDashboard({ user, view: 'FINANCE', onLogout });
-
-
-    // --- HOOK WRAPPERS (FIX) ---
     
-    // FIX 1: Wrapper for the Fixed Cost removal handler
-    const handleFixedCostRemoveWrapper = (codeToRemove: string) => {
-        if (!selectedTransaction) return;
-        // Pass the base transaction data object as the second argument
-        handleFixedCostRemove(codeToRemove, selectedTransaction); 
-    };
-
-    // FIX 2: Wrapper for the Fixed Cost addition handler
-    const handleFixedCostAddWrapper = (newCosts: FixedCost[]) => {
-        if (!selectedTransaction) return;
-        // Pass the base transaction data object as the second argument
-        handleFixedCostAdd(newCosts, selectedTransaction);
-    };
-
-    // ... (stats calculation remains the same) ...
+    // Stats calculation remains the same
     const stats = useMemo(() => {
         const transactionList = transactions as FormattedFinanceTransaction[];
 
@@ -90,105 +68,65 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
         };
     }, [transactions]);
     
-    // ... (rest of handlers like handleClearDate, handleSelectToday, handleRowClick remain the same) ...
-
+    // Row click handler is now much simpler
     const handleRowClick = async (transaction: FormattedFinanceTransaction) => {
-        setApiError(null);
-        setLiveEdits(null);
-        setLiveKpis(null);
-        setEditedFixedCosts(null); 
-        setEditedRecurringServices(null);
-        setIsCodeManagerOpen(false); 
+        setApiError(null); // Clear list API error
+        setSelectedTransaction(null); // Clear old data first
         
         const result = await getTransactionDetails(transaction.id); 
         
         if (result.success) {
-            setSelectedTransaction(result.data);
-            setEditedFixedCosts(result.data.fixed_costs || []); 
-            setEditedRecurringServices(result.data.recurring_services || []);
+            setSelectedTransaction(result.data); // Set the base data for the context
             setIsDetailModalOpen(true);
         } else {
-            setApiError(result.error || 'Unknown error');
+            setApiError(result.error || 'Unknown error'); // Show list API error
         }
     };
 
-    // Handler for changes inside the preview modal
-    const handleRecalculateWrapper = async (key: string, value: any) => {
-        if (!selectedTransaction) return;
-
-        // Update local live edits state
-        if (key !== 'fixed_costs' && key !== 'recurring_services') {
-            setLiveEdits(prev => ({ ...prev, [key]: value }));
-        }
-        
-        // Pass the base transaction data to the hook for calculation
-        await handleRecalculate(key, value, selectedTransaction);
-    };
-
-    const handleUpdateStatus = async (transactionId: number, status: 'approve' | 'reject') => {
-        if (!selectedTransaction) return; 
+    // This handler is passed to the footer, which gets context data
+    const handleUpdateStatus = async (
+        transactionId: number, 
+        status: 'approve' | 'reject', 
+        modifiedData: Partial<Transaction>,
+        fixedCosts: FixedCost[] | null, 
+        recurringServices: RecurringService[] | null
+    ) => {
         setApiError(null);
         
-        const modifiedFields = {
-            ...selectedTransaction.transactions,
-            ...liveEdits,
-        };
-        
         const result = await updateTransactionStatus( 
-            transactionId, status, modifiedFields, editedFixedCosts, editedRecurringServices
+            transactionId, status, modifiedData, fixedCosts, recurringServices
         );
         
         if (result.success) {
             setIsDetailModalOpen(false);
-            setLiveEdits(null); setLiveKpis(null); 
-            setEditedFixedCosts(null); setEditedRecurringServices(null);
-            setIsCodeManagerOpen(false);
-            fetchTransactions(); 
+            setSelectedTransaction(null);
+            fetchTransactions(currentPage); // Refetch current page
         } else {
-            setApiError(result.error || 'Unknown error');
+            // In a real app, we'd set this error in the context
+            alert(`Error: ${result.error}`);
         }
     };
 
+    // This handler is passed to the footer
     const handleCalculateCommission = async (transactionId: number) => {
         setApiError(null);
         const result = await calculateCommission(transactionId);
         
         if (result.success) { 
+            // Update the base transaction data to re-render the provider
             setSelectedTransaction(result.data); 
-            setEditedFixedCosts(result.data.fixed_costs || []);
-            setEditedRecurringServices(result.data.recurring_services || []);
-            fetchTransactions(); 
+            fetchTransactions(currentPage); // Refetch list
         } else {
-             setApiError(result.error || 'Unknown error');
+             // In a real app, we'd set this error in the context
+             alert(`Error: ${result.error}`);
         }
     };
-
-    const handleApprove = (transactionId: number) => { handleUpdateStatus(transactionId, 'approve'); };
-    const handleReject = (transactionId: number) => { handleUpdateStatus(transactionId, 'reject'); };
     
-    // Handler for updates to Recurring Services table within modal
-    const handleRecurringServiceChange = (index: number, field: keyof RecurringService, value: any) => {
-        if (!editedRecurringServices) return;
-
-        setEditedRecurringServices(prev => {
-            const newServices = [...(prev || [])];
-            (newServices[index] as any)[field] = value;
-            handleRecalculateWrapper('recurring_services', newServices);
-            return newServices;
-        });
-    };
-    
-    // Handler for updates to Fixed Costs table within modal
-    const handleFixedCostChange = (index: number, field: keyof FixedCost, value: string | number) => {
-        if (!editedFixedCosts) return;
-
-        setEditedFixedCosts(prev => {
-            const newCosts = [...(prev || [])];
-            (newCosts[index] as any)[field] = value;
-            handleRecalculateWrapper('fixed_costs', newCosts);
-            return newCosts;
-        });
-    };
+    // Modal close handler
+    const handleCloseModal = () => {
+        setIsDetailModalOpen(false);
+        setSelectedTransaction(null);
+    }
 
 
     return (
@@ -197,12 +135,14 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
                 <FinanceStatsGrid stats={stats} />
         
                 <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
-                    <FinanceToolBar
+                    {/* Use the new shared DashboardToolbar */}
+                    <DashboardToolbar
                         filter={filter} setFilter={setFilter}
                         isDatePickerOpen={isDatePickerOpen} setIsDatePickerOpen={setIsDatePickerOpen}
                         selectedDate={selectedDate} setSelectedDate={setSelectedDate}
                         datePickerRef={datePickerRef}
                         onClearDate={handleClearDate} onSelectToday={handleSelectToday}
+                        placeholder="Filter by client name..."
                     />
                     
                     <TransactionList
@@ -215,41 +155,34 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
                 </div>
             </div>
             
+            {/* This is the API error for the *list* page */}
             {apiError && <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{apiError}</span></div>}
             
+            {/* --- WRAP THE MODAL IN THE PROVIDER --- */}
             {selectedTransaction && (
-                <DataPreviewModal 
-                    isOpen={isDetailModalOpen} 
-                    title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
-                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); setIsCodeManagerOpen(false); }}
-                    footer={
-                        <FinancePreviewFooter 
-                            tx={selectedTransaction.transactions} 
-                            onApprove={handleApprove} 
-                            onReject={handleReject} 
-                            onCalculateCommission={handleCalculateCommission} 
-                        />
-                    }
+                <TransactionPreviewProvider 
+                    baseTransaction={selectedTransaction} 
+                    view="FINANCE"
                 >
-                    <TransactionPreviewContent
-                        isFinanceView={true}
-                        data={selectedTransaction} 
-                        liveKpis={liveKpis} 
-                        gigalanInputs={liveEdits} 
-                        onGigalanInputChange={handleRecalculateWrapper} 
-                        selectedUnidad={liveEdits?.unidadNegocio ?? selectedTransaction.transactions.unidadNegocio}
-                        onUnidadChange={(value: string) => handleRecalculateWrapper('unidadNegocio', value)}
-                        fixedCostsData={editedFixedCosts} 
-                        onFixedCostChange={handleFixedCostChange}
-                        recurringServicesData={editedRecurringServices}
-                        onRecurringServiceChange={handleRecurringServiceChange}
-                        // HOOK-BASED PROPS (FIXED)
-                        isCodeManagerOpen={isCodeManagerOpen}
-                        setIsCodeManagerOpen={setIsCodeManagerOpen}
-                        onFixedCostAdd={handleFixedCostAddWrapper} // FIX: Use wrapper
-                        onFixedCostRemove={handleFixedCostRemoveWrapper} // FIX: Use wrapper
-                    />
-                </DataPreviewModal>
+                    <DataPreviewModal 
+                        isOpen={isDetailModalOpen} 
+                        title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
+                        onClose={handleCloseModal}
+                        footer={
+                            <FinancePreviewFooter 
+                                // Pass the handlers down. The footer will call them using context data.
+                                onApprove={handleUpdateStatus} 
+                                onReject={handleUpdateStatus} 
+                                onCalculateCommission={handleCalculateCommission} 
+                            />
+                        }
+                    >
+                        {/* --- CONTENT COMPONENT NO LONGER NEEDS PROPS --- */}
+                        <TransactionPreviewContent
+                            isFinanceView={true}
+                        />
+                    </DataPreviewModal>
+                </TransactionPreviewProvider>
             )}
         </>
     );
