@@ -48,6 +48,8 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
     const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
     const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(null);
     const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(null);
+    // --- NEW STATE ---
+    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); // <-- NEW
 
     // 6. Type async functions
     const fetchTransactions = async (): Promise<void> => {
@@ -68,6 +70,18 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
             setApiError(result.error || 'Unknown error');
         }
         setIsLoading(false);
+    };
+
+    // --- NEW HANDLER ---
+    const handleFixedCostAdd = (newCosts: FixedCost[]) => {
+        if (!editedFixedCosts) return;
+
+        // 1. Merge the new costs with the existing ones
+        const combinedCosts = [...editedFixedCosts, ...newCosts];
+        
+        // 2. Update state and trigger recalculation (using finance's recalculate function)
+        setEditedFixedCosts(combinedCosts);
+        handleRecalculate('fixed_costs', combinedCosts);
     };
 
     useEffect(() => {
@@ -319,7 +333,7 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
                 <DataPreviewModal 
                     isOpen={isDetailModalOpen} 
                     title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
-                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); }}
+                    onClose={() => { setIsDetailModalOpen(false); setLiveEdits(null); setLiveKpis(null); setIsCodeManagerOpen(false); }} // <-- Close manager on modal close
                     footer={
                         <FinancePreviewFooter 
                             tx={selectedTransaction.transactions} 
@@ -341,6 +355,10 @@ export default function FinanceDashboard({ user: _user, onLogout }: FinanceDashb
                         onFixedCostChange={handleFixedCostChange}
                         recurringServicesData={editedRecurringServices}
                         onRecurringServiceChange={handleRecurringServiceChange}
+                        // **NEW PROPS**
+                        isCodeManagerOpen={isCodeManagerOpen}
+                        setIsCodeManagerOpen={setIsCodeManagerOpen}
+                        onFixedCostAdd={handleFixedCostAdd} // Finance can add costs too
                     />
                 </DataPreviewModal>
             )}

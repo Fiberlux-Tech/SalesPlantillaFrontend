@@ -1,5 +1,5 @@
 // src/features/transactions/components/TransactionPreviewContent.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import KpiCard from '@/components/shared/KpiCard';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CostBreakdownRow from '@/components/shared/CostBreakdownRow';
@@ -30,15 +30,22 @@ import type {
     KpiCalculationResponse,
     FixedCost,
     RecurringService
-} from '@/types'; // 1. Import all necessary types
+} from '@/types'; 
+// *** CORRECTED SHARED IMPORT ***
+import { FixedCostCodeManager, FixedCostEmptyState } from '@/components/shared/FixedCostCodeManager'; 
 
 type Currency = 'PEN' | 'USD';
 
-// 2. Define props interface
+// 3. Define state types (Restored from previous error)
+interface OpenSectionsState {
+    [key: string]: boolean;
+}
+
+// 2. Define props interface (Updated with new props for Code Manager)
 interface TransactionPreviewContentProps {
     data: TransactionDetailResponse['data'];
     isFinanceView?: boolean;
-    gigalanInputs: Record<string, any> | null; // Flexible for gigalan/override fields
+    gigalanInputs: Record<string, any> | null; 
     onGigalanInputChange: (key: string, value: any) => void;
     selectedUnidad: string;
     onUnidadChange: (value: string) => void;
@@ -49,11 +56,10 @@ interface TransactionPreviewContentProps {
     recurringServicesData: RecurringService[] | null;
     // FIX 2b: Stronger type for value
     onRecurringServiceChange: (index: number, field: keyof RecurringService, value: string | number | Currency) => void;
-}
-
-// 3. Define state types
-interface OpenSectionsState {
-    [key: string]: boolean;
+    // **NEW PROPS**
+    isCodeManagerOpen: boolean;
+    setIsCodeManagerOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    onFixedCostAdd: (newCosts: FixedCost[]) => void;
 }
 
 export function TransactionPreviewContent({
@@ -67,7 +73,10 @@ export function TransactionPreviewContent({
     fixedCostsData,
     onFixedCostChange,
     recurringServicesData,
-    onRecurringServiceChange
+    onRecurringServiceChange,
+    isCodeManagerOpen, 
+    setIsCodeManagerOpen, 
+    onFixedCostAdd 
 }: TransactionPreviewContentProps) {
 
     // 4. Type internal state
@@ -83,7 +92,7 @@ export function TransactionPreviewContent({
     const [isEditingSaleType, setIsEditingSaleType] = useState<boolean>(false);
     const [editedSaleType, setEditedSaleType] = useState<string | null>(null);
 
-    // ... (useEffect remains the same, it's already robust)
+    // ... (useEffect remains the same) ...
     useEffect(() => {
         if (!data || !data.transactions) return;
 
@@ -120,10 +129,11 @@ export function TransactionPreviewContent({
     const timeline = liveKpis?.timeline || data?.timeline;
 
     const toggleSection = (section: string) => {
-        setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+        // FIX 3: Explicitly type the 'prev' parameter
+        setOpenSections((prev: OpenSectionsState) => ({ ...prev, [section]: !prev[section] }));
     };
 
-    // 5. Type event handlers
+    // 5. Type event handlers (rest of handlers are unchanged)
     const handleEditPlazoSubmit = () => {
         const newPlazo = parseInt(editedPlazo as string, 10);
         if (!isNaN(newPlazo) && newPlazo > 0 && Number.isInteger(newPlazo)) {
@@ -137,8 +147,6 @@ export function TransactionPreviewContent({
         setEditedPlazo(kpiData.plazoContrato ?? tx.plazoContrato ?? '');
         setIsEditingPlazo(false);
     };
-    // ... (other handlers: handleEditUnidadSubmit, handleCancelEditUnidad, etc.) ...
-    // (Handler logic remains the same)
     const handleEditUnidadSubmit = () => {
         if (!editedUnidad || !UNIDADES_NEGOCIO.includes(editedUnidad)) {
              alert("Selección obligatoria: Por favor, selecciona una Unidad de Negocio válida.");
@@ -166,14 +174,11 @@ export function TransactionPreviewContent({
         setIsEditingRegion(false);
     };
     const handleEditSaleTypeSubmit = () => {
-         // Check 1: Handle null/empty string.
          if (!editedSaleType) {
             alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
             return;
         }
         
-        // FIX: Cast the argument to the required narrow union type for the includes method.
-        // This resolves the error on the 'editedSaleType' variable.
         const saleType = editedSaleType as ('NUEVO' | 'EXISTENTE');
 
         if (!SALE_TYPES.includes(saleType)) {
@@ -181,7 +186,6 @@ export function TransactionPreviewContent({
             return;
         }
         
-        // Now that validation is complete, pass the strictly typed variable.
         onGigalanInputChange('gigalan_sale_type', saleType);
         setIsEditingSaleType(false);
     };
@@ -211,6 +215,56 @@ export function TransactionPreviewContent({
     const totalFixedCosts = (currentFixedCosts || []).reduce((acc, item) => acc + (item.total || 0), 0);
     const totalRecurringCosts = (currentRecurringServices || []).reduce((acc, item) => acc + (item.egreso || 0), 0); 
     const totalRecurringIncome = (currentRecurringServices || []).reduce((acc, item) => acc + (item.ingreso || 0), 0);
+
+    const loadedFixedCostCodes = useMemo(() => {
+        return (currentFixedCosts || [])
+            .map(c => c.ticket) 
+            .filter((code, index, self) => code && self.indexOf(code) === index);
+    }, [currentFixedCosts]);
+
+    // **Custom Totals Node (Implements "Cargar" button layout fix)**
+    const CustomFixedCostTotalsNode = () => {
+        const showCodeManagerUI = !isFinanceView || canEdit; 
+        
+        if (!showCodeManagerUI) {
+            return (
+                <div> 
+                    <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p> 
+                    <p className="text-xs text-gray-500 text-right">Total</p> 
+                </div> 
+            );
+        }
+        
+        // FIX: Renders the total and the button side-by-side (matching image_0666c8.png)
+        return (
+            <div className="flex items-center space-x-3 relative"> 
+                {/* Total Text */}
+                <div className="text-right"> 
+                    <p className="font-semibold text-red-600">{formatCurrency(totalFixedCosts)}</p> 
+                    <p className="text-xs text-gray-500">Total</p> 
+                </div>
+                
+                {/* Cargar Button */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); setIsCodeManagerOpen(prev => !prev); }}
+                    className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                    Cargar
+                </button>
+                
+                {/* Manager Pop-up */}
+                {isCodeManagerOpen && (
+                    <FixedCostCodeManager 
+                        loadedCodes={loadedFixedCostCodes} 
+                        onFixedCostAdd={onFixedCostAdd} 
+                        onToggle={() => setIsCodeManagerOpen(false)} 
+                        canRemoveLoadedCodes={!isFinanceView} 
+                    />
+                )}
+            </div>
+        );
+    };
+
 
     return (
         <>
@@ -371,12 +425,15 @@ export function TransactionPreviewContent({
                     total={totalFixedCosts} 
                     isOpen={openSections['fixedCosts']} 
                     onToggle={() => toggleSection('fixedCosts')} 
-                    customTotalsNode={ <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p> <p className="text-xs text-gray-500 text-right">Total</p> </div> } 
+                    // FIX: Use CustomFixedCostTotalsNode for correct button/total layout
+                    customTotalsNode={CustomFixedCostTotalsNode()} 
                 > 
                     <FixedCostsTable 
                         data={currentFixedCosts} 
                         canEdit={canEdit} 
                         onCostChange={onFixedCostChange} 
+                        // NEW PROP: Pass the empty state component logic
+                        EmptyStateComponent={() => <FixedCostEmptyState onToggle={() => setIsCodeManagerOpen(true)} />}
                     /> 
                 </CostBreakdownRow>
 

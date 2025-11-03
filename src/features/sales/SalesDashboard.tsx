@@ -76,6 +76,7 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
     });
     const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(null);
     const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(null);
+    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false); // <-- NEW
 
     // --- useEffect for setSalesActions remains the same ---
     useEffect(() => {
@@ -106,6 +107,18 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
         }
         setIsLoading(false);
     };
+
+    // --- NEW HANDLER ---
+    const handleFixedCostAdd = (newCosts: FixedCost[]) => {
+        if (!editedFixedCosts) return;
+
+        // 1. Merge the new costs with the existing ones
+        const combinedCosts = [...editedFixedCosts, ...newCosts];
+        
+        // 2. Update state and trigger recalculation
+        setEditedFixedCosts(combinedCosts);
+        handleInputChangeAndRecalculate('fixed_costs', combinedCosts);
+    };
 
     useEffect(() => {
         fetchTransactions();
@@ -335,11 +348,11 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
                 <DataPreviewModal
                     isOpen={isPreviewModalOpen}
                     title={`Preview: ${uploadedData.fileName}`}
-                    onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} 
+                    onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
                     footer={
                         <SalesPreviewFooter 
                             onConfirm={handleConfirmSubmission} 
-                            onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); }} 
+                            onClose={() => { setIsPreviewModalOpen(false); setSelectedUnidad(''); setLiveKpis(null); setIsCodeManagerOpen(false); }} 
                         />
                     }
                 >
@@ -347,7 +360,6 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
                         isFinanceView={false}
                         data={uploadedData}
                         liveKpis={liveKpis}
-                        // Pass the combined override/gigalan fields
                         gigalanInputs={{...gigalanCommissionInputs, ...overrideFields}}
                         onGigalanInputChange={handleInputChangeAndRecalculate}
                         selectedUnidad={selectedUnidad}
@@ -356,6 +368,10 @@ export default function SalesDashboard({ user: _user, setSalesActions }: SalesDa
                         onFixedCostChange={handleFixedCostChange}
                         recurringServicesData={editedRecurringServices}
                         onRecurringServiceChange={handleRecurringServiceChange}
+                        // **NEW PROPS**
+                        isCodeManagerOpen={isCodeManagerOpen}
+                        setIsCodeManagerOpen={setIsCodeManagerOpen}
+                        onFixedCostAdd={handleFixedCostAdd}
                     />
                 </DataPreviewModal>
             )}

@@ -1,16 +1,16 @@
 // src/components/shared/CostBreakdownRow.tsx
-import type { ReactNode } from 'react'; // FIX: Import type explicitly
-import { ChevronRightIcon, ChevronDownIcon } from './Icons'; // Assumes Icons.tsx
+import type { ReactNode } from 'react'; 
+import { ChevronRightIcon, ChevronDownIcon } from './Icons'; 
 
 // 1. Define props interface
 interface CostBreakdownRowProps {
     title: string;
     items: number;
-    total: number | null; // Allow null for cases like CashFlow
+    total: number | null; 
     isOpen: boolean;
     onToggle: () => void;
-    children: ReactNode; // FIX: Use imported type
-    customTotalsNode?: ReactNode; // FIX: Use imported type
+    children: ReactNode; 
+    customTotalsNode?: ReactNode; 
 }
 
 // 2. Apply props
@@ -32,21 +32,23 @@ const CostBreakdownRow = ({
                     <p className="text-xs text-gray-500">{items} items</p>
                 </div>
             </div>
-            <div>
+            
+            {/* FIX: Use a flex container here to manage the layout of the total and the button */}
+            <div className="flex items-center space-x-2"> 
                 {customTotalsNode ? (
-                    customTotalsNode 
+                    customTotalsNode // This is used for Recurring Services (Income/Egreso)
                 ) : (
-                     <>
-                        {/* 3. Handle null 'total' prop */}
-                        <p className="font-semibold text-gray-800">
+                     <div className="text-right"> {/* Default alignment for total */}
+                        <p className="font-semibold text-red-600">
                             {total !== null 
                                 ? `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                 : '-'
                             }
                         </p>
-                        <p className="text-xs text-gray-500 text-right">Total</p>
-                    </>
+                        <p className="text-xs text-gray-500">Total</p>
+                    </div>
                 )}
+                
             </div>
         </div>
         {isOpen && <div className="p-4 border border-t-0 border-gray-200 rounded-b-lg">{children}</div>}

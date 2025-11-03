@@ -2,21 +2,31 @@
 import { formatCurrency, formatCellData } from '@/lib/formatters';
 import { EditableTableCell } from '@/components/shared/EditableTableCell'; 
 import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell'; 
-import type { FixedCost } from '@/types'; // 1. Import the data type
+import type { FixedCost } from '@/types'; 
+// FIX 1: Import ReactNode for the component type
+import type { ReactNode } from 'react';
 
 // 2. Define props interface
 interface FixedCostsTableProps {
     data: FixedCost[] | null | undefined;
     canEdit?: boolean;
     onCostChange?: (index: number, field: keyof FixedCost, value: any) => void;
+    // FIX: ADD THE MISSING PROP TO THE INTERFACE
+    EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
 }
 
 const FixedCostsTable = ({ 
     data, 
     canEdit = false, 
-    onCostChange = () => {} // Default no-op function
+    onCostChange = () => {}, // Default no-op function
+    EmptyStateComponent // <-- This prop must be here for destructuring
 }: FixedCostsTableProps) => {
   if (!data || data.length === 0) {
+    // FIX: Render the component if provided
+    if (EmptyStateComponent) {
+        // We pass 'canEdit' to the component, but the type allows simpler components too.
+        return <EmptyStateComponent canEdit={canEdit} />; 
+    }
     return <p className="text-center text-gray-500 py-4">No fixed cost data available.</p>;
   }
   

@@ -5,7 +5,8 @@ import type {
     TransactionDetailResponse,
     KpiCalculationResponse,
     BaseApiResponse,
-    Transaction // Import the Transaction type itself
+    Transaction, // Import the Transaction type itself
+    FixedCost,
 } from '@/types';
 
 // Define a type for the formatted, local-state transaction
@@ -113,5 +114,41 @@ export async function calculatePreview(payload: any): Promise<CalculatePreviewRe
         }
     } catch (error: any) {
         return { success: false, error: error.message || 'Failed to connect to the server for preview calculation.' };
+    }
+}
+
+type FixedCostLookupResult = {
+    success: true;
+    data: FixedCost[];
+} | {
+    success: false;
+    error: string;
+    data?: undefined;
+}
+
+/**
+ * Calls the backend to fetch full FixedCost data objects for a list of codes.
+ * @param {string[]} codes - The list of investment codes (e.g., ["WIN-001"]).
+ * @returns {Promise<FixedCostLookupResult>}
+ */
+export async function getFixedCostsByCodes(codes: string[]): Promise<FixedCostLookupResult> {
+    try {
+        const payload = { investment_codes: codes };
+        // NOTE: The backend must map its internal column names (producto, moneda, etc.) 
+        // to the FixedCost interface field names (tipo_servicio, costo_currency, etc.)
+        const result = await api.post<{ success: boolean, data: { fixed_costs: FixedCost[] }, error?: string }>(
+            '/api/fixed-costs/lookup', 
+            payload
+        );
+
+        if (result.success) {
+            // Defensive check: handle case where backend data structure might be slightly off
+            const fixedCosts = result.data?.fixed_costs || [];
+            return { success: true, data: fixedCosts };
+        } else {
+            return { success: false, error: result.error || 'Failed to fetch fixed costs.' };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Network error during code lookup.' };
     }
 }
