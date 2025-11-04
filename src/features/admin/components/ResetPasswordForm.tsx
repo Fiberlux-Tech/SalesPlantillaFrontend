@@ -1,21 +1,21 @@
 // src/features/admin/components/ResetPasswordForm.tsx
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { UserSearchInput } from "./UserSearchInput";
-import { User } from "../AdminUserManagement";
-import { getAllUsers, resetUserPassword } from "../adminService"; // <-- 1. Import services
+import { useState } from "react";
+import { resetUserPassword } from "../adminService"; // <-- No more getAllUsers
+import type { User } from "../AdminUserManagement"; // <-- Import as a type
 
 // 2. Define a simpler props interface
 interface ResetPasswordFormProps {
+  allUsers: User[]; // <-- ADD THIS NEW PROP
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
 }
 
-export function ResetPasswordForm({ onSuccess, onError }: ResetPasswordFormProps) {
+export function ResetPasswordForm({ allUsers, onSuccess, onError }: ResetPasswordFormProps) {
   // 3. All state now lives inside this component
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -24,17 +24,6 @@ export function ResetPasswordForm({ onSuccess, onError }: ResetPasswordFormProps
     newPassword: "",
     confirmPassword: "",
   });
-
-  // 4. Fetch users once on mount for the search
-  useEffect(() => {
-    const loadUsers = async () => {
-      const result = await getAllUsers();
-      if (result.success && result.data) {
-        setAllUsers(result.data);
-      }
-    };
-    loadUsers();
-  }, []);
 
   // 5. All handlers are now internal
   const handleUserNameChange = (value: string) => {

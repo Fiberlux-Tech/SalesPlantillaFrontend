@@ -1,20 +1,12 @@
 // src/components/shared/CashFlowTimelineTable.tsx
 import type { ReactNode } from 'react'; // FIX: Import type explicitly
 import type { CashFlowTimeline } from '@/types';
+import { formatCurrency } from '@/lib/formatters';
 
 // 2. Define the props interface
 interface CashFlowTimelineTableProps {
     timeline: CashFlowTimeline | null | undefined;
 }
-
-// A local formatter that shows '0.00' instead of '-' for zero values
-const formatFlowValue = (value: number | string | null | undefined): string => {
-    const numValue = parseFloat(value as string);
-    if (!numValue || isNaN(numValue) || numValue === 0) {
-        return '-';
-    }
-    return numValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-};
 
 const isRowEmpty = (values: number[] | null | undefined): boolean => {
     if (!values || values.length === 0) {
@@ -47,7 +39,7 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
         isIndented = false
     ): ReactNode => { // 5. Define return type (FIX: Use imported type)
         
-        const formattedValues = values.map(formatFlowValue); 
+        const formattedValues = values.map(val => formatCurrency(val, { decimals: 0 }));
         
         return (
             <tr className={isBold ? "bg-gray-100" : ""}>

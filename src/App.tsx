@@ -5,8 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { checkAuthStatus, loginUser, registerUser, logoutUser } from '@/features/auth/authService';
 import AuthPage from '@/features/auth/AuthPage';
 import LandingPage from '@/features/landing/LandingPage';
-import SalesDashboard from '@/features/transactions/SalesDashboard';
-import FinanceDashboard from '@/features/transactions/FinanceDashboard';
+import TransactionDashboard from '@/features/transactions/TransactionDashboard';
 import { PermissionManagementModule } from '@/features/admin/AdminUserManagement';
 import MasterDataManagement from '@/features/masterdata/MasterDataManagement';
 import GlobalHeader from '@/components/shared/GlobalHeader';
@@ -118,15 +117,16 @@ export default function App() {
                         
                         <Route path="/sales" element={
                             <ProtectedRoute user={user} roles={['SALES']}>
-                                <SalesDashboard 
-                                    setSalesActions={setSalesActions} 
+                                <TransactionDashboard
+                                    view="SALES"
+                                    setSalesActions={setSalesActions}
                                 />
                             </ProtectedRoute>
                         } />
-                        
+
                         <Route path="/finance" element={
                             <ProtectedRoute user={user} roles={['FINANCE']}>
-                                <FinanceDashboard />
+                                <TransactionDashboard view="FINANCE" />
                             </ProtectedRoute>
                         } />
                         

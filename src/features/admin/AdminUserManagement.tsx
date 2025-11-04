@@ -91,6 +91,7 @@ export function PermissionManagementModule() {
         
         {/* 2. Render the new smart component with simple props */}
         <ResetPasswordForm
+          allUsers={users} // <-- PASS THE users STATE HERE
           onSuccess={(message) => {
             setError(null); // Clear any previous errors
             alert(message); // Show success
