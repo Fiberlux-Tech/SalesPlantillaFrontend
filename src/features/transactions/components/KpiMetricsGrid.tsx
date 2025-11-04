@@ -17,7 +17,7 @@ export function KpiMetricsGrid() {
     } = useTransactionPreview();
 
     // 3. Destructure liveKpis from draftState
-    const { liveKpis } = draftState;
+    const { liveKpis, liveEdits } = draftState;
 
     const tx = baseTransaction.transactions;
     const kpiData = liveKpis || tx;
@@ -50,7 +50,7 @@ export function KpiMetricsGrid() {
                     title="NRC (Pago Único)"
                     kpiKey="NRC"
                     currencyKey="nrc_currency"
-                    currentValue={kpiData.NRC ?? tx.NRC}
+                    currentValue={liveEdits.NRC ?? kpiData.NRC ?? tx.NRC}
                     currentCurrency={kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN'}
                     canEdit={canEdit}
                     onValueChange={onValueChange} // Pass the new dispatch-based handler

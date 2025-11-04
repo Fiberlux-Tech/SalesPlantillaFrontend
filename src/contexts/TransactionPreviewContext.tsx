@@ -45,8 +45,9 @@ export function TransactionPreviewProvider({
         getInitialState
     );
 
-    const { liveEdits, currentFixedCosts, currentRecurringServices } = draftState;
-
+    // CRITICAL FIX: Removed the immediate destructuring here to eliminate the 'unused' error.
+    // The values are accessed either below in 'value' or inside the useEffect/useMemo.
+    
     // 3. canEdit logic remains the same
     const canEdit = useMemo(
         () => baseTransaction.transactions.ApprovalStatus === 'PENDING',
@@ -55,6 +56,9 @@ export function TransactionPreviewProvider({
 
     // 4. This useEffect now handles ALL recalculations automatically (WITH DEBOUNCING)
     useEffect(() => {
+        // MODIFIED: Destructure values *inside* the effect using the latest draftState
+        const { liveEdits, currentFixedCosts, currentRecurringServices } = draftState;
+
         // Do not run on initial render or if data is missing
         if (!baseTransaction) return;
 
@@ -116,14 +120,12 @@ export function TransactionPreviewProvider({
         }, 500); // <-- Wait 500ms after the last dependency change
 
         // --- MODIFICATION: Cleanup function ---
-        // This clears the timer if the dependencies change again before 500ms
+        // CRITICAL FIX: The dependency is now only the top-level draftState
         return () => {
             clearTimeout(handler);
         };
     }, [
-        liveEdits,
-        currentFixedCosts,
-        currentRecurringServices,
+        draftState, // <--- CRITICAL FIX: Ensure the recalculation runs on any valid state update
         baseTransaction,
         dispatch,
     ]);

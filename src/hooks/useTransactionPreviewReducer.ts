@@ -32,11 +32,15 @@ export type PreviewAction =
 export function getInitialState(
     baseTransaction: TransactionDetailResponse['data']
 ): PreviewState {
+    const initialKpis = {
+        ...baseTransaction.transactions,
+        timeline: baseTransaction.timeline,
+    };
     return {
         liveEdits: {},
         currentFixedCosts: baseTransaction.fixed_costs || [],
         currentRecurringServices: baseTransaction.recurring_services || [],
-        liveKpis: null,
+        liveKpis: initialKpis as KpiCalculationResponse['data'],
         apiError: null,
         isRecalculating: false,
     };
