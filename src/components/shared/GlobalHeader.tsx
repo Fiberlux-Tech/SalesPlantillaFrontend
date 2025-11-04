@@ -1,16 +1,15 @@
 // src/components/shared/GlobalHeader.tsx
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOutIcon, ArrowLeftIcon, UploadIcon, ExportIcon } from './Icons';
+import { LogOutIcon, ArrowLeftIcon, UploadIcon } from './Icons';
 import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
 
+// CORRECTED SalesActions interface
 interface SalesActions {
+    uploadLabel: string; // <-- New field
     onUpload: () => void;
-    onExport: () => void;
 }
 
 interface GlobalHeaderProps {
-    // 2. REMOVE onLogout prop
-    // onLogout: () => void; 
     salesActions: SalesActions;
 }
 
@@ -77,13 +76,6 @@ export default function GlobalHeader({
                 <div className="flex items-center space-x-2">
                     {showSalesActions && salesActions && (
                         <>
-                            <button 
-                                onClick={salesActions.onExport}
-                                className={buttonStyles}
-                            >
-                                <ExportIcon className="w-5 h-5 mr-2 text-gray-500" />
-                                <span>Exportar</span>
-                            </button>
                             
                             <button 
                                 onClick={salesActions.onUpload}

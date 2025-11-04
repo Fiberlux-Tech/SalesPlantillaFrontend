@@ -35,9 +35,10 @@ import {
 // --- Define Component Props ---
 type View = 'SALES' | 'FINANCE';
 
+// --- Define Component Props (UPDATED SalesActions Interface) ---
 interface SalesActions {
+    uploadLabel: string; // <-- Only two properties
     onUpload: () => void;
-    onExport: () => void;
 }
 
 interface TransactionDashboardProps {
@@ -89,18 +90,20 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 
     // --- 5. VIEW-SPECIFIC HANDLERS ---
 
-    // Sales Handlers
+// Sales Handlers
     useEffect(() => {
         if (view === 'SALES' && setSalesActions) {
             setSalesActions({
+                uploadLabel: 'Crear Plantilla', // <--- Set the new button text
                 onUpload: () => setIsUploadModalOpen(true),
-                onExport: () => alert('Exporting sales data is not implemented yet!')
+                // onExport is gone
             });
             // Cleanup function
             return () => {
                 setSalesActions({
+                    uploadLabel: 'Crear Plantilla', // Revert default
                     onUpload: () => console.log('Upload not yet available'),
-                    onExport: () => console.log('Export not yet available')
+                    // onExport is gone
                 });
             };
         }

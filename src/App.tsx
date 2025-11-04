@@ -13,12 +13,14 @@ import { AuthProvider } from '@/contexts/AuthContext'; // <-- 1. Import AuthProv
 import type { User, UserRole } from '@/types';
 
 interface SalesActions {
+    uploadLabel: string; // <-- MODIFIED
     onUpload: () => void;
-    onExport: () => void;
+    // Removed: onExport
 }
 const defaultSalesActions: SalesActions = {
+    uploadLabel: 'Cargar Archivo', // <-- MODIFIED
     onUpload: () => console.log('Upload handler not yet mounted'),
-    onExport: () => console.log('Export handler not yet mounted')
+    // Removed: onExport
 };
 
 interface ProtectedRouteProps {
