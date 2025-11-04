@@ -75,17 +75,37 @@ export function transactionPreviewReducer(
             };
 
         case 'UPDATE_FIXED_COST': {
-            const newCosts = [...state.currentFixedCosts];
-            (newCosts[action.payload.index] as any)[action.payload.field] =
-                action.payload.value;
+            // --- MODIFIED BLOCK (Immutable Update) ---
+            const newCosts = state.currentFixedCosts.map((cost, index) => {
+                // If this is not the item we're updating, return it as-is
+                if (index !== action.payload.index) {
+                    return cost;
+                }
+                // This is the item to update. Return a *new* object.
+                return {
+                    ...cost,
+                    [action.payload.field]: action.payload.value,
+                };
+            });
             return { ...state, currentFixedCosts: newCosts };
+            // --- END OF MODIFIED BLOCK ---
         }
 
         case 'UPDATE_RECURRING_SERVICE': {
-            const newServices = [...state.currentRecurringServices];
-            (newServices[action.payload.index] as any)[action.payload.field] =
-                action.payload.value;
+            // --- MODIFIED BLOCK (Immutable Update) ---
+            const newServices = state.currentRecurringServices.map((service, index) => {
+                // If this is not the item we're updating, return it as-is
+                if (index !== action.payload.index) {
+                    return service;
+                }
+                // This is the item to update. Return a *new* object.
+                return {
+                    ...service,
+                    [action.payload.field]: action.payload.value,
+                };
+            });
             return { ...state, currentRecurringServices: newServices };
+            // --- END OF MODIFIED BLOCK ---
         }
 
         case 'RECALCULATION_START':

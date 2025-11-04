@@ -53,62 +53,73 @@ export function TransactionPreviewProvider({
         [baseTransaction]
     );
 
-    // 4. This useEffect now handles ALL recalculations automatically
+    // 4. This useEffect now handles ALL recalculations automatically (WITH DEBOUNCING)
     useEffect(() => {
         // Do not run on initial render or if data is missing
         if (!baseTransaction) return;
 
-        const recalculate = async () => {
-            dispatch({ type: 'RECALCULATION_START' });
+        // --- MODIFICATION: Set up a 500ms timer ---
+        const handler = setTimeout(() => {
+            // Define the async function *inside* the timer callback
+            const recalculate = async () => {
+                dispatch({ type: 'RECALCULATION_START' });
 
-            const baseTx = baseTransaction.transactions;
+                const baseTx = baseTransaction.transactions;
 
-            // Build the payload from base data + current draft state
-            const payloadUpdates = {
-                unidadNegocio: liveEdits?.unidadNegocio ?? baseTx.unidadNegocio,
-                plazoContrato: liveEdits?.plazoContrato ?? baseTx.plazoContrato,
-                MRC: liveEdits?.MRC ?? baseTx.MRC,
-                NRC: liveEdits?.NRC ?? baseTx.NRC,
-                mrc_currency: liveEdits?.mrc_currency ?? baseTx.mrc_currency,
-                nrc_currency: liveEdits?.nrc_currency ?? baseTx.nrc_currency,
-                gigalan_region: liveEdits?.gigalan_region ?? baseTx.gigalan_region,
-                gigalan_sale_type: liveEdits?.gigalan_sale_type ?? baseTx.gigalan_sale_type,
-                gigalan_old_mrc: liveEdits?.gigalan_old_mrc ?? baseTx.gigalan_old_mrc,
-            };
+                // Build the payload from base data + current draft state
+                const payloadUpdates = {
+                    unidadNegocio: liveEdits?.unidadNegocio ?? baseTx.unidadNegocio,
+                    plazoContrato: liveEdits?.plazoContrato ?? baseTx.plazoContrato,
+                    MRC: liveEdits?.MRC ?? baseTx.MRC,
+                    NRC: liveEdits?.NRC ?? baseTx.NRC,
+                    mrc_currency: liveEdits?.mrc_currency ?? baseTx.mrc_currency,
+                    nrc_currency: liveEdits?.nrc_currency ?? baseTx.nrc_currency,
+                    gigalan_region: liveEdits?.gigalan_region ?? baseTx.gigalan_region,
+                    gigalan_sale_type: liveEdits?.gigalan_sale_type ?? baseTx.gigalan_sale_type,
+                    gigalan_old_mrc: liveEdits?.gigalan_old_mrc ?? baseTx.gigalan_old_mrc,
+                };
 
-            const recalculationPayload = {
-                ...baseTransaction,
-                fixed_costs: currentFixedCosts,
-                recurring_services: currentRecurringServices,
-                transactions: {
-                    ...baseTx,
-                    ...payloadUpdates,
-                },
-            };
-            delete (recalculationPayload as any).timeline;
+                const recalculationPayload = {
+                    ...baseTransaction,
+                    fixed_costs: currentFixedCosts,
+                    recurring_services: currentRecurringServices,
+                    transactions: {
+                        ...baseTx,
+                        ...payloadUpdates,
+                    },
+                };
+                delete (recalculationPayload as any).timeline;
 
-            try {
-                const result = await calculatePreview(recalculationPayload);
-                if (result.success) {
-                    dispatch({
-                        type: 'RECALCULATION_SUCCESS',
-                        payload: result.data || null,
-                    });
-                } else {
+                try {
+                    const result = await calculatePreview(recalculationPayload);
+                    if (result.success) {
+                        dispatch({
+                            type: 'RECALCULATION_SUCCESS',
+                            payload: result.data || null,
+                        });
+                    } else {
+                        dispatch({
+                            type: 'RECALCULATION_ERROR',
+                            payload: result.error || 'Failed to update KPIs.',
+                        });
+                    }
+                } catch (error: any) {
                     dispatch({
                         type: 'RECALCULATION_ERROR',
-                        payload: result.error || 'Failed to update KPIs.',
+                        payload: 'Network error calculating preview.',
                     });
                 }
-            } catch (error: any) {
-                dispatch({
-                    type: 'RECALCULATION_ERROR',
-                    payload: 'Network error calculating preview.',
-                });
-            }
-        };
+            };
 
-        recalculate();
+            // Call the async function
+            recalculate();
+        }, 500); // <-- Wait 500ms after the last dependency change
+
+        // --- MODIFICATION: Cleanup function ---
+        // This clears the timer if the dependencies change again before 500ms
+        return () => {
+            clearTimeout(handler);
+        };
     }, [
         liveEdits,
         currentFixedCosts,
@@ -116,8 +127,6 @@ export function TransactionPreviewProvider({
         baseTransaction,
         dispatch,
     ]);
-
-    // 5. All 'handle...' functions and local 'useState' hooks are GONE.
 
     // 6. The value provided by the context is now much simpler
     const value = {
