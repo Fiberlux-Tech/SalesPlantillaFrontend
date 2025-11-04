@@ -1,5 +1,5 @@
 // src/features/transactions/components/TransactionOverviewInputs.tsx
-import React, { useState, useMemo } from 'react'; // <-- useEffect removed
+import React, { useState, useMemo } from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import {
     EditPencilIcon,
@@ -16,27 +16,30 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants';
-import { formatCurrency } from '@/lib/formatters'; 
-import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
+import { formatCurrency } from '@/lib/formatters';
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; // 1. Import hook
 
-// --- PROPS ARE NOW MINIMAL ---
+// --- PROPS ARE THE SAME ---
 interface TransactionOverviewInputsProps {
     isFinanceView: boolean;
 }
 
 export function TransactionOverviewInputs({ isFinanceView }: TransactionOverviewInputsProps) {
 
-    // +++ GET EVERYTHING FROM CONTEXT +++
+    // 2. GET NEW STATE AND DISPATCH FROM CONTEXT
     const {
         baseTransaction,
-        liveKpis,
-        liveEdits, // This replaces 'gigalanInputs'
-        handleGigalanInputChange,
-        handleUnidadChange,
+        draftState, // Get the entire draftState
+        dispatch,     // Get the dispatch function
         canEdit
     } = useTransactionPreview();
 
-    // --- ADAPT PROPS TO INTERNAL VARIABLE NAMES ---
+    // 3. Destructure state from draftState
+    const {
+        liveKpis,
+        liveEdits, // This replaces 'gigalanInputs'
+    } = draftState;
+
     const tx = baseTransaction.transactions;
     const kpiData = liveKpis || tx;
     const gigalanInputs = liveEdits; // Use 'liveEdits' from context
@@ -51,74 +54,78 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     const [isEditingSaleType, setIsEditingSaleType] = useState<boolean>(false);
     const [editedSaleType, setEditedSaleType] = useState<string | null>(null);
 
-    // --- Local Handlers (Now call context handlers, passing baseTransaction) ---
+    // --- 4. Local Handlers (Now call dispatch) ---
     const handleEditPlazoSubmit = () => {
         const newPlazo = parseInt(editedPlazo as string, 10);
         if (!isNaN(newPlazo) && newPlazo > 0 && Number.isInteger(newPlazo)) {
-            // Call the CONTEXT handler
-            handleGigalanInputChange('plazoContrato', newPlazo, baseTransaction); 
+            // Call dispatch instead of handleGigalanInputChange
+            dispatch({
+                type: 'UPDATE_TRANSACTION_FIELD',
+                payload: { key: 'plazoContrato', value: newPlazo }
+            });
             setIsEditingPlazo(false);
         } else {
             alert("Please enter a valid whole number greater than 0 for Plazo Contrato.");
         }
     };
 
-    // REFACTOR: Cancel handler is now simpler
-    const handleCancelEditPlazo = () => {
-        // No need to reset editedPlazo, it will be re-set on next edit click
-        setIsEditingPlazo(false);
-    };
-    
+    const handleCancelEditPlazo = () => setIsEditingPlazo(false);
+
     const handleEditUnidadSubmit = () => {
         if (!editedUnidad || !UNIDADES_NEGOCIO.includes(editedUnidad)) {
-             alert("Selección obligatoria: Por favor, selecciona una Unidad de Negocio válida.");
-             return;
+            alert("Selección obligatoria: Por favor, selecciona una Unidad de Negocio válida.");
+            return;
         }
-        // Call the CONTEXT handler
-        handleUnidadChange(editedUnidad, baseTransaction); 
+        // Call dispatch instead of handleUnidadChange
+        dispatch({
+            type: 'UPDATE_TRANSACTION_FIELD',
+            payload: { key: 'unidadNegocio', value: editedUnidad }
+        });
         setIsEditingUnidad(false);
     };
 
-    // REFACTOR: Cancel handler is now simpler
-    const handleCancelEditUnidad = () => {
-        setIsEditingUnidad(false);
-    };
+    const handleCancelEditUnidad = () => setIsEditingUnidad(false);
 
     const handleEditRegionSubmit = () => {
         if (!editedRegion || !REGIONS.includes(editedRegion)) {
             alert("Selección obligatoria: Por favor, selecciona una Región válida.");
             return;
         }
-        handleGigalanInputChange('gigalan_region', editedRegion, baseTransaction);
+        // Call dispatch
+        dispatch({
+            type: 'UPDATE_TRANSACTION_FIELD',
+            payload: { key: 'gigalan_region', value: editedRegion }
+        });
         setIsEditingRegion(false);
     };
 
-    // REFACTOR: Cancel handler is now simpler
-    const handleCancelEditRegion = () => {
-        setIsEditingRegion(false);
-    };
+    const handleCancelEditRegion = () => setIsEditingRegion(false);
 
     const handleEditSaleTypeSubmit = () => {
-         if (!editedSaleType || !SALE_TYPES.includes(editedSaleType as any)) {
+        if (!editedSaleType || !SALE_TYPES.includes(editedSaleType as any)) {
             alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
             return;
         }
-        handleGigalanInputChange('gigalan_sale_type', editedSaleType, baseTransaction);
+        // Call dispatch
+        dispatch({
+            type: 'UPDATE_TRANSACTION_FIELD',
+            payload: { key: 'gigalan_sale_type', value: editedSaleType }
+        });
         setIsEditingSaleType(false);
     };
 
-    // REFACTOR: Cancel handler is now simpler
-    const handleCancelEditSaleType = () => {
-        setIsEditingSaleType(false);
-    };
+    const handleCancelEditSaleType = () => setIsEditingSaleType(false);
 
-    // Wrapper function for GigaLanCommissionInputs (This logic was already correct)
+    // Wrapper function for GigaLanCommissionInputs
     const handleGigaLanOldMrcChange = (key: string, value: number | null) => {
-        // This wrapper calls the context handler with the extra baseTransaction argument
-        handleGigalanInputChange(key, value, baseTransaction);
+        // This wrapper calls dispatch
+        dispatch({
+            type: 'UPDATE_TRANSACTION_FIELD',
+            payload: { key, value }
+        });
     };
 
-    // --- Derived Values (use context state) ---
+    // --- 5. Derived Values (read from draftState) ---
     const confirmedUnidad = liveEdits?.unidadNegocio ?? tx.unidadNegocio;
     const confirmedRegion = liveEdits?.gigalan_region ?? tx.gigalan_region;
     const confirmedSaleType = liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type;
@@ -141,23 +148,23 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 <div className="min-h-[60px]">
                     <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Unidad de Negocio</p>
                     {canEdit ? (
-                        isEditingUnidad ? ( 
+                        isEditingUnidad ? (
                             <div className="flex items-center space-x-2">
                                 <div className="flex-grow max-w-[200px]"><Select value={editedUnidad || ''} onValueChange={setEditedUnidad}><SelectTrigger className="text-sm h-9 bg-white"><SelectValue placeholder="Selecciona..." /></SelectTrigger><SelectContent>{UNIDADES_NEGOCIO.map(unidad => (<SelectItem key={unidad} value={unidad}>{unidad}</SelectItem>))}</SelectContent></Select></div>
                                 <button onClick={handleEditUnidadSubmit} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditCheckIcon /></button>
                                 <button onClick={handleCancelEditUnidad} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                             </div>
-                        ) : ( 
-                            // REFACTOR: onClick now initializes the draft state
-                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { 
+                        ) : (
+                            // 6. onClick now reads from draftState to populate local state
+                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
                                 setEditedUnidad((liveEdits?.unidadNegocio ?? tx.unidadNegocio) || '');
-                                setIsEditingUnidad(true); 
+                                setIsEditingUnidad(true);
                             }}>
                                 <p className={`font-semibold ${confirmedUnidad ? 'text-gray-900' : 'text-red-600'}`}> {confirmedUnidad || "Selecciona obligatorio"} </p>
                                 <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                             </div>
                         )
-                    ) : ( 
+                    ) : (
                         <p className="font-semibold text-gray-900">{tx.unidadNegocio || '-'}</p>
                     )}
                 </div>
@@ -174,23 +181,23 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 <div className="min-h-[60px]">
                     <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Plazo de Contrato</p>
                     {canEdit ? (
-                        isEditingPlazo ? ( 
+                        isEditingPlazo ? (
                             <div className="flex items-center space-x-2">
-                                <Input type="number" value={editedPlazo || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedPlazo(e.target.value)} className="h-9 w-24 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white" min="1" step="1"/>
+                                <Input type="number" value={editedPlazo || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedPlazo(e.target.value)} className="h-9 w-24 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white" min="1" step="1" />
                                 <button onClick={handleEditPlazoSubmit} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditCheckIcon /></button>
                                 <button onClick={handleCancelEditPlazo} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                             </div>
-                        ) : ( 
-                            // REFACTOR: onClick now initializes the draft state
-                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => { 
+                        ) : (
+                            // 6. onClick now reads from draftState to populate local state
+                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
                                 setEditedPlazo((kpiData.plazoContrato ?? tx.plazoContrato) || '');
-                                setIsEditingPlazo(true); 
+                                setIsEditingPlazo(true);
                             }}>
                                 <p className="font-semibold text-gray-900">{kpiData.plazoContrato ?? tx.plazoContrato ?? '-'} meses</p>
                                 <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                             </div>
                         )
-                    ) : ( 
+                    ) : (
                         <p className="font-semibold text-gray-900">{kpiData.plazoContrato ?? tx.plazoContrato ?? '-'} meses</p>
                     )}
                 </div>
@@ -203,23 +210,23 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                         <div className="min-h-[60px]">
                             <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Región</p>
                             {canEdit ? (
-                                isEditingRegion ? ( 
+                                isEditingRegion ? (
                                     <div className="flex items-center space-x-2">
                                         <div className="flex-grow max-w-[200px]"><Select value={editedRegion || ''} onValueChange={setEditedRegion}><SelectTrigger className="text-sm h-9 bg-white"><SelectValue placeholder="Selecciona..." /></SelectTrigger><SelectContent>{REGIONS.map(region => (<SelectItem key={region} value={region}>{region}</SelectItem>))}</SelectContent></Select></div>
                                         <button onClick={handleEditRegionSubmit} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditCheckIcon /></button>
                                         <button onClick={handleCancelEditRegion} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                                     </div>
-                                ) : ( 
-                                    // REFACTOR: onClick now initializes the draft state
+                                ) : (
+                                    // 6. onClick now reads from draftState to populate local state
                                     <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
                                         setEditedRegion((liveEdits?.gigalan_region ?? tx.gigalan_region) || '');
-                                        setIsEditingRegion(true); 
+                                        setIsEditingRegion(true);
                                     }}>
                                         <p className={`font-semibold ${confirmedRegion ? 'text-gray-900' : 'text-red-600'}`}> {confirmedRegion || "Selecciona obligatorio"} </p>
                                         <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                                     </div>
                                 )
-                            ) : ( 
+                            ) : (
                                 <p className="font-semibold text-gray-900">{confirmedRegion || '-'}</p>
                             )}
                         </div>
@@ -229,23 +236,23 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                         <div className="min-h-[60px]">
                             <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Tipo de Venta</p>
                             {canEdit ? (
-                                isEditingSaleType ? ( 
+                                isEditingSaleType ? (
                                     <div className="flex items-center space-x-2">
                                         <div className="flex-grow max-w-[200px]"><Select value={editedSaleType || ''} onValueChange={setEditedSaleType}><SelectTrigger className="text-sm h-9 bg-white"><SelectValue placeholder="Selecciona..." /></SelectTrigger><SelectContent>{SALE_TYPES.map(type => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent></Select></div>
                                         <button onClick={handleEditSaleTypeSubmit} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditCheckIcon /></button>
                                         <button onClick={handleCancelEditSaleType} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0"><EditXIcon /></button>
                                     </div>
-                                ) : ( 
-                                    // REFACTOR: onClick now initializes the draft state
+                                ) : (
+                                    // 6. onClick now reads from draftState to populate local state
                                     <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
                                         setEditedSaleType((liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type) || '');
-                                        setIsEditingSaleType(true); 
+                                        setIsEditingSaleType(true);
                                     }}>
                                         <p className={`font-semibold ${confirmedSaleType ? 'text-gray-900' : 'text-red-600'}`}> {confirmedSaleType || "Selecciona obligatorio"} </p>
                                         <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
                                     </div>
                                 )
-                            ) : ( 
+                            ) : (
                                 <p className="font-semibold text-gray-900">{confirmedSaleType || '-'}</p>
                             )}
                         </div>
@@ -260,7 +267,7 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                                 />
                             </div>
                         )}
-                        
+
                         {!canEdit && tx.gigalan_sale_type === 'EXISTENTE' && (
                             <div className="min-h-[60px]">
                                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">MRC Previo</p>

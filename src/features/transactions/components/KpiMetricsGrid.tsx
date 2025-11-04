@@ -1,29 +1,36 @@
 // src/features/transactions/components/KpiMetricsGrid.tsx
 import KpiCard from '@/components/shared/KpiCard';
 import { EditableKpiCard } from '@/components/shared/EditableKpiCard';
-import { formatCurrency } from '@/lib/formatters'; 
-import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; // <-- NEW IMPORT
+import { formatCurrency } from '@/lib/formatters';
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; // 1. Import hook
 
 // --- REMOVED PROPS INTERFACE ---
 
 export function KpiMetricsGrid() {
 
-    // +++ GET PROPS FROM CONTEXT +++
+    // 2. GET NEW STATE AND DISPATCH FROM CONTEXT
     const {
         baseTransaction,
-        liveKpis,
         canEdit,
-        handleGigalanInputChange
+        draftState, // Get the entire draftState
+        dispatch      // Get the dispatch function
     } = useTransactionPreview();
+
+    // 3. Destructure liveKpis from draftState
+    const { liveKpis } = draftState;
 
     const tx = baseTransaction.transactions;
     const kpiData = liveKpis || tx;
-    
-    // +++ Create the onValueChange handler to pass down +++
+
+    // 4. Create the onValueChange handler to use dispatch
     const onValueChange = (key: string, newValue: string | number) => {
-        handleGigalanInputChange(key, newValue, baseTransaction);
+        dispatch({
+            type: 'UPDATE_TRANSACTION_FIELD',
+            payload: { key, value: newValue }
+        });
     }
 
+    // 5. The JSX (return) remains exactly the same
     return (
         <div>
             <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
@@ -35,18 +42,18 @@ export function KpiMetricsGrid() {
                     currentValue={kpiData.MRC ?? tx.MRC}
                     currentCurrency={kpiData.mrc_currency ?? tx.mrc_currency ?? 'PEN'}
                     subtext="Métrica Clave"
-                    canEdit={canEdit} 
-                    onValueChange={onValueChange} // Pass the new handler
+                    canEdit={canEdit}
+                    onValueChange={onValueChange} // Pass the new dispatch-based handler
                 />
-                
+
                 <EditableKpiCard
                     title="NRC (Pago Único)"
                     kpiKey="NRC"
                     currencyKey="nrc_currency"
                     currentValue={kpiData.NRC ?? tx.NRC}
                     currentCurrency={kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN'}
-                    canEdit={canEdit} 
-                    onValueChange={onValueChange} // Pass the new handler
+                    canEdit={canEdit}
+                    onValueChange={onValueChange} // Pass the new dispatch-based handler
                 />
 
                 <KpiCard title="VAN" value={formatCurrency(kpiData.VAN)} currency="PEN" />

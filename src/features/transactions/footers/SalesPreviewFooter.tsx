@@ -1,48 +1,55 @@
-// src/features/sales/components/SalesPreviewFooter.tsx
+// src/features/transactions/footers/SalesPreviewFooter.tsx
 import { CheckCircleIcon } from '../../../components/shared/Icons';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import type { TransactionDetailResponse } from '@/types';
 
-// Props interface remains correct
+// --- PROPS INTERFACE (No change) ---
 interface SalesPreviewFooterProps {
     onConfirm: (finalData: TransactionDetailResponse['data']) => void;
     onClose: () => void;
 }
 
 export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterProps) {
-    
-    // --- GET DATA FROM CONTEXT ---
+
+    // --- 1. GET DATA FROM CONTEXT (Refactored) ---
+    // Get dispatch and draftState
     const {
         baseTransaction,
-        liveEdits,
-        currentFixedCosts, // <-- FIX: Use this instead of editedFixedCosts
-        currentRecurringServices, // <-- FIX: Use this instead of editedRecurringServices
-        apiError,
-        setApiError
+        draftState,
+        dispatch
     } = useTransactionPreview();
 
+    // 2. Destructure all state from draftState
+    const {
+        liveEdits,
+        currentFixedCosts,
+        currentRecurringServices,
+        apiError // Get apiError from here
+    } = draftState;
+
     const handleConfirmClick = () => {
-        setApiError(null);
-        
+        // 3. Use dispatch to set the error state
+        dispatch({ type: 'SET_API_ERROR', payload: null });
+
         // Build the final payload from context state
         const finalPayload = {
             ...baseTransaction,
-            fixed_costs: currentFixedCosts, // <-- FIX: Use the non-null variable
-            recurring_services: currentRecurringServices, // <-- FIX: Use the non-null variable
+            fixed_costs: currentFixedCosts,
+            recurring_services: currentRecurringServices,
             transactions: {
                 ...baseTransaction.transactions,
                 ...liveEdits,
             }
         };
-        
+
         // Pass the complete, live payload up to the dashboard handler
         onConfirm(finalPayload);
     };
-    
+
     return (
         <div className="flex justify-between items-center p-5 border-t bg-white space-x-3">
             <div className="flex-grow flex items-center text-sm">
-                {/* Show error from context if it exists */}
+                {/* 4. Read error from draftState */}
                 {apiError ? (
                     <span className="text-red-600 font-medium">{apiError}</span>
                 ) : (
@@ -52,14 +59,14 @@ export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterPro
                     </>
                 )}
             </div>
-            <button 
-                onClick={onClose} 
+            <button
+                onClick={onClose}
                 className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
                 Cancelar
             </button>
-            <button 
-                onClick={handleConfirmClick} // Use the new internal handler
+            <button
+                onClick={handleConfirmClick}
                 className="px-5 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800"
             >
                 Confirmar

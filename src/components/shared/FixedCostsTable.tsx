@@ -1,38 +1,44 @@
 // src/components/shared/FixedCostsTable.tsx
-import { EditableTableCell } from '@/components/shared/EditableTableCell'; 
-import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell'; 
-import type { FixedCost } from '@/types'; 
+import { EditableTableCell } from '@/components/shared/EditableTableCell';
+import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell';
+import type { FixedCost } from '@/types';
 import type { ReactNode } from 'react';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
-import { formatCurrency, formatCellData } from '@/lib/formatters'; // <-- Import formatters
+import { formatCurrency, formatCellData } from '@/lib/formatters';
 
 interface FixedCostsTableProps {
     EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
 }
 
 const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
-    
+
+    // 1. Get dispatch and draftState from the context
     const {
-        baseTransaction,
-        currentFixedCosts, 
         canEdit,
-        handleFixedCostChange
+        draftState, // Get the draft state
+        dispatch    // Get the dispatch function
     } = useTransactionPreview();
 
-    const data = currentFixedCosts;
-    
+    // 2. Get the costs from the draftState
+    const data = draftState.currentFixedCosts;
+
+    // 3. The onCostChange handler now uses dispatch
     const onCostChange = (index: number, field: keyof FixedCost, value: any) => {
-        handleFixedCostChange(index, field, value, baseTransaction);
+        // No longer needs baseTransaction, just dispatch the action
+        dispatch({
+            type: 'UPDATE_FIXED_COST',
+            payload: { index, field, value }
+        });
     }
 
     if (!data || data.length === 0) {
         if (EmptyStateComponent) {
-            // Pass canEdit to the EmptyStateComponent
-            return <EmptyStateComponent canEdit={canEdit} />; 
+            return <EmptyStateComponent canEdit={canEdit} />;
         }
         return <p className="text-center text-gray-500 py-4">No fixed cost data available.</p>;
     }
-  
+
+    // 4. The entire JSX render tree remains UNCHANGED
     return (
         <div className="overflow-x-auto bg-white rounded-lg">
             <table className="min-w-full text-sm divide-y divide-gray-200 table-fixed">
@@ -61,7 +67,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.ubicacion)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">{formatCellData(item.cantidad)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-right">{formatCurrency(item.costoUnitario)}</td>
-                            
+
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">
                                 <EditableTableCell
                                     currentValue={item.periodo_inicio ?? 0}
@@ -85,7 +91,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                                     canEdit={canEdit}
                                 />
                             </td>
-                            
+
                             <td className="px-4 py-2 whitespace-nowrap text-red-600 font-medium text-right">{formatCurrency(item.total)}</td>
                         </tr>
                     ))}

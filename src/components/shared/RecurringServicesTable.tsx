@@ -1,33 +1,37 @@
 // src/components/shared/RecurringServicesTable.tsx
-import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell'; 
+import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell';
 import type { RecurringService } from '@/types';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
-import { formatCurrency, formatCellData } from '@/lib/formatters'; // <-- Import formatters
+import { formatCurrency, formatCellData } from '@/lib/formatters';
 
 const RecurringServicesTable = () => {
 
+    // 1. Get dispatch and draftState from the context
     const {
-        baseTransaction,
-        currentRecurringServices, 
         canEdit,
-        handleRecurringServiceChange
+        draftState, // Get the draft state
+        dispatch    // Get the dispatch function
     } = useTransactionPreview();
 
-    const data = currentRecurringServices; 
-    
+    // 2. Get the services from the draftState
+    const data = draftState.currentRecurringServices;
+
+    // 3. The onServiceChange handler now uses dispatch
     const onServiceChange = (index: number, field: keyof RecurringService, value: any) => {
-        handleRecurringServiceChange(index, field, value, baseTransaction);
+        // No longer needs baseTransaction, just dispatch the action
+        dispatch({
+            type: 'UPDATE_RECURRING_SERVICE',
+            payload: { index, field, value }
+        });
     }
 
     if (!data || data.length === 0) {
         return <p className="text-center text-gray-500 py-4">No recurring services data available.</p>;
     }
 
+    // 4. The entire JSX render tree remains UNCHANGED
     return (
         <div className="overflow-x-auto bg-white rounded-lg">
-            {/* FIX: The table-fixed class is important for layout. 
-              min-w-[800px] or similar can be added if horizontal scroll is needed.
-            */}
             <table className="w-full text-sm divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50">
                     {/* --- THIS SECTION WAS COMMENTED OUT --- */}
@@ -53,7 +57,7 @@ const RecurringServicesTable = () => {
                             <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.ubicacion)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">{formatCellData(item.Q)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-right whitespace-nowrap">{formatCurrency(item.P)}</td>
-                            
+
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">
                                 <EditableCurrencyCell
                                     currentValue={item.p_currency ?? 'PEN'}
@@ -61,7 +65,7 @@ const RecurringServicesTable = () => {
                                     canEdit={canEdit}
                                 />
                             </td>
-                            
+
                             <td className="px-3 py-2 text-green-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.ingreso)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-right whitespace-nowrap">{formatCurrency(item.CU1)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-right whitespace-nowrap">{formatCurrency(item.CU2)}</td>
@@ -74,7 +78,7 @@ const RecurringServicesTable = () => {
                                     canEdit={canEdit}
                                 />
                             </td>
-                            
+
                             <td className="px-3 py-2 text-red-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.egreso)}</td>
                         </tr>
                     ))}

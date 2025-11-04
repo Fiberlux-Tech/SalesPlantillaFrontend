@@ -1,45 +1,31 @@
 // src/contexts/TransactionPreviewContext.tsx
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import { 
-    calculatePreview
-} from '@/features/transactions/services/shared.service';
-import type {
-    TransactionDetailResponse, 
-    KpiCalculationResponse, 
-    FixedCost, 
-    RecurringService 
-} from '@/types';
+import React, {
+    createContext,
+    useContext,
+    useReducer,
+    useMemo,
+    useEffect,
+} from 'react';
+import { calculatePreview } from '@/features/transactions/services/shared.service';
+import type { TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
+import {
+    transactionPreviewReducer,
+    getInitialState,
+    type PreviewState,
+    type PreviewAction,
+} from '@/hooks/useTransactionPreviewReducer';
 
+// 1. Define the new, simpler context interface
 interface ITransactionPreviewContext {
     view: 'SALES' | 'FINANCE';
     baseTransaction: TransactionDetailResponse['data'];
-    liveKpis: KpiCalculationResponse['data'] | null;
-    apiError: string | null;
-    setApiError: (error: string | null) => void;
-    
-    // Live Edits State
-    liveEdits: Record<string, any> | null;
-    editedFixedCosts: FixedCost[] | null;
-    editedRecurringServices: RecurringService[] | null;
-    isCodeManagerOpen: boolean;
-    setIsCodeManagerOpen: (isOpen: boolean) => void;
-
-    // Handlers
-    handleRecalculate: (key: string, value: any, baseTxData: TransactionDetailResponse['data']) => Promise<void>;
-    handleFixedCostAdd: (newCosts: FixedCost[], baseTxData: TransactionDetailResponse['data']) => void;
-    handleFixedCostRemove: (codeToRemove: string, baseTxData: TransactionDetailResponse['data']) => void;
-    handleFixedCostChange: (index: number, field: keyof FixedCost, value: any, baseTxData: TransactionDetailResponse['data']) => void;
-    handleRecurringServiceChange: (index: number, field: keyof RecurringService, value: any, baseTxData: TransactionDetailResponse['data']) => void;
-    handleGigalanInputChange: (key: string, value: any, baseTxData: TransactionDetailResponse['data']) => void;
-    handleUnidadChange: (value: string, baseTxData: TransactionDetailResponse['data']) => void;
-
-    // Derived State
     canEdit: boolean;
-    currentFixedCosts: FixedCost[];
-    currentRecurringServices: RecurringService[];
+    draftState: PreviewState;
+    dispatch: React.Dispatch<PreviewAction>;
 }
 
-const TransactionPreviewContext = createContext<ITransactionPreviewContext | null>(null);
+const TransactionPreviewContext =
+    createContext<ITransactionPreviewContext | null>(null);
 
 interface ProviderProps {
     children: React.ReactNode;
@@ -47,133 +33,99 @@ interface ProviderProps {
     view: 'SALES' | 'FINANCE';
 }
 
-export function TransactionPreviewProvider({ children, baseTransaction, view }: ProviderProps) {
-    const [liveKpis, setLiveKpis] = useState<KpiCalculationResponse['data'] | null>(null);
-    const [liveEdits, setLiveEdits] = useState<Record<string, any> | null>(null);
-    const [apiError, setApiError] = useState<string | null>(null);
-    
-    const [editedFixedCosts, setEditedFixedCosts] = useState<FixedCost[] | null>(
-        () => baseTransaction.fixed_costs || []
+export function TransactionPreviewProvider({
+    children,
+    baseTransaction,
+    view,
+}: ProviderProps) {
+    // 2. Use the reducer to manage all draft state
+    const [draftState, dispatch] = useReducer(
+        transactionPreviewReducer,
+        baseTransaction,
+        getInitialState
     );
-    const [editedRecurringServices, setEditedRecurringServices] = useState<RecurringService[] | null>(
-        () => baseTransaction.recurring_services || []
+
+    const { liveEdits, currentFixedCosts, currentRecurringServices } = draftState;
+
+    // 3. canEdit logic remains the same
+    const canEdit = useMemo(
+        () => baseTransaction.transactions.ApprovalStatus === 'PENDING',
+        [baseTransaction]
     );
-    const [isCodeManagerOpen, setIsCodeManagerOpen] = useState<boolean>(false);
 
-    const canEdit = useMemo(() => baseTransaction.transactions.ApprovalStatus === 'PENDING', [baseTransaction]);
-    const currentFixedCosts = useMemo(() => editedFixedCosts || [], [editedFixedCosts]);
-    const currentRecurringServices = useMemo(() => editedRecurringServices || [], [editedRecurringServices]);
+    // 4. This useEffect now handles ALL recalculations automatically
+    useEffect(() => {
+        // Do not run on initial render or if data is missing
+        if (!baseTransaction) return;
 
-    const handleRecalculate = useCallback(async (
-        inputKey: string, 
-        inputValue: any,
-        baseTxData: TransactionDetailResponse['data']
-    ) => {
-        if (!baseTxData) return;
-        setApiError(null);
+        const recalculate = async () => {
+            dispatch({ type: 'RECALCULATION_START' });
 
-        const calculator = calculatePreview;
-        
-        const currentEdits: Record<string, any> = { ...liveEdits, [inputKey]: inputValue }; 
-        const baseTx = baseTxData.transactions;
-        const costsForPayload = inputKey === 'fixed_costs' ? inputValue : editedFixedCosts; 
-        const servicesForPayload = inputKey === 'recurring_services' ? inputValue : editedRecurringServices;
+            const baseTx = baseTransaction.transactions;
 
-        const payloadUpdates = {
-             unidadNegocio: currentEdits?.unidadNegocio ?? baseTx.unidadNegocio,
-             plazoContrato: currentEdits?.plazoContrato ?? baseTx.plazoContrato,
-             MRC: currentEdits?.MRC ?? baseTx.MRC,
-             NRC: currentEdits?.NRC ?? baseTx.NRC,
-             mrc_currency: currentEdits?.mrc_currency ?? baseTx.mrc_currency,
-             nrc_currency: currentEdits?.nrc_currency ?? baseTx.nrc_currency,
-             gigalan_region: currentEdits?.gigalan_region ?? baseTx.gigalan_region,
-             gigalan_sale_type: currentEdits?.gigalan_sale_type ?? baseTx.gigalan_sale_type,
-             gigalan_old_mrc: currentEdits?.gigalan_old_mrc ?? baseTx.gigalan_old_mrc,
-        };
-        
-        const recalculationPayload = {
-            ...baseTxData,     
-            fixed_costs: costsForPayload,
-            recurring_services: servicesForPayload,
-            transactions: {
-                ...baseTx,
-                ...payloadUpdates
+            // Build the payload from base data + current draft state
+            const payloadUpdates = {
+                unidadNegocio: liveEdits?.unidadNegocio ?? baseTx.unidadNegocio,
+                plazoContrato: liveEdits?.plazoContrato ?? baseTx.plazoContrato,
+                MRC: liveEdits?.MRC ?? baseTx.MRC,
+                NRC: liveEdits?.NRC ?? baseTx.NRC,
+                mrc_currency: liveEdits?.mrc_currency ?? baseTx.mrc_currency,
+                nrc_currency: liveEdits?.nrc_currency ?? baseTx.nrc_currency,
+                gigalan_region: liveEdits?.gigalan_region ?? baseTx.gigalan_region,
+                gigalan_sale_type: liveEdits?.gigalan_sale_type ?? baseTx.gigalan_sale_type,
+                gigalan_old_mrc: liveEdits?.gigalan_old_mrc ?? baseTx.gigalan_old_mrc,
+            };
+
+            const recalculationPayload = {
+                ...baseTransaction,
+                fixed_costs: currentFixedCosts,
+                recurring_services: currentRecurringServices,
+                transactions: {
+                    ...baseTx,
+                    ...payloadUpdates,
+                },
+            };
+            delete (recalculationPayload as any).timeline;
+
+            try {
+                const result = await calculatePreview(recalculationPayload);
+                if (result.success) {
+                    dispatch({
+                        type: 'RECALCULATION_SUCCESS',
+                        payload: result.data || null,
+                    });
+                } else {
+                    dispatch({
+                        type: 'RECALCULATION_ERROR',
+                        payload: result.error || 'Failed to update KPIs.',
+                    });
+                }
+            } catch (error: any) {
+                dispatch({
+                    type: 'RECALCULATION_ERROR',
+                    payload: 'Network error calculating preview.',
+                });
             }
         };
-        delete (recalculationPayload as any).timeline;
 
-        try {
-            const result = await calculator(recalculationPayload);
-            if (result.success) {
-                setLiveKpis(result.data || null);
-            } else {
-                setApiError(result.error || 'Failed to update KPIs.');
-                setLiveKpis(null);
-            }
-        } catch (error: any) {
-            setApiError('Network error calculating preview.');
-            setLiveKpis(null);
-        }
-    }, [liveEdits, editedFixedCosts, editedRecurringServices]);
+        recalculate();
+    }, [
+        liveEdits,
+        currentFixedCosts,
+        currentRecurringServices,
+        baseTransaction,
+        dispatch,
+    ]);
 
-    const handleFixedCostRemove = useCallback((codeToRemove: string, baseTxData: TransactionDetailResponse['data']) => {
-        const newCosts = (editedFixedCosts || []).filter(cost => cost.ticket !== codeToRemove);
-        setEditedFixedCosts(newCosts);
-        handleRecalculate('fixed_costs', newCosts, baseTxData);
-    }, [editedFixedCosts, handleRecalculate]);
+    // 5. All 'handle...' functions and local 'useState' hooks are GONE.
 
-    const handleFixedCostAdd = useCallback((newCosts: FixedCost[], baseTxData: TransactionDetailResponse['data']) => {
-        const combinedCosts = [...(editedFixedCosts || []), ...newCosts];
-        setEditedFixedCosts(combinedCosts);
-        handleRecalculate('fixed_costs', combinedCosts, baseTxData);
-    }, [editedFixedCosts, handleRecalculate]);
-    
-    const handleFixedCostChange = useCallback((index: number, field: keyof FixedCost, value: any, baseTxData: TransactionDetailResponse['data']) => {
-        const newCosts = [...(editedFixedCosts || [])];
-        (newCosts[index] as any)[field] = value;
-        setEditedFixedCosts(newCosts);
-        handleRecalculate('fixed_costs', newCosts, baseTxData);
-    }, [editedFixedCosts, handleRecalculate]);
-
-    const handleRecurringServiceChange = useCallback((index: number, field: keyof RecurringService, value: any, baseTxData: TransactionDetailResponse['data']) => {
-        const newServices = [...(editedRecurringServices || [])];
-        (newServices[index] as any)[field] = value; 
-        setEditedRecurringServices(newServices);
-        handleRecalculate('recurring_services', newServices, baseTxData);
-    }, [editedRecurringServices, handleRecalculate]);
-
-    const handleGigalanInputChange = useCallback((key: string, value: any, baseTxData: TransactionDetailResponse['data']) => {
-        setLiveEdits(prev => ({ ...prev, [key]: value }));
-        handleRecalculate(key, value, baseTxData);
-    }, [handleRecalculate]);
-
-    const handleUnidadChange = useCallback((value: string, baseTxData: TransactionDetailResponse['data']) => {
-        setLiveEdits(prev => ({ ...prev, 'unidadNegocio': value }));
-        handleRecalculate('unidadNegocio', value, baseTxData);
-    }, [handleRecalculate]);
-
-
+    // 6. The value provided by the context is now much simpler
     const value = {
         view,
         baseTransaction,
-        liveKpis,
-        apiError,
-        setApiError,
-        liveEdits,
-        editedFixedCosts,
-        editedRecurringServices,
-        isCodeManagerOpen,
-        setIsCodeManagerOpen,
-        handleRecalculate,
-        handleFixedCostAdd,
-        handleFixedCostRemove,
-        handleFixedCostChange,
-        handleRecurringServiceChange,
-        handleGigalanInputChange,
-        handleUnidadChange,
         canEdit,
-        currentFixedCosts,
-        currentRecurringServices,
+        draftState,
+        dispatch,
     };
 
     return (
@@ -183,10 +135,13 @@ export function TransactionPreviewProvider({ children, baseTransaction, view }: 
     );
 }
 
+// 7. The consumer hook remains the same
 export const useTransactionPreview = (): ITransactionPreviewContext => {
     const context = useContext(TransactionPreviewContext);
     if (!context) {
-        throw new Error('useTransactionPreview must be used within a TransactionPreviewProvider');
+        throw new Error(
+            'useTransactionPreview must be used within a TransactionPreviewProvider'
+        );
     }
     return context;
 };

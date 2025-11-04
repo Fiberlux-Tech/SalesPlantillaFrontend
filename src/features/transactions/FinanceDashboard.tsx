@@ -1,12 +1,11 @@
 // src/features/transactions/FinanceDashboard.tsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react'; // 1. Import useRef
 import DataPreviewModal from '@/components/shared/DataPreviewModal';
 import { TransactionPreviewProvider } from '@/contexts/TransactionPreviewContext';
 import { useTransactionDashboard } from '@/hooks/useTransactionDashboard';
-import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
-// import type { User, Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
-
+import type { RefObject } from 'react'; // 2. Import RefObject
 
 // ... (Import Finance-specific components) ...
 import { FinanceStatsGrid } from './components/FinanceStatsGrid';
@@ -24,37 +23,59 @@ import {
 } from './services/finance.service';
 
 interface FinanceDashboardProps {
-    // 2. REMOVE user and onLogout props
-    // user: User;
-    // onLogout: () => void;
+    // (Props are removed)
 }
 
-export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. Remove props
-    
-    const { user, logout } = useAuth(); // <-- 4. Get user and logout from context
+export default function FinanceDashboard({}: FinanceDashboardProps) {
 
-    // 5. Add a check for user
+    const { user, logout } = useAuth();
+
     if (!user) {
         return <div className="text-center py-12">Loading user data...</div>;
     }
 
-    // --- HOOK (Now pass context data) ---
+    // --- 3. HOOK (Now has a simpler return value) ---
     const {
         transactions, isLoading, currentPage, totalPages, setCurrentPage,
-        filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
         apiError, setApiError,
         fetchTransactions,
-    } = useTransactionDashboard({ 
-        user, 
-        view: 'FINANCE', 
-        onLogout: logout // <-- 6. Pass logout from context
+    } = useTransactionDashboard({
+        user,
+        view: 'FINANCE',
+        onLogout: logout
     });
 
-    // ... (All other state, handlers, and render logic remain exactly the same) ...
+    // --- 4. UI STATE MOVED HERE ---
+    const [filter, setFilter] = useState<string>('');
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const datePickerRef = useRef<HTMLDivElement>(null);
+
+    // --- 5. UI HANDLERS MOVED HERE ---
+    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
+    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
+
+    // --- 6. FILTER LOGIC MOVED HERE ---
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+            const filterLower = filter.toLowerCase();
+            const financeTx = t as FormattedFinanceTransaction;
+            const clientMatch = financeTx.clientName.toLowerCase().includes(filterLower);
+
+            if (!selectedDate) return clientMatch;
+
+            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
+            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
+        });
+    }, [transactions, filter, selectedDate]);
+
+
+    // --- (All other state and handlers remain exactly the same) ---
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
 
     const stats = useMemo(() => {
+        // ... (stats logic is unchanged)
         const transactionList = transactions as FormattedFinanceTransaction[];
         const totalApprovedValue = transactionList
             .filter(t => t.status === 'APPROVED')
@@ -79,6 +100,7 @@ export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. 
     }, [transactions]);
 
     const handleRowClick = async (transaction: FormattedFinanceTransaction) => {
+        // ... (handler logic is unchanged)
         setApiError(null);
         setSelectedTransaction(null);
         const result = await getTransactionDetails(transaction.id);
@@ -97,6 +119,7 @@ export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. 
         fixedCosts: FixedCost[] | null,
         recurringServices: RecurringService[] | null
     ) => {
+        // ... (handler logic is unchanged)
         setApiError(null);
         const result = await updateTransactionStatus(transactionId, status, modifiedData, fixedCosts, recurringServices);
         if (result.success) {
@@ -109,6 +132,7 @@ export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. 
     };
 
     const handleCalculateCommission = async (transactionId: number) => {
+        // ... (handler logic is unchanged)
         setApiError(null);
         const result = await calculateCommission(transactionId);
         if (result.success) {
@@ -126,6 +150,7 @@ export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. 
 
     return (
         <>
+            {/* 7. Pass all the local UI state down to the layout component */}
             <TransactionDashboardLayout
                 apiError={apiError}
                 placeholder={"Filter by client name..."}
@@ -135,7 +160,7 @@ export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. 
                 setIsDatePickerOpen={setIsDatePickerOpen}
                 selectedDate={selectedDate}
                 setSelectedDate={setSelectedDate}
-                datePickerRef={datePickerRef}
+                datePickerRef={datePickerRef as RefObject<HTMLDivElement | null>}
                 onClearDate={handleClearDate}
                 onSelectToday={handleSelectToday}
                 statsGrid={
@@ -148,11 +173,12 @@ export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. 
                         onRowClick={handleRowClick}
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        onPageChange={setCurrentPage}
+                        onPageChange={setCurrentPage} // <-- This prop now matches
                     />
                 }
             />
 
+            {/* --- (Modal logic is unchanged) --- */}
             {selectedTransaction && (
                 <TransactionPreviewProvider
                     baseTransaction={selectedTransaction}

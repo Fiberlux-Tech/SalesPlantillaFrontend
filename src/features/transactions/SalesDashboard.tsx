@@ -1,11 +1,11 @@
 // src/features/transactions/SalesDashboard.tsx
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react'; // 1. Import useRef
 import DataPreviewModal from '@/components/shared/DataPreviewModal';
 import { TransactionPreviewProvider } from '@/contexts/TransactionPreviewContext';
 import { useTransactionDashboard } from '@/hooks/useTransactionDashboard';
-import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
-// import type { User, TransactionDetailResponse } from '@/types'; // User no longer needed
+import { useAuth } from '@/contexts/AuthContext';
 import type { TransactionDetailResponse } from '@/types';
+import type { RefObject } from 'react'; // 2. Import RefObject
 
 // ... (Import Sales-specific components) ...
 import { SalesStatsGrid } from './components/SalesStatsGrid';
@@ -23,35 +23,54 @@ import {
 } from './services/sales.service';
 
 interface SalesDashboardProps {
-    // 2. REMOVE user and onLogout props
-    // user: User;
     setSalesActions: (actions: { onUpload: () => void, onExport: () => void }) => void;
-    // onLogout: () => void;
 }
 
-export default function SalesDashboard({ setSalesActions }: SalesDashboardProps) { // <-- 3. Remove props
-    
-    const { user, logout } = useAuth(); // <-- 4. Get user and logout from context
-    
-    // 5. Add a check for user
+export default function SalesDashboard({ setSalesActions }: SalesDashboardProps) {
+
+    const { user, logout } = useAuth();
+
     if (!user) {
         return <div className="text-center py-12">Loading user data...</div>;
     }
-    
-    // --- HOOK (Now pass context data) ---
+
+    // --- 3. HOOK (Now has a simpler return value) ---
     const {
         transactions, isLoading, currentPage, totalPages, setCurrentPage,
-        filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
         apiError, setApiError,
         fetchTransactions,
-    } = useTransactionDashboard({ 
-        user, 
-        view: 'SALES', 
-        onLogout: logout // <-- 6. Pass logout from context
+    } = useTransactionDashboard({
+        user,
+        view: 'SALES',
+        onLogout: logout
     });
 
-    // ... (All other state, handlers, and render logic remain exactly the same) ...
-    
+    // --- 4. UI STATE MOVED HERE ---
+    const [filter, setFilter] = useState<string>('');
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const datePickerRef = useRef<HTMLDivElement>(null);
+
+    // --- 5. UI HANDLERS MOVED HERE ---
+    const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
+    const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
+
+    // --- 6. FILTER LOGIC MOVED HERE ---
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+            const filterLower = filter.toLowerCase();
+            const salesTx = t as FormattedSalesTransaction;
+            const clientMatch = salesTx.client.toLowerCase().includes(filterLower);
+
+            if (!selectedDate) return clientMatch;
+
+            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
+            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
+        });
+    }, [transactions, filter, selectedDate]);
+
+
+    // --- (All other state and handlers remain the same) ---
     const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
@@ -70,10 +89,11 @@ export default function SalesDashboard({ setSalesActions }: SalesDashboardProps)
     }, [setSalesActions]);
 
     const stats = useMemo(() => {
+        // ... (stats logic is unchanged)
         const pendingApprovals = transactions.filter(t => t.status === 'PENDING').length;
-        const totalValue = 0; // Placeholder
-        const avgIRR = 24.5; // Placeholder
-        const avgPayback = 20; // Placeholder
+        const totalValue = 0;
+        const avgIRR = 24.5;
+        const avgPayback = 20;
         return {
             pendingApprovals,
             totalValue: `${(totalValue / 1000000).toFixed(2)}M`,
@@ -83,6 +103,7 @@ export default function SalesDashboard({ setSalesActions }: SalesDashboardProps)
     }, [transactions]);
 
     const handleUploadNext = async (file: File | null) => {
+        // ... (handler logic is unchanged)
         if (!file) return;
         setApiError(null);
         const result = await uploadExcelForPreview(file);
@@ -97,6 +118,7 @@ export default function SalesDashboard({ setSalesActions }: SalesDashboardProps)
     };
 
     const handleConfirmSubmission = async (finalData: TransactionDetailResponse['data']) => {
+        // ... (handler logic is unchanged)
         setApiError(null);
         const finalPayload = { ...finalData, transactions: { ...finalData.transactions } };
         delete (finalPayload as any).timeline;
@@ -110,7 +132,7 @@ export default function SalesDashboard({ setSalesActions }: SalesDashboardProps)
             alert(result.error || 'Unknown submission error');
         }
     };
-    
+
     const handleCloseSalesModal = () => {
         setIsPreviewModalOpen(false);
         setUploadedData(null);
@@ -118,6 +140,7 @@ export default function SalesDashboard({ setSalesActions }: SalesDashboardProps)
 
     return (
         <>
+            {/* 7. Pass all the local UI state down to the layout component */}
             <TransactionDashboardLayout
                 apiError={apiError}
                 placeholder={"Filtra por nombre de cliente..."}
@@ -127,7 +150,7 @@ export default function SalesDashboard({ setSalesActions }: SalesDashboardProps)
                 setIsDatePickerOpen={setIsDatePickerOpen}
                 selectedDate={selectedDate}
                 setSelectedDate={setSelectedDate}
-                datePickerRef={datePickerRef}
+                datePickerRef={datePickerRef as RefObject<HTMLDivElement | null>}
                 onClearDate={handleClearDate}
                 onSelectToday={handleSelectToday}
                 statsGrid={
@@ -139,10 +162,12 @@ export default function SalesDashboard({ setSalesActions }: SalesDashboardProps)
                         transactions={filteredTransactions as FormattedSalesTransaction[]}
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        onPageChange={setCurrentPage}
+                        onPageChange={setCurrentPage} // This now correctly calls the hook's setter
                     />
                 }
             />
+            
+            {/* --- (Modal logic is unchanged) --- */}
             <FileUploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onNext={handleUploadNext} />
             {uploadedData && (
                 <TransactionPreviewProvider

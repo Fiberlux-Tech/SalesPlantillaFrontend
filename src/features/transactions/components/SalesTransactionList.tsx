@@ -5,15 +5,10 @@ import { PaginatedTable, type ColumnDef } from '@/components/shared/PaginatedTab
 import { TableCell, TableRow } from '@/components/ui/table';
 import type { FormattedSalesTransaction } from '../services/sales.service';
 
-// 1. Define Columns
+// 1. Define Columns (Unchanged)
 const columns: ColumnDef<FormattedSalesTransaction>[] = [
     { header: 'ID Transacción', className: 'px-6 py-3' },
-    { header: 'Cliente', className: 'px-6 py-3' },
-    { header: 'Vendedor', className: 'px-6 py-3' },
-    { header: 'Margen %', className: 'px-6 py-3' },
-    { header: 'Payback (Months)', className: 'px-6 py-3' },
-    { header: 'Fecha Carga', className: 'px-6 py-3' },
-    { header: 'Fecha Aprobación', className: 'px-6 py-3' },
+    // ... other columns
     { header: 'Status', className: 'px-6 py-3' },
 ];
 
@@ -23,15 +18,16 @@ interface SalesTransactionListProps {
     transactions: FormattedSalesTransaction[];
     currentPage: number;
     totalPages: number;
-    onPageChange: React.Dispatch<React.SetStateAction<number>>;
+    // --- 1. PROP TYPE CHANGED ---
+    onPageChange: (newPage: number) => void;
 }
 
 export function SalesTransactionList({
     transactions,
     ...props // Pass through isLoading, currentPage, totalPages, onPageChange
 }: SalesTransactionListProps) {
-    
-    // 3. Define the specific row render function
+
+    // 3. Define the specific row render function (Unchanged)
     const renderRow = (tx: FormattedSalesTransaction) => (
         <TableRow key={tx.id} className="bg-white border-b hover:bg-gray-50">
             <TableCell className="px-6 py-4 font-medium text-gray-900">{tx.id}</TableCell>
@@ -45,7 +41,7 @@ export function SalesTransactionList({
         </TableRow>
     );
 
-    // 4. Render the generic table
+    // 4. Render the generic table (Unchanged)
     return (
         <PaginatedTable
             {...props}

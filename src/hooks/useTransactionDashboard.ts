@@ -1,32 +1,29 @@
 // src/hooks/useTransactionDashboard.ts
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-// --- FIX THE IMPORT PATHS ---
-import { 
-    getSalesTransactions, 
-    type FormattedSalesTransaction 
+// --- (Imports remain the same) ---
+import {
+    getSalesTransactions,
+    type FormattedSalesTransaction
 } from '@/features/transactions/services/sales.service';
-import { 
-    getFinanceTransactions, 
+import {
+    getFinanceTransactions,
     type FormattedFinanceTransaction
 } from '@/features/transactions/services/finance.service';
-// --- (End of fix) ---
 import type { User } from '@/types';
-import type { RefObject } from 'react';
+// --- (RefObject is no longer needed) ---
 
-// --- Type Definitions for the Hook ---
-
+// --- Type Definitions (remain the same) ---
 type DashboardTransaction = FormattedSalesTransaction | FormattedFinanceTransaction;
 type DashboardStats = { [key: string]: string | number };
 type DashboardView = 'SALES' | 'FINANCE';
 
-// Define inputs that are common to both dashboards
 interface DashboardOptions {
     user: User;
     view: DashboardView;
     onLogout: () => void;
 }
 
-// FIX 1: The return type is NOW MUCH SMALLER
+// --- 1. The return type is NOW MUCH SMALLER ---
 interface DashboardReturn {
     // Data & Pagination
     transactions: DashboardTransaction[];
@@ -34,21 +31,9 @@ interface DashboardReturn {
     isLoading: boolean;
     currentPage: number;
     totalPages: number;
-    setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
-    fetchTransactions: (pageToFetch: number) => Promise<void>; // Modified to accept page
+    setCurrentPage: (page: number) => void; // <-- Simplified signature
+    fetchTransactions: (pageToFetch: number) => Promise<void>;
 
-    // Filtering
-    filter: string;
-    setFilter: React.Dispatch<React.SetStateAction<string>>;
-    isDatePickerOpen: boolean;
-    setIsDatePickerOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    selectedDate: Date | null;
-    setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
-    datePickerRef: RefObject<HTMLDivElement>; 
-    handleClearDate: () => void;
-    handleSelectToday: () => void;
-    filteredTransactions: DashboardTransaction[];
-    
     // API Error for the *list* page
     apiError: string | null;
     setApiError: React.Dispatch<React.SetStateAction<string | null>>;
@@ -57,25 +42,20 @@ interface DashboardReturn {
 // --- Hook Implementation ---
 
 export function useTransactionDashboard({ view, onLogout }: DashboardOptions): DashboardReturn {
-    // --- State Initialization ---
+    // --- 2. State Initialization (UI State is GONE) ---
     const [transactions, setTransactions] = useState<DashboardTransaction[]>([]);
-    const [filter, setFilter] = useState<string>('');
-    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const datePickerRef = useRef<HTMLDivElement>(null); 
     const [apiError, setApiError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(1);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    
-    // REMOVED ALL MODAL-RELATED STATE:
-    // liveKpis, liveEdits, editedFixedCosts, editedRecurringServices, isCodeManagerOpen
 
-    // --- Core Logic: Fetching Transactions (Modified to take page) ---
+    // --- (State for filter, datePicker, etc. is REMOVED) ---
+
+    // --- Core Logic: Fetching Transactions (remains the same) ---
     const fetchTransactions = useCallback(async (pageToFetch: number) => {
         setIsLoading(true);
         setApiError(null);
-        
+
         let result;
         if (view === 'SALES') {
             result = await getSalesTransactions(pageToFetch);
@@ -84,82 +64,45 @@ export function useTransactionDashboard({ view, onLogout }: DashboardOptions): D
         }
 
         if (result.success) {
-            setTransactions(result.data || []); 
+            setTransactions(result.data || []);
             setTotalPages(result.pages || 1);
-            setCurrentPage(pageToFetch); // Set current page after successful fetch
+            setCurrentPage(pageToFetch);
         } else {
             if (view === 'FINANCE' && (result as any).status === 401) {
-                onLogout(); 
+                onLogout();
                 return;
             }
             setApiError(result.error || 'Unknown error');
         }
         setIsLoading(false);
-    }, [view, onLogout]); // Removed currentPage from dependencies
+    }, [view, onLogout]);
 
     // Initial fetch
     useEffect(() => {
         fetchTransactions(1); // Fetch page 1 on mount
-    }, [fetchTransactions]); // Runs once on mount
-
-    
-    // REMOVED ALL HANDLERS FOR MODAL LOGIC:
-    // handleRecalculate, handleFixedCostRemove, handleFixedCostAdd
+    }, [fetchTransactions]);
 
 
-    // --- Memoized Values (Shared) ---
-    const handleClearDate = useCallback(() => { setSelectedDate(null); setIsDatePickerOpen(false); }, []);
-    const handleSelectToday = useCallback(() => { setSelectedDate(new Date()); setIsDatePickerOpen(false); }, []);
+    // --- 3. ALL MEMOIZED UI LOGIC IS GONE ---
+    // (handleClearDate, handleSelectToday, filteredTransactions are REMOVED)
 
-    // Filter logic remains the same
-    const filteredTransactions = useMemo(() => {
-        // ... (filter logic is unchanged) ...
-        return transactions.filter(t => {
-            const filterLower = filter.toLowerCase();
-            const isFinanceTx = (t as FormattedFinanceTransaction).unidadNegocio !== undefined;
-            let clientMatch = false;
 
-            if (isFinanceTx) {
-                const financeTx = t as FormattedFinanceTransaction;
-                clientMatch = financeTx.clientName.toLowerCase().includes(filterLower);
-            } else {
-                const salesTx = t as FormattedSalesTransaction;
-                clientMatch = salesTx.client.toLowerCase().includes(filterLower);
-            }
-            
-            if (!selectedDate) return clientMatch;
-            
-            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
-            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
-        });
-    }, [transactions, filter, selectedDate]);
-    
-    // --- Return Hook State and Handlers (Much smaller) ---
+    // --- 4. Return Hook State and Handlers (Much smaller) ---
     return {
         transactions,
         stats: {} as DashboardStats,
         isLoading,
         currentPage,
         totalPages,
-        setCurrentPage: (pageAction) => {
-            // New setCurrentPage logic to trigger fetch
-            const newPage = typeof pageAction === 'function' ? pageAction(currentPage) : pageAction;
+        // 5. setCurrentPage is now a simple function that triggers a fetch
+        setCurrentPage: (newPage: number) => {
             if (newPage !== currentPage) {
                 fetchTransactions(newPage);
             }
         },
-        fetchTransactions: () => fetchTransactions(currentPage), // Add a way to refresh current page
+        fetchTransactions: () => fetchTransactions(currentPage),
 
-        filter,
-        setFilter,
-        isDatePickerOpen,
-        setIsDatePickerOpen,
-        selectedDate,
-        setSelectedDate,
-        datePickerRef: datePickerRef as RefObject<HTMLDivElement>, 
-        handleClearDate,
-        handleSelectToday,
-        filteredTransactions,
+        // --- (All filter and date state returns are REMOVED) ---
 
         apiError,
         setApiError,

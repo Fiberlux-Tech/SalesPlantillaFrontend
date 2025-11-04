@@ -5,7 +5,7 @@ import { PaginatedTable, type ColumnDef } from '@/components/shared/PaginatedTab
 import { TableCell, TableRow } from '@/components/ui/table';
 import type { FormattedFinanceTransaction } from '../services/finance.service';
 
-// 1. Define Columns
+// 1. Define Columns (Unchanged)
 const columns: ColumnDef<FormattedFinanceTransaction>[] = [
     { header: 'ID', className: 'px-6 py-3 text-center' },
     { header: 'Unidad de Negocio', className: 'px-6 py-3 text-center' },
@@ -26,7 +26,9 @@ interface TransactionListProps {
     onRowClick: (transaction: FormattedFinanceTransaction) => void;
     currentPage: number;
     totalPages: number;
-    onPageChange: React.Dispatch<React.SetStateAction<number>>;
+    // --- 1. PROP TYPE CHANGED ---
+    // This now matches the new prop type
+    onPageChange: (newPage: number) => void;
 }
 
 export function TransactionList({
@@ -34,8 +36,8 @@ export function TransactionList({
     onRowClick,
     ...props // Pass through isLoading, currentPage, totalPages, onPageChange
 }: TransactionListProps) {
-    
-    // 3. Define the specific row render function
+
+    // 3. Define the specific row render function (Unchanged)
     const renderRow = (tx: FormattedFinanceTransaction) => (
         <TableRow
             key={tx.id}
@@ -55,7 +57,7 @@ export function TransactionList({
         </TableRow>
     );
 
-    // 4. Render the generic table
+    // 4. Render the generic table (Unchanged)
     return (
         <PaginatedTable
             {...props}

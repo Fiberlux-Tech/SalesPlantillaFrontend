@@ -12,7 +12,7 @@ import {
 // Define a type for our column definitions
 export interface ColumnDef<T> {
     header: string;
-    className?: string; // To control width, text-align, etc.
+    className?: string;
 }
 
 // Define the props for our generic table
@@ -20,11 +20,13 @@ interface PaginatedTableProps<T> {
     isLoading: boolean;
     columns: ColumnDef<T>[];
     data: T[];
-    renderRow: (item: T) => React.ReactNode; // Function to render a row
+    renderRow: (item: T) => React.ReactNode;
     emptyStateMessage?: string;
     currentPage: number;
     totalPages: number;
-    onPageChange: React.Dispatch<React.SetStateAction<number>>;
+    // --- 1. PROP TYPE CHANGED ---
+    // No longer a React.Dispatch. It's a simple callback.
+    onPageChange: (newPage: number) => void;
 }
 
 export function PaginatedTable<T>({
@@ -37,7 +39,7 @@ export function PaginatedTable<T>({
     totalPages,
     onPageChange,
 }: PaginatedTableProps<T>) {
-    
+
     const colSpan = columns.length;
 
     return (
@@ -47,9 +49,9 @@ export function PaginatedTable<T>({
                     <TableHeader className="text-xs text-gray-700 uppercase bg-gray-50">
                         <TableRow>
                             {columns.map((col) => (
-                                <TableHead 
-                                    key={col.header} 
-                                    className={col.className} // Apply custom classes
+                                <TableHead
+                                    key={col.header}
+                                    className={col.className}
                                 >
                                     {col.header}
                                 </TableHead>
@@ -79,7 +81,8 @@ export function PaginatedTable<T>({
             {/* Pagination Controls */}
             <div className="flex justify-between items-center pt-4">
                 <button
-                    onClick={() => onPageChange(prev => Math.max(prev - 1, 1))}
+                    // --- 2. LOGIC UPDATED ---
+                    onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1 || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
@@ -89,7 +92,8 @@ export function PaginatedTable<T>({
                     Pagina {currentPage} de {totalPages}
                 </span>
                 <button
-                    onClick={() => onPageChange(prev => Math.min(prev + 1, totalPages))}
+                    // --- 3. LOGIC UPDATED ---
+                    onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
