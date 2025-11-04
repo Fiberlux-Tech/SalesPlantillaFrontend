@@ -316,6 +316,8 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                 isOpen={isPreviewModalOpen}
                                 title={`Preview: ${uploadedData.fileName}`}
                                 onClose={handleCloseSalesModal}
+                                // Pass status for the new modal header structure (Point 2)
+                                status={uploadedData.transactions.ApprovalStatus} 
                                 footer={
                                     <SalesPreviewFooter
                                         onConfirm={handleConfirmSubmission}
@@ -340,6 +342,8 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                         isOpen={isDetailModalOpen}
                         title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
                         onClose={handleCloseFinanceModal}
+                        // Pass status for the new modal header structure (Point 2)
+                        status={selectedTransaction.transactions.ApprovalStatus} 
                         footer={
                             <FinancePreviewFooter
                                 onApprove={handleUpdateStatus}
