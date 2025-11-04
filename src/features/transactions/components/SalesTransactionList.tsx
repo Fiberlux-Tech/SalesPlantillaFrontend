@@ -1,8 +1,8 @@
 // src/features/transactions/components/SalesTransactionList.tsx
 import React from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
-// 1. Import the formatted type from the *new* service file
-import type { FormattedSalesTransaction } from '../transactionService';
+// --- FIX THE IMPORT PATH ---
+import type { FormattedSalesTransaction } from '../services/sales.service';
 
 // 2. Define the props interface
 interface SalesTransactionListProps {

@@ -1,25 +1,28 @@
 // src/features/landing/components/ModuleCard.tsx
-// 1. Define the shape of the 'module' prop
+import { useNavigate } from 'react-router-dom'; // <-- 1. Import
+
+// 2. Update the 'module' prop shape
 interface Module {
     id: string;
     name: string;
-    icon: string; // Emojis are strings
+    icon: string;
     description: string;
-    // 'available' is filtered out by the parent, so it's not needed here
+    path: string; // <-- Add path
 }
 
-// 2. Define the component's props
 interface ModuleCardProps {
     module: Module;
-    onNavigate: (id: string) => void;
+    // onNavigate: (id: string) => void; // <-- 3. REMOVE onNavigate
 }
 
-// 3. Apply the props interface
-export const ModuleCard = ({ module, onNavigate }: ModuleCardProps) => {
+// 4. Apply props and add hook
+export const ModuleCard = ({ module }: ModuleCardProps) => {
+    const navigate = useNavigate(); // <-- 5. Use the hook
+
     return (
         <div
             className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-lg border border-slate-200"
-            onClick={() => onNavigate(module.id)}
+            onClick={() => navigate(module.path)} // <-- 6. Use navigate
         >
             <div className="p-8">
                 <div className="flex items-start gap-4">

@@ -1,0 +1,152 @@
+// src/features/transactions/services/finance.service.ts
+import { api } from '@/lib/api';
+import type {
+    TransactionDetailResponse,
+    BaseApiResponse,
+    Transaction,
+    FixedCost,
+    RecurringService,
+    FinanceTransactionListResponse
+} from '@/types';
+
+// --- Types ---
+
+export interface FormattedFinanceTransaction {
+    id: number;
+    unidadNegocio: string;
+    clientName: string;
+    salesman: string;
+    MRC: number;
+    plazoContrato: number;
+    grossMarginRatio: number;
+    payback: number;
+    submissionDate: string;
+    status: "PENDING" | "APPROVED" | "REJECTED";
+}
+
+interface GetFinanceTransactionsResult {
+    success: boolean;
+    data?: FormattedFinanceTransaction[];
+    pages?: number;
+    error?: string;
+}
+
+type GetTransactionDetailsResult = {
+    success: true;
+    data: TransactionDetailResponse['data'];
+} | {
+    success: false;
+    error: string;
+    data?: undefined;
+}
+
+type CalculateCommissionResult = {
+    success: true;
+    data: TransactionDetailResponse['data'];
+} | {
+    success: false;
+    error: string;
+    data?: undefined;
+}
+
+// --- Functions ---
+
+export async function getFinanceTransactions(page: number): Promise<GetFinanceTransactionsResult> {
+    try {
+        const result = await api.get<FinanceTransactionListResponse>(`/api/transactions?page=${page}&per_page=30`); 
+ 
+        if (result.success) {
+            const formattedTransactions: FormattedFinanceTransaction[] = result.data.transactions.map((tx: Transaction) => ({
+                id: tx.id,
+                unidadNegocio: tx.unidadNegocio,
+                clientName: tx.clientName,
+                salesman: tx.salesman,
+                MRC: tx.MRC,
+                plazoContrato: tx.plazoContrato,
+                grossMarginRatio: tx.grossMarginRatio,
+                payback: tx.payback,
+                submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
+                status: tx.ApprovalStatus,
+            }));
+            
+            return { 
+                success: true, 
+                data: formattedTransactions, 
+                pages: result.data.pages
+            };
+        } else {
+            return { success: false, error: result.error || 'Failed to fetch transactions.' };
+        }
+ 
+ 	} catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to the server.' };
+ 	}
+}
+
+export async function getTransactionDetails(transactionId: number): Promise<GetTransactionDetailsResult> {
+    try {
+        const result = await api.get<TransactionDetailResponse>(`/api/transaction/${transactionId}`);
+        if (result.success) {
+            return { success: true, data: result.data };
+        } else {
+            return { success: false, error: result.error || 'Failed to fetch transaction details.' };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to the server.' };
+    }
+}
+
+export async function updateTransactionStatus(
+    transactionId: number, 
+    action: 'approve' | 'reject', 
+    modifiedData: Partial<Transaction> = {}, 
+    fixedCosts: FixedCost[] | null = null, 
+    recurringServices: RecurringService[] | null = null
+): Promise<BaseApiResponse> {
+    
+    const endpoint = action === 'approve' ? 'approve' : 'reject';
+    
+    const payload: {
+        transactions: Partial<Transaction>;
+        fixed_costs?: FixedCost[] | null;
+        recurring_services?: RecurringService[] | null;
+    } = {
+        transactions: modifiedData
+    };
+    
+    if (fixedCosts) {
+        payload.fixed_costs = fixedCosts;
+    }
+    if (recurringServices) {
+        payload.recurring_services = recurringServices;
+    }
+    
+    try {
+        const result = await api.post<BaseApiResponse>(`/api/transaction/${endpoint}/${transactionId}`, payload);
+        
+        if (result.success) {
+            return { success: true };
+        } else {
+            return { success: false, error: result.error || `Failed to ${action} transaction.` };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to the server.' };
+    }
+}
+
+export async function calculateCommission(transactionId: number): Promise<CalculateCommissionResult> {
+    try {
+        const result = await api.post<TransactionDetailResponse>(
+            `/api/transaction/${transactionId}/calculate-commission`, 
+            {} 
+        );
+        
+        if (result.success) { 
+            return { success: true, data: result.data };
+        } else {
+            return { success: false, error: result.error || `Failed to calculate commission.` };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to the server for commission calculation.' };
+    }
+}

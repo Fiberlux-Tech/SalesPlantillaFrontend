@@ -2,8 +2,8 @@
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { 
     calculatePreview
-} from '@/features/transactions/transactionService';
-import type { 
+} from '@/features/transactions/services/shared.service';
+import type {
     TransactionDetailResponse, 
     KpiCalculationResponse, 
     FixedCost, 

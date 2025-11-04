@@ -3,10 +3,12 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 // --- FIX THE IMPORT PATHS ---
 import { 
     getSalesTransactions, 
-    FormattedSalesTransaction,
-    getFinanceTransactions,
-    FormattedFinanceTransaction
-} from '@/features/transactions/transactionService';
+    type FormattedSalesTransaction 
+} from '@/features/transactions/services/sales.service';
+import { 
+    getFinanceTransactions, 
+    type FormattedFinanceTransaction
+} from '@/features/transactions/services/finance.service';
 // --- (End of fix) ---
 import type { User } from '@/types';
 import type { RefObject } from 'react';
