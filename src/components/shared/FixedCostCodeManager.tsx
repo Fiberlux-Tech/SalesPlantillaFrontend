@@ -71,7 +71,7 @@ export function FixedCostCodeManager({ loadedCodes, onFixedCostAdd, onToggle, on
 
     return (
         // Attach the ref for click-away detection
-        <div ref={managerRef} className="absolute right-0 w-80 mt-2 bg-white border border-gray-300 rounded-lg shadow-xl z-20 p-4">
+        <div ref={managerRef} className="absolute right-0 w-80 mt-2 bg-white border border-gray-300 rounded-lg shadow-xl z-20 p-4" onClick={(e) => e.stopPropagation()}>
             <h4 className="text-md font-semibold mb-3">Código de Inversión</h4>
             
             {/* Input and "Ir" Button (Grouped and Styled) */}

@@ -12,7 +12,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
  * @throws {Error} - Throws an error for non-successful HTTP responses
  */
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-    // 1. Set default options
     const config: RequestInit = {
         ...options,
         credentials: 'include', // Always send cookies
@@ -36,13 +35,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     // 4. Make the request
     const response = await fetch(`${API_BASE_URL}${url}`, config);
 
-    // 5. GLOBAL 401 HANDLER
-    if (response.status === 401) {
-        window.location.href = '/'; 
-        throw new Error('Not authenticated');
-    }
-
-    // 6. GLOBAL ERROR HANDLER (for non-401 errors)
+    // 6. GLOBAL ERROR HANDLER (for all non-ok responses)
     if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
@@ -51,6 +44,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
         } catch (e) {
             // Ignore if response is not JSON
         }
+        // This is where the 401 error will now be caught and thrown
         throw new Error(errorMessage);
     }
 

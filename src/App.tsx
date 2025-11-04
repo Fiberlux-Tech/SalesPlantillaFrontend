@@ -53,7 +53,7 @@ export default function App() {
                 }
             } catch (error) {
                 console.error("Failed to fetch user", error);
-                setUser(null); 
+                setUser(null); // <-- This correctly handles the thrown 401 error
             }
             setIsLoading(false);
         };
