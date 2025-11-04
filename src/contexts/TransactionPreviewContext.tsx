@@ -7,7 +7,7 @@ import React, {
     useEffect,
 } from 'react';
 import { calculatePreview } from '@/features/transactions/services/shared.service';
-import type { TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
+import type { TransactionDetailResponse } from '@/types';
 import {
     transactionPreviewReducer,
     getInitialState,

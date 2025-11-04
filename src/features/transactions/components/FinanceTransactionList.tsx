@@ -1,5 +1,4 @@
 // src/features/transactions/components/FinanceTransactionList.tsx
-import React from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { PaginatedTable, type ColumnDef } from '@/components/shared/PaginatedTable';
 import { TableCell, TableRow } from '@/components/ui/table';

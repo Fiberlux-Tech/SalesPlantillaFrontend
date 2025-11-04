@@ -1,5 +1,5 @@
 // src/hooks/useTransactionDashboard.ts
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 // --- (Imports remain the same) ---
 import {
     getSalesTransactions,
