@@ -41,7 +41,7 @@ const RecurringServicesTable = () => {
                         <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CU1</th>
                         <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CU2</th>
                         <th scope="col" className="w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Moneda (CU)</th>
+                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Moneda</th>
                         <th scope="col" className="w-28 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Egreso</th>
                     </tr>
                     {/* --- END OF FIX --- */}

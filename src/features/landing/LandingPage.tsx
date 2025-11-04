@@ -1,20 +1,26 @@
 // src/features/landing/LandingPage.tsx
 import { ModuleCard } from './components/ModuleCard';
-import type { User } from '@/types';
+import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
+// import type { User } from '@/types'; // No longer needed directly
 
 interface LandingPageProps {
-  user: User;
-  // onNavigate: (page: string) => void; // <-- 1. REMOVE this prop
+  // 2. REMOVE all props
+  // user: User;
 }
 
-// 2. Apply the updated interface
-export default function LandingPage({ user }: LandingPageProps) {
+export default function LandingPage({}: LandingPageProps) { // <-- 3. Remove props
+    const { user } = useAuth(); // <-- 4. Get user from context
+
+    // 5. Add a check in case user is somehow null
+    if (!user) {
+        return <div className="text-center py-12">Loading user data...</div>;
+    }
+
     const isSales = user.role === 'SALES' || user.role === 'ADMIN';
     const isFinance = user.role === 'FINANCE' || user.role === 'ADMIN';
     const isAdmin = user.role === 'ADMIN';
     const isMasterData = true;
 
-    // 3. Add a 'path' property to each module
     const availableModules = [
         { id: 'sales', name: 'Plantillas Economicas', icon: '📝', description: 'Ingresa y revisa el estado de tus plantillas.', available: isSales, path: '/sales' },
         { id: 'finance', name: 'Aprobación de Plantillas Economicas', icon: '📊', description: 'Aprueba las plantillas economicas.', available: isFinance, path: '/finance' },
@@ -31,13 +37,12 @@ export default function LandingPage({ user }: LandingPageProps) {
                             <ModuleCard
                                 key={module.id}
                                 module={module}
-                                // onNavigate={onNavigate} // <-- 4. REMOVE this prop
-                            />
+                            />
                         ))}
                     </div>
                 ) : (
                     <div className="text-center py-12">
-                        <p className="text-slate-600">No hay modulos disponible para ti ({user.role})</p>
+                       <p className="text-slate-600">No hay modulos disponible para ti ({user.role})</p>
                     </div>
                 )}
             </div>

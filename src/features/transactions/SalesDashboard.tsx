@@ -1,20 +1,21 @@
 // src/features/transactions/SalesDashboard.tsx
 import { useState, useMemo, useEffect } from 'react';
-// import { DashboardToolbar } from '@/components/shared/DashboardToolBar'; // No longer needed
 import DataPreviewModal from '@/components/shared/DataPreviewModal';
 import { TransactionPreviewProvider } from '@/contexts/TransactionPreviewContext';
 import { useTransactionDashboard } from '@/hooks/useTransactionDashboard';
-import type { User, TransactionDetailResponse } from '@/types';
+import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
+// import type { User, TransactionDetailResponse } from '@/types'; // User no longer needed
+import type { TransactionDetailResponse } from '@/types';
 
-// Import Sales-specific components
+// ... (Import Sales-specific components) ...
 import { SalesStatsGrid } from './components/SalesStatsGrid';
 import { SalesTransactionList } from './components/SalesTransactionList';
 import FileUploadModal from './components/FileUploadModal';
 import { TransactionPreviewContent } from './components/TransactionPreviewContent';
 import { SalesPreviewFooter } from './footers/SalesPreviewFooter';
-import { TransactionDashboardLayout } from './components/TransactionDashboardLayout'; // <-- 1. Import new layout
+import { TransactionDashboardLayout } from './components/TransactionDashboardLayout';
 
-// Import Sales-specific services and types
+// ... (Import Sales-specific services) ...
 import {
     uploadExcelForPreview,
     submitFinalTransaction,
@@ -22,14 +23,22 @@ import {
 } from './services/sales.service';
 
 interface SalesDashboardProps {
-    user: User;
+    // 2. REMOVE user and onLogout props
+    // user: User;
     setSalesActions: (actions: { onUpload: () => void, onExport: () => void }) => void;
-    onLogout: () => void;
+    // onLogout: () => void;
 }
 
-export default function SalesDashboard({ user, setSalesActions, onLogout }: SalesDashboardProps) {
+export default function SalesDashboard({ setSalesActions }: SalesDashboardProps) { // <-- 3. Remove props
     
-    // --- HOOK (Unchanged) ---
+    const { user, logout } = useAuth(); // <-- 4. Get user and logout from context
+    
+    // 5. Add a check for user
+    if (!user) {
+        return <div className="text-center py-12">Loading user data...</div>;
+    }
+    
+    // --- HOOK (Now pass context data) ---
     const {
         transactions, isLoading, currentPage, totalPages, setCurrentPage,
         filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
@@ -38,10 +47,11 @@ export default function SalesDashboard({ user, setSalesActions, onLogout }: Sale
     } = useTransactionDashboard({ 
         user, 
         view: 'SALES', 
-        onLogout
+        onLogout: logout // <-- 6. Pass logout from context
     });
 
-    // --- STATE & HANDLERS (Unchanged) ---
+    // ... (All other state, handlers, and render logic remain exactly the same) ...
+    
     const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
@@ -106,14 +116,11 @@ export default function SalesDashboard({ user, setSalesActions, onLogout }: Sale
         setUploadedData(null);
     };
 
-    // --- RENDER (Refactored) ---
     return (
         <>
-            {/* 2. Use the new layout component */}
             <TransactionDashboardLayout
                 apiError={apiError}
                 placeholder={"Filtra por nombre de cliente..."}
-                // Pass all toolbar props
                 filter={filter}
                 setFilter={setFilter}
                 isDatePickerOpen={isDatePickerOpen}
@@ -123,13 +130,9 @@ export default function SalesDashboard({ user, setSalesActions, onLogout }: Sale
                 datePickerRef={datePickerRef}
                 onClearDate={handleClearDate}
                 onSelectToday={handleSelectToday}
-                
-                // 3. Pass Stats Grid as a slot
                 statsGrid={
                     <SalesStatsGrid stats={stats} />
                 }
-                
-                // 4. Pass Transaction List as a slot
                 transactionList={
                     <SalesTransactionList
                         isLoading={isLoading}
@@ -140,10 +143,7 @@ export default function SalesDashboard({ user, setSalesActions, onLogout }: Sale
                     />
                 }
             />
-
-            {/* 5. Keep Modals here, as they are specific to Sales */}
             <FileUploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onNext={handleUploadNext} />
-            
             {uploadedData && (
                 <TransactionPreviewProvider
                     baseTransaction={uploadedData}

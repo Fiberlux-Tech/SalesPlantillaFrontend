@@ -1,6 +1,7 @@
 // src/components/shared/GlobalHeader.tsx
-import { useNavigate, useLocation } from 'react-router-dom'; // <-- 1. Import hooks
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LogOutIcon, ArrowLeftIcon, UploadIcon, ExportIcon } from './Icons';
+import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
 
 interface SalesActions {
     onUpload: () => void;
@@ -8,15 +9,12 @@ interface SalesActions {
 }
 
 interface GlobalHeaderProps {
-    onLogout: () => void;
-    // 2. REMOVE these props
-    // onNavigate: (page: string) => void;
-    // currentPage: string;
-    // pageTitle: string;
+    // 2. REMOVE onLogout prop
+    // onLogout: () => void; 
     salesActions: SalesActions;
 }
 
-// 3. Helper function to get title from URL
+// ... (Helper function getPageTitle remains the same) ...
 const getPageTitle = (pathname: string): string => {
     switch (pathname) {
         case '/sales':
@@ -34,18 +32,17 @@ const getPageTitle = (pathname: string): string => {
 };
 
 export default function GlobalHeader({
-    onLogout,
     salesActions
-}: GlobalHeaderProps) { // <-- 4. Update destructured props
+}: GlobalHeaderProps) { // <-- 3. Remove onLogout from props
 
-    const navigate = useNavigate(); // <-- 5. Add hooks
+    const navigate = useNavigate();
     const location = useLocation();
+    const { logout } = useAuth(); // <-- 4. Get logout from the context
     const pathname = location.pathname;
 
     const buttonStyles = "flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50";
     const primaryButtonStyles = "flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg shadow-sm hover:bg-gray-800";
 
-    // 6. Determine state from the URL pathname
     const showSalesActions = pathname === '/sales';
     const showBackButton = pathname !== '/';
     const currentTitle = getPageTitle(pathname);
@@ -57,14 +54,13 @@ export default function GlobalHeader({
                 <div className="flex items-center space-x-4">
                     {showBackButton ? (
                         <button
-                            onClick={() => navigate('/')} // <-- 7. Update back button
+                            onClick={() => navigate('/')}
                             className={buttonStyles}
                         >
                             <ArrowLeftIcon className="w-5 h-5 mr-2 text-gray-500" />
                             Atrás
                         </button>
                     ) : (
-                        // ... (placeholder div is unchanged) ...
                         <div className="invisible pointer-events-none">
                             <button className={buttonStyles}>
                                 <ArrowLeftIcon className="w-5 h-5 mr-2 text-gray-500" />
@@ -74,12 +70,11 @@ export default function GlobalHeader({
                     )}
 
                     <h1 className="text-3xl font-bold text-gray-800">
-                        {currentTitle} {/* <-- 8. Use local title */}
+                        {currentTitle}
                     </h1>
                 </div>
 
                 <div className="flex items-center space-x-2">
-                    {/* ... (rest of the file is unchanged) ... */}
                     {showSalesActions && salesActions && (
                         <>
                             <button 
@@ -101,7 +96,7 @@ export default function GlobalHeader({
                     )}
                     
                     <button 
-                        onClick={onLogout}
+                        onClick={logout} // <-- 5. Use logout from context
                         className={buttonStyles}
                     >
                         <LogOutIcon className="w-5 h-5 mr-2 text-gray-500" />

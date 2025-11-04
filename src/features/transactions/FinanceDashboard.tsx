@@ -1,19 +1,21 @@
 // src/features/transactions/FinanceDashboard.tsx
 import { useState, useMemo } from 'react';
-// import { DashboardToolbar } from '@/components/shared/DashboardToolBar'; // No longer needed
 import DataPreviewModal from '@/components/shared/DataPreviewModal';
 import { TransactionPreviewProvider } from '@/contexts/TransactionPreviewContext';
 import { useTransactionDashboard } from '@/hooks/useTransactionDashboard';
-import type { User, Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
+import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
+// import type { User, Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
+import type { Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
 
-// Import Finance-specific components
+
+// ... (Import Finance-specific components) ...
 import { FinanceStatsGrid } from './components/FinanceStatsGrid';
 import { TransactionList as FinanceTransactionList } from './components/FinanceTransactionList';
 import { TransactionPreviewContent } from './components/TransactionPreviewContent';
 import { FinancePreviewFooter } from './footers/FinancePreviewFooter';
-import { TransactionDashboardLayout } from './components/TransactionDashboardLayout'; // <-- 1. Import new layout
+import { TransactionDashboardLayout } from './components/TransactionDashboardLayout';
 
-// Import Finance-specific services and types
+// ... (Import Finance-specific services) ...
 import {
     getTransactionDetails,
     updateTransactionStatus,
@@ -22,13 +24,21 @@ import {
 } from './services/finance.service';
 
 interface FinanceDashboardProps {
-    user: User;
-    onLogout: () => void;
+    // 2. REMOVE user and onLogout props
+    // user: User;
+    // onLogout: () => void;
 }
 
-export default function FinanceDashboard({ user, onLogout }: FinanceDashboardProps) {
+export default function FinanceDashboard({}: FinanceDashboardProps) { // <-- 3. Remove props
     
-    // --- HOOK (Unchanged) ---
+    const { user, logout } = useAuth(); // <-- 4. Get user and logout from context
+
+    // 5. Add a check for user
+    if (!user) {
+        return <div className="text-center py-12">Loading user data...</div>;
+    }
+
+    // --- HOOK (Now pass context data) ---
     const {
         transactions, isLoading, currentPage, totalPages, setCurrentPage,
         filter, setFilter, isDatePickerOpen, setIsDatePickerOpen, selectedDate, setSelectedDate, datePickerRef, handleClearDate, handleSelectToday, filteredTransactions,
@@ -37,10 +47,10 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
     } = useTransactionDashboard({ 
         user, 
         view: 'FINANCE', 
-        onLogout 
+        onLogout: logout // <-- 6. Pass logout from context
     });
 
-    // --- STATE & HANDLERS (Unchanged) ---
+    // ... (All other state, handlers, and render logic remain exactly the same) ...
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
 
@@ -114,14 +124,11 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
         setSelectedTransaction(null);
     };
 
-    // --- RENDER (Refactored) ---
     return (
         <>
-            {/* 2. Use the new layout component */}
             <TransactionDashboardLayout
                 apiError={apiError}
                 placeholder={"Filter by client name..."}
-                // Pass all toolbar props
                 filter={filter}
                 setFilter={setFilter}
                 isDatePickerOpen={isDatePickerOpen}
@@ -131,13 +138,9 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
                 datePickerRef={datePickerRef}
                 onClearDate={handleClearDate}
                 onSelectToday={handleSelectToday}
-
-                // 3. Pass Stats Grid as a slot
                 statsGrid={
                     <FinanceStatsGrid stats={stats} />
                 }
-                
-                // 4. Pass Transaction List as a slot
                 transactionList={
                     <FinanceTransactionList
                         isLoading={isLoading}
@@ -150,7 +153,6 @@ export default function FinanceDashboard({ user, onLogout }: FinanceDashboardPro
                 }
             />
 
-            {/* 5. Keep Modals here, as they are specific to Finance */}
             {selectedTransaction && (
                 <TransactionPreviewProvider
                     baseTransaction={selectedTransaction}

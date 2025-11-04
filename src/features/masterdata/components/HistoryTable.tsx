@@ -1,40 +1,20 @@
 // src/features/masterdata/components/HistoryTable.tsx
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge'; 
-import type { VariantProps } from 'class-variance-authority';
-import { badgeVariants } from '@/components/ui/badge';
-// FIX: Import the type from the single source of truth (masterDataService)
-import type { HistoryItem as HistoryRecord } from '../masterDataService'; 
-
-
-// 1. Removed local definition of HistoryRecord, using imported alias
+import { CategoryBadge } from '@/components/shared/CategoryBadge'; // <-- 1. Import new component
+import type { HistoryItem as HistoryRecord } from '../masterDataService';
 
 // 2. Define the props interface
 interface HistoryTableProps {
     isLoading: boolean;
-    history: HistoryRecord[]; // This now correctly matches the imported type
+    history: HistoryRecord[];
 }
 
-// Utility to map category string to the new badge variant 
-const getCategoryVariant = (category: string): VariantProps<typeof badgeVariants>['variant'] => {
-    switch (category) {
-        case 'Finance':
-            return 'categoryFinance';
-        case 'Sales':
-            return 'categorySales';
-        case 'Mayorista':
-            return 'categoryMayorista';
-        case 'Admin':
-            return 'categoryAdmin';
-        default:
-            return 'categoryUser'; // Fallback
-    }
-};
+// 3. REMOVED the local 'getCategoryVariant' function
 
 const formatDate = (isoString: string): string => {
     try {
         const date = new Date(isoString);
-        if (isNaN(date.getTime())) return isoString; // Use getTime() for invalid date check
+        if (isNaN(date.getTime())) return isoString;
         
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -48,7 +28,6 @@ const formatDate = (isoString: string): string => {
     }
 };
 
-// 3. Apply the props interface
 export function HistoryTable({ isLoading, history }: HistoryTableProps) {
     return (
         <div className="bg-white p-6 rounded-lg shadow-md mt-8">
@@ -77,9 +56,8 @@ export function HistoryTable({ isLoading, history }: HistoryTableProps) {
                                 <TableRow key={record.id || index} className="hover:bg-gray-50"> 
                                     <TableCell className="font-medium">{record.variable_name}</TableCell>
                                     <TableCell>
-                                        <Badge variant={getCategoryVariant(record.category)}>
-                                            {record.category}
-                                        </Badge>
+                                        {/* 4. Use the new component */}
+                                        <CategoryBadge category={record.category} />
                                     </TableCell>
                                     <TableCell className="text-right font-mono">{record.variable_value}</TableCell>
                                     <TableCell className="text-center text-xs">{formatDate(record.date_recorded)}</TableCell>

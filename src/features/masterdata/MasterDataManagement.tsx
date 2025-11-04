@@ -1,52 +1,55 @@
 // src/features/masterdata/MasterDataManagement.tsx
 import { useState, useEffect } from 'react';
-// FIX: Import the explicit HistoryItem type from the service file
 import { getMasterVariableHistory, getEditableConfig, updateMasterVariable, type HistoryItem } from './masterDataService'; 
-import { VariableUpdateForm } from './components/VariableUpdateForm'; // Assumes migration
-import { HistoryTable } from './components/HistoryTable'; // Assumes migration
-import type { User } from '@/types'; // 1. Import User type
+import { VariableUpdateForm } from './components/VariableUpdateForm';
+import { HistoryTable } from './components/HistoryTable';
+import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
+// import type { User } from '@/types'; // No longer needed
 
-// 2. Define component props
 interface MasterDataManagementProps {
-    user: User;
+    // 2. REMOVE user prop
+    // user: User;
 }
 
-// 3. Define types for state
+// ... (State interface definitions remain the same) ...
 interface EditableConfigItem {
     name: string;
     label: string;
     category: string;
 }
-
 interface FormInputState {
     variable_name: string;
     variable_value: string;
     comment: string;
 }
 
-export default function MasterDataManagement({ user }: MasterDataManagementProps) {
-    // 5. Type all state hooks
+export default function MasterDataManagement({}: MasterDataManagementProps) { // <-- 3. Remove prop
+    const { user } = useAuth(); // <-- 4. Get user from context
+
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [editableConfig, setEditableConfig] = useState<EditableConfigItem[]>([]); 
     const [apiError, setApiError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    
     const [formInput, setFormInput] = useState<FormInputState>({
         variable_name: '',
         variable_value: '',
         comment: '',
     });
 
+    // 5. Add a check for user
+    if (!user) {
+        return <div className="text-center py-12">Loading user data...</div>;
+    }
+
     const isAuthorizedForWrite = user.role === 'ADMIN' || user.role === 'FINANCE';
 
-    // 6. Type async functions
     const loadData = async (): Promise<void> => {
         setIsLoading(true);
         setApiError(null);
         
         const historyResponse = await getMasterVariableHistory();
         if (historyResponse.success) {
-            setHistory(historyResponse.data || []); // Ensure data is not undefined
+            setHistory(historyResponse.data || []);
         } else {
             setApiError(historyResponse.error || 'Unknown error');
         }
@@ -54,7 +57,7 @@ export default function MasterDataManagement({ user }: MasterDataManagementProps
         if (isAuthorizedForWrite) {
             const configResponse = await getEditableConfig();
             if (configResponse.success) {
-                setEditableConfig(configResponse.data || []); // Ensure data is not undefined
+                setEditableConfig(configResponse.data || []);
                 if (configResponse.data && configResponse.data.length > 0) {
                     setFormInput(prev => ({ ...prev, variable_name: configResponse.data[0].name }));
                 }
@@ -64,14 +67,15 @@ export default function MasterDataManagement({ user }: MasterDataManagementProps
         }
         setIsLoading(false);
     };
-    
+
+    // 6. Add 'isAuthorizedForWrite' to the dependency array
     useEffect(() => {
         loadData();
-    }, []); // Note: 'isAuthorizedForWrite' removed from deps array as it derives from 'user' prop
+    }, [isAuthorizedForWrite]);
 
     const handleUpdateSubmit = async (): Promise<void> => {
         setApiError(null);
-        const valueAsNumber = parseFloat(formInput.variable_value); 
+          const valueAsNumber = parseFloat(formInput.variable_value); 
 
         if (!formInput.variable_name || !formInput.variable_value) {
             setApiError('Please select a variable and enter a value.');
@@ -92,7 +96,8 @@ export default function MasterDataManagement({ user }: MasterDataManagementProps
         if (result.success) {
             alert(`Variable "${formInput.variable_name}" updated successfully to ${valueAsNumber}.`);
             setFormInput(prev => ({ ...prev, variable_value: '', comment: '' })); 
-            loadData(); // Reload all data
+            // We need to reload data to see the new history entry
+            await loadData();
         } else {
             setApiError(result.error || 'Unknown submission error');
         }
@@ -112,13 +117,13 @@ export default function MasterDataManagement({ user }: MasterDataManagementProps
                 />
             ) : (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800 mb-6">
-          _         <p className="text-sm font-medium">Viewing Access Only: Your role ({user.role}) does not permit updating Master Variables.</p>
+                    <p className="text-sm font-medium">Viewing Access Only: Your role ({user.role}) does not permit updating Master Variables.</p>
                 </div>
             )}
             
             <HistoryTable
                 isLoading={isLoading}
-                history={history}
+                  history={history}
             />
         </div>
     );
