@@ -35,6 +35,7 @@ export interface Transaction {
   nrc_currency: "PEN" | "USD";
   plazoContrato: number;
   tipoCambio: number;
+  costoCapitalAnual: number;
   costoInstalacion: number;
 
   // KPIs

@@ -81,6 +81,8 @@ export function TransactionPreviewProvider({
                     gigalan_region: liveEdits?.gigalan_region ?? baseTx.gigalan_region,
                     gigalan_sale_type: liveEdits?.gigalan_sale_type ?? baseTx.gigalan_sale_type,
                     gigalan_old_mrc: liveEdits?.gigalan_old_mrc ?? baseTx.gigalan_old_mrc,
+                    tipoCambio: baseTx.tipoCambio, // <--- ADDED static field
+                    costoCapitalAnual: baseTx.costoCapitalAnual, // <--- ADDED static field
                 };
 
                 const recalculationPayload = {

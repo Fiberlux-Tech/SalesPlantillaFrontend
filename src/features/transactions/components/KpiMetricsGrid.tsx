@@ -38,9 +38,9 @@ export function KpiMetricsGrid() {
     ];
 
     return (
-        <div>
+        <div className="mb-8"> {/* MODIFIED: Increased margin from mb-8 to mb-12 */}
             <h3 className="font-semibold text-gray-800 mb-3 text-lg">Key Performance Indicators</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {kpiCards}
             </div>
         </div>

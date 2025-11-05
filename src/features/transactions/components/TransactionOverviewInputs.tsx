@@ -1,5 +1,6 @@
 // src/features/transactions/components/TransactionOverviewInputs.tsx
-import React, { useState, useMemo } from 'react';
+
+import React, { useState } from 'react';
 import {
     EditPencilIcon,
     EditCheckIcon,
@@ -17,12 +18,18 @@ import { Input } from '@/components/ui/input';
 import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/formatters';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; 
-import { EditableKpiCard } from '@/components/shared/EditableKpiCard'; // Imported for MRC/NRC
+// import { EditableKpiCard } from '@/components/shared/EditableKpiCard'; // REMOVED: No longer used, logic moved inline
 
 // --- PROPS ARE THE SAME ---
 interface TransactionOverviewInputsProps {
     isFinanceView: boolean;
 }
+
+// Local utility to format value and append currency for display mode
+const formatCurrencyDisplay = (value: number | string | null | undefined, currency: string | null | undefined = 'PEN'): string => {
+    // Use formatCurrency for value formatting, which handles the '-' for zero/null/undefined
+    return `${formatCurrency(value)} ${currency || 'PEN'}`;
+};
 
 export function TransactionOverviewInputs({ isFinanceView }: TransactionOverviewInputsProps) {
 
@@ -50,7 +57,7 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     const kpiData = liveKpis || tx;
     const gigalanInputs = liveEdits;
 
-    // --- Local Editing State (remains the same for reusable components) ---
+    // --- Local Editing State (all fields are now managed locally) ---
     const [isEditingPlazo, setIsEditingPlazo] = useState<boolean>(false);
     const [editedPlazo, setEditedPlazo] = useState<string | number | null>(null);
     const [isEditingUnidad, setIsEditingUnidad] = useState<boolean>(false);
@@ -60,7 +67,16 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     const [isEditingSaleType, setIsEditingSaleType] = useState<boolean>(false);
     const [editedSaleType, setEditedSaleType] = useState<string | null>(null);
 
-    // --- FIX START: Restore missing handlers for Plazo Contrato ---
+    // NEW STATES FOR INLINE EDITING OF MRC/NRC (Value and Currency in one cycle)
+    const [isEditingMrc, setIsEditingMrc] = useState<boolean>(false);
+    const [editedMrcValue, setEditedMrcValue] = useState<string | number | null>(null);
+    const [editedMrcCurrency, setEditedMrcCurrency] = useState<string | null>(null);
+
+    const [isEditingNrc, setIsEditingNrc] = useState<boolean>(false);
+    const [editedNrcValue, setEditedNrcValue] = useState<string | number | null>(null);
+    const [editedNrcCurrency, setEditedNrcCurrency] = useState<string | null>(null);
+
+    // --- Plazo Contrato Handlers ---
     const handleEditPlazoSubmit = () => {
         const newPlazo = parseInt(editedPlazo as string, 10);
         if (!isNaN(newPlazo) && newPlazo > 0 && Number.isInteger(newPlazo)) {
@@ -120,8 +136,33 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     };
 
     const handleCancelEditSaleType = () => setIsEditingSaleType(false);
-    // --- FIX END ---
     
+    // --- NEW MRC/NRC Handlers (Combined Value and Currency) ---
+    const handleEditMrcSubmit = () => {
+        const newValue = parseFloat(editedMrcValue as string);
+        if (!isNaN(newValue) && newValue >= 0) {
+            onValueChange('MRC', newValue);
+            onValueChange('mrc_currency', editedMrcCurrency as string);
+            setIsEditingMrc(false);
+        } else {
+            alert("Please enter a valid non-negative number for MRC.");
+        }
+    };
+    const handleCancelEditMrc = () => setIsEditingMrc(false);
+
+    const handleEditNrcSubmit = () => {
+        const newValue = parseFloat(editedNrcValue as string);
+        if (!isNaN(newValue) && newValue >= 0) {
+            onValueChange('NRC', newValue);
+            onValueChange('nrc_currency', editedNrcCurrency as string);
+            setIsEditingNrc(false);
+        }
+        else {
+            alert("Please enter a valid non-negative number for NRC.");
+        }
+    };
+    const handleCancelEditNrc = () => setIsEditingNrc(false);
+
     // Wrapper function for GigaLanCommissionInputs
     const handleGigaLanOldMrcChange = (key: string, value: number | null) => {
         onValueChange(key, value);
@@ -131,6 +172,12 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     const confirmedUnidad = liveEdits?.unidadNegocio ?? tx.unidadNegocio;
     const confirmedRegion = liveEdits?.gigalan_region ?? tx.gigalan_region;
     const confirmedSaleType = liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type;
+
+    // NEW DERIVED VALUES FOR MRC/NRC
+    const confirmedMrcValue = liveEdits?.MRC ?? kpiData.MRC ?? tx.MRC;
+    const confirmedMrcCurrency = liveEdits?.mrc_currency ?? kpiData.mrc_currency ?? tx.mrc_currency ?? 'PEN';
+    const confirmedNrcValue = liveEdits?.NRC ?? kpiData.NRC ?? tx.NRC;
+    const confirmedNrcCurrency = liveEdits?.nrc_currency ?? kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN';
     
     // Helper for static display blocks (RUC/DNI, Nombre Cliente, Comisión)
     const StaticField = ({ label, value, currency }: { label: string, value: React.ReactNode, currency?: string }) => (
@@ -142,7 +189,27 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
 
     return (
         <div className="mb-6">
-            <h3 className="font-semibold text-gray-800 mb-3 text-lg">Transaction Overview</h3>
+            <div className="flex justify-between items-start mb-3"> {/* <--- MODIFIED TO USE FLEX */}
+                <h3 className="font-semibold text-gray-800 text-lg">Transaction Overview</h3>
+                
+                {/* --- MODIFIED BLOCK: Master Variables (Horizontal) --- */}
+                <div className="flex space-x-4 text-xs text-gray-500"> {/* <--- MODIFIED CLASSES */}
+                    <p>
+                        Tipo de Cambio: 
+                        <span className="font-semibold text-gray-700 ml-1">
+                            {formatCurrency(tx.tipoCambio, { decimals: 4 })}
+                        </span>
+                    </p>
+                    <p>
+                        Costo Capital: 
+                        <span className="font-semibold text-gray-700 ml-1">
+                            {formatCurrency(tx.costoCapitalAnual * 100, { decimals: 2 })}%
+                        </span>
+                    </p>
+                </div>
+                {/* --- END MODIFIED BLOCK --- */}
+
+            </div>
             <div className="bg-gray-100 p-4 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 items-start">
                 
                 {/* 1. UNIDAD DE NEGOCIO (Complex Block) */}
@@ -207,28 +274,110 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                     )}
                 </div>
 
-                {/* 5. MRC (Editable KPI Card) */}
-                <EditableKpiCard
-                    title="MRC (Recurrente Mensual)"
-                    kpiKey="MRC"
-                    currencyKey="mrc_currency"
-                    currentValue={kpiData.MRC ?? tx.MRC}
-                    currentCurrency={kpiData.mrc_currency ?? tx.mrc_currency ?? 'PEN'}
-                    subtext="Métrica Clave"
-                    canEdit={canEdit}
-                    onValueChange={onValueChange} 
-                />
+                {/* 5. MRC (INLINE Editable Block) */}
+                <div className="min-h-[60px]">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">MRC (Recurrente Mensual)</p>
+                    {canEdit ? (
+                        isEditingMrc ? (
+                            <div className="flex items-center space-x-1">
+                                {/* Input for Value */}
+                                <Input 
+                                    type="number" 
+                                    value={editedMrcValue ?? ''} 
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedMrcValue(e.target.value)}
+                                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleEditMrcSubmit()}
+                                    className="h-9 w-20 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white" 
+                                    min="0" 
+                                    step="0.01" 
+                                    autoFocus
+                                />
+                                
+                                {/* Select for Currency */}
+                                <div className="w-16">
+                                    <Select 
+                                        value={editedMrcCurrency || ''} 
+                                        onValueChange={(value) => setEditedMrcCurrency(value)}
+                                    >
+                                        <SelectTrigger className="text-sm h-9 bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="PEN">PEN</SelectItem>
+                                            <SelectItem value="USD">USD</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                
+                                {/* Buttons */}
+                                <button onClick={handleEditMrcSubmit} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0" aria-label="Confirm MRC"><EditCheckIcon /></button>
+                                <button onClick={handleCancelEditMrc} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0" aria-label="Cancel MRC"><EditXIcon /></button>
+                            </div>
+                        ) : (
+                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
+                                setEditedMrcValue(confirmedMrcValue ?? '');
+                                setEditedMrcCurrency(confirmedMrcCurrency ?? 'PEN');
+                                setIsEditingMrc(true);
+                            }}>
+                                <p className="font-semibold text-gray-900">{formatCurrencyDisplay(confirmedMrcValue, confirmedMrcCurrency)}</p>
+                                <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
+                            </div>
+                        )
+                    ) : (
+                        <p className="font-semibold text-gray-900">{formatCurrencyDisplay(confirmedMrcValue, confirmedMrcCurrency)}</p>
+                    )}
+                </div>
                 
-                {/* 6. NRC (Editable KPI Card) */}
-                <EditableKpiCard
-                    title="NRC (Pago Único)"
-                    kpiKey="NRC"
-                    currencyKey="nrc_currency"
-                    currentValue={liveEdits.NRC ?? kpiData.NRC ?? tx.NRC}
-                    currentCurrency={kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN'}
-                    canEdit={canEdit}
-                    onValueChange={onValueChange} 
-                />
+                {/* 6. NRC (INLINE Editable Block) */}
+                <div className="min-h-[60px]">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">NRC (Pago Único)</p>
+                    {canEdit ? (
+                        isEditingNrc ? (
+                            <div className="flex items-center space-x-1">
+                                {/* Input for Value */}
+                                <Input 
+                                    type="number" 
+                                    value={editedNrcValue ?? ''} 
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditedNrcValue(e.target.value)}
+                                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleEditNrcSubmit()}
+                                    className="h-9 w-20 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white" 
+                                    min="0" 
+                                    step="0.01" 
+                                />
+                                
+                                {/* Select for Currency */}
+                                <div className="w-16">
+                                    <Select 
+                                        value={editedNrcCurrency || ''} 
+                                        onValueChange={(value) => setEditedNrcCurrency(value)}
+                                    >
+                                        <SelectTrigger className="text-sm h-9 bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="PEN">PEN</SelectItem>
+                                            <SelectItem value="USD">USD</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                
+                                {/* Buttons */}
+                                <button onClick={handleEditNrcSubmit} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0" aria-label="Confirm NRC"><EditCheckIcon /></button>
+                                <button onClick={handleCancelEditNrc} className="p-1 rounded hover:bg-gray-200 transition-colors flex-shrink-0" aria-label="Cancel NRC"><EditXIcon /></button>
+                            </div>
+                        ) : (
+                            <div className="group flex items-center space-x-2 cursor-pointer" onClick={() => {
+                                setEditedNrcValue(confirmedNrcValue ?? '');
+                                setEditedNrcCurrency(confirmedNrcCurrency ?? 'PEN');
+                                setIsEditingNrc(true);
+                            }}>
+                                <p className="font-semibold text-gray-900">{formatCurrencyDisplay(confirmedNrcValue, confirmedNrcCurrency)}</p>
+                                <div className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"><EditPencilIcon /></div>
+                            </div>
+                        )
+                    ) : (
+                        <p className="font-semibold text-gray-900">{formatCurrencyDisplay(confirmedNrcValue, confirmedNrcCurrency)}</p>
+                    )}
+                </div>
 
                 {/* 7. COMISION DE VENTAS (Static Field) */}
                 <StaticField 

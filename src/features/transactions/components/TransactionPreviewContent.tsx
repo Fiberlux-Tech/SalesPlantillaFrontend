@@ -121,6 +121,9 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                 isFinanceView={isFinanceView}
             />
 
+            {/* 2. Key Performance Indicators (NEW POSITION) */}
+            <KpiMetricsGrid />
+
             <div className="mb-6">
                 <h3 className="font-semibold text-gray-800 mb-3 text-lg">Detalle de Servicios</h3>
                 <div className="space-y-3">
@@ -167,8 +170,6 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     )}
                 </div>
             </div>
-
-            <KpiMetricsGrid />
         </>
     );
 }
