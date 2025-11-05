@@ -45,8 +45,17 @@ export function TransactionPreviewProvider({
         getInitialState
     );
 
-    // CRITICAL FIX: Removed the immediate destructuring here to eliminate the 'unused' error.
-    // The values are accessed either below in 'value' or inside the useEffect/useMemo.
+    // 1. FIX: Memoize the set of inputs that should trigger a recalculation.
+    // This object reference only changes when one of its deep dependencies change.
+    const recalculationInputs = useMemo(() => ({
+        liveEdits: draftState.liveEdits,
+        currentFixedCosts: draftState.currentFixedCosts,
+        currentRecurringServices: draftState.currentRecurringServices,
+    }), [
+        draftState.liveEdits,
+        draftState.currentFixedCosts,
+        draftState.currentRecurringServices,
+    ]);
     
     // 3. canEdit logic remains the same
     const canEdit = useMemo(
@@ -56,9 +65,9 @@ export function TransactionPreviewProvider({
 
     // 4. This useEffect now handles ALL recalculations automatically (WITH DEBOUNCING)
     useEffect(() => {
-        // MODIFIED: Destructure values *inside* the effect using the latest draftState
-        const { liveEdits, currentFixedCosts, currentRecurringServices } = draftState;
-
+        // MODIFIED: Destructure values *from the memoized input object*
+        const { liveEdits, currentFixedCosts, currentRecurringServices } = recalculationInputs;
+        
         // Do not run on initial render or if data is missing
         if (!baseTransaction) return;
 
@@ -66,6 +75,12 @@ export function TransactionPreviewProvider({
         const handler = setTimeout(() => {
             // Define the async function *inside* the timer callback
             const recalculate = async () => {
+                // Ensure recalculation doesn't run if the state is already empty (e.g. initial run after mount)
+                if (Object.keys(liveEdits).length === 0 && currentFixedCosts.length === 0 && currentRecurringServices.length === 0) {
+                    // Avoid unnecessary recalculation if initial state is clean
+                    return;
+                }
+
                 dispatch({ type: 'RECALCULATION_START' });
 
                 const baseTx = baseTransaction.transactions;
@@ -122,12 +137,11 @@ export function TransactionPreviewProvider({
         }, 500); // <-- Wait 500ms after the last dependency change
 
         // --- MODIFICATION: Cleanup function ---
-        // CRITICAL FIX: The dependency is now only the top-level draftState
         return () => {
             clearTimeout(handler);
         };
     }, [
-        draftState, // <--- CRITICAL FIX: Ensure the recalculation runs on any valid state update
+        recalculationInputs, // <--- CRITICAL FIX: Use the memoized input object as dependency
         baseTransaction,
         dispatch,
     ]);

@@ -19,6 +19,7 @@ export interface PreviewState {
 // 2. Define all possible actions
 export type PreviewAction =
     | { type: 'UPDATE_TRANSACTION_FIELD'; payload: { key: string; value: any | null } }
+    | { type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS'; payload: Record<string, any> }
     | { type: 'ADD_FIXED_COSTS'; payload: FixedCost[] }
     | { type: 'REMOVE_FIXED_COST'; payload: string } // payload is 'ticket' code
     | { type: 'UPDATE_FIXED_COST'; payload: { index: number; field: keyof FixedCost; value: any } }
@@ -58,6 +59,15 @@ export function transactionPreviewReducer(
                 liveEdits: {
                     ...state.liveEdits,
                     [action.payload.key]: action.payload.value,
+                },
+            };
+            
+        case 'UPDATE_MULTIPLE_TRANSACTION_FIELDS':
+            return {
+                ...state,
+                liveEdits: {
+                    ...state.liveEdits,
+                    ...action.payload, // Spread the object of key/value updates
                 },
             };
 
