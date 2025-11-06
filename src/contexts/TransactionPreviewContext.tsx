@@ -98,6 +98,8 @@ export function TransactionPreviewProvider({
                     gigalan_old_mrc: liveEdits?.gigalan_old_mrc ?? baseTx.gigalan_old_mrc,
                     tipoCambio: baseTx.tipoCambio, // <--- ADDED static field
                     costoCapitalAnual: baseTx.costoCapitalAnual, // <--- ADDED static field
+                    aplicaCartaFianza: liveEdits?.aplicaCartaFianza ?? baseTx.aplicaCartaFianza,
+                    tasaCartaFianza: baseTx.tasaCartaFianza,
                 };
 
                 const recalculationPayload = {

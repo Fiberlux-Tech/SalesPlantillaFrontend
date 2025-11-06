@@ -111,7 +111,31 @@ const CurrencyInput: React.FC<{
         </div>
     </>
 );
-// --- End Custom Renderer Components ---
+
+// Custom Rendering Component for Boolean (SI/NO) fields
+const BooleanSelectInput: React.FC<{
+    localValue: boolean | null | undefined;
+    setLocalValue: React.Dispatch<React.SetStateAction<any>>;
+    onConfirm: () => void;
+}> = ({ localValue, setLocalValue, onConfirm }) => (
+    <Select
+        // We convert the boolean to a string for the Select component
+        value={localValue === true ? "true" : "false"}
+        onValueChange={(value) => {
+            // Convert the string back to a boolean for our state
+            setLocalValue(value === "true");
+        }}
+    >
+        <SelectTrigger className="text-sm h-9 bg-white w-24">
+            <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+            <SelectItem value="true">SI</SelectItem>
+            <SelectItem value="false">NO</SelectItem>
+        </SelectContent>
+    </Select>
+);
+// --- END of new component ---
 
 
 export function TransactionOverviewInputs() {
@@ -153,6 +177,7 @@ export function TransactionOverviewInputs() {
     const confirmedMrcCurrency = liveEdits?.mrc_currency ?? kpiData.mrc_currency ?? tx.mrc_currency ?? 'PEN';
     const confirmedNrcValue = liveEdits?.NRC ?? kpiData.NRC ?? tx.NRC;
     const confirmedNrcCurrency = liveEdits?.nrc_currency ?? kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN';
+    const confirmedAplicaCartaFianza = liveEdits?.aplicaCartaFianza ?? tx.aplicaCartaFianza;
     
     // Helper for static display blocks (RUC/DNI, Nombre Cliente, Comisión)
     const StaticField = ({ label, value, currency }: { label: string, value: React.ReactNode, currency?: string }) => (
@@ -238,6 +263,13 @@ export function TransactionOverviewInputs() {
         }
     };
 
+    const handleConfirmCartaFianza = (finalValue: boolean | null | undefined) => {
+        // Use single, ATOMIC dispatch
+        dispatch({
+            type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS',
+            payload: { aplicaCartaFianza: finalValue === true } // Ensure it's a boolean
+        });
+    };
 
     // Wrapper function for GigaLanCommissionInputs
     const handleGigaLanOldMrcChange = (key: string, value: number | null) => {
@@ -250,19 +282,33 @@ export function TransactionOverviewInputs() {
                 <h3 className="font-semibold text-gray-800 text-lg">Transaction Overview</h3>
                 
                 {/* --- Master Variables (Horizontal) --- */}
-                <div className="flex space-x-4 text-xs text-gray-500"> 
+                <div className="flex space-x-4 text-xs text-gray-500">
                     <p>
-                        Tipo de Cambio: 
+                        Tipo de Cambio:
                         <span className="font-semibold text-gray-700 ml-1">
                             {formatCurrency(tx.tipoCambio, { decimals: 4 })}
                         </span>
                     </p>
                     <p>
-                        Costo Capital: 
+                        Costo Capital:
                         <span className="font-semibold text-gray-700 ml-1">
                             {formatCurrency(tx.costoCapitalAnual * 100, { decimals: 2 })}%
                         </span>
                     </p>
+                    {/* --- ADD THESE TWO <p> BLOCKS --- */}
+                    <p>
+                        Tasa Carta Fianza:
+                        <span className="font-semibold text-gray-700 ml-1">
+                            {formatCurrency((tx.tasaCartaFianza || 0) * 100, { decimals: 2 })}%
+                        </span>
+                    </p>
+                    <p>
+                        Costo Carta Fianza:
+                        <span className="font-semibold text-gray-700 ml-1">
+                            {formatCurrency(kpiData.costoCartaFianza)}
+                        </span>
+                    </p>
+                    {/* --- END OF ADDED BLOCK --- */}
                 </div>
             </div>
             <div className="bg-gray-100 p-4 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 items-start">
@@ -372,6 +418,26 @@ export function TransactionOverviewInputs() {
                         />
                     );
                 })()}
+
+                {/* 8. APLICA CARTA FIANZA (Using InlineEditWrapper) */}
+                <div className="min-h-[60px]">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Aplica Carta Fianza</p>
+                    <InlineEditWrapper<boolean | null>
+                        fieldKey="Aplica Carta Fianza"
+                        currentValue={confirmedAplicaCartaFianza || false}
+                        canEdit={canEdit}
+                        initialValueTransformer={(value) => value === true}
+                        renderDisplay={(value) => (value === true ? "SI" : "NO")}
+                        renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
+                            <BooleanSelectInput
+                                localValue={localValue}
+                                setLocalValue={setLocalValue}
+                                onConfirm={onConfirm}
+                            />
+                        )}
+                        onConfirm={handleConfirmCartaFianza}
+                    />
+                </div>
 
                 {/* --- GIGALAN FIELDS --- */}
                 {confirmedUnidad === 'GIGALAN' && (

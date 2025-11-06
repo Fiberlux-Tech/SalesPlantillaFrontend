@@ -56,6 +56,11 @@ export interface Transaction {
   gigalan_old_mrc?: number | null;
 
   timeline?: CashFlowTimeline; // <-- ADD THIS LINE
+
+  // --- ADD THESE THREE LINES ---
+  aplicaCartaFianza?: boolean;
+  tasaCartaFianza?: number;
+  costoCartaFianza?: number;
 }
 
 export interface FixedCost {
