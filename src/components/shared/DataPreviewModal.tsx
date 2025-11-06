@@ -16,8 +16,8 @@ interface DataPreviewModalProps {
     title: string;
     children: React.ReactNode; 
     footer: React.ReactNode;
-    // NEW PROP: Pass status directly to display in the header
     status: string; 
+    headerActions?: React.ReactNode; // <-- ADD THIS LINE
 }
 
 function DataPreviewModal({
@@ -26,7 +26,8 @@ function DataPreviewModal({
     title,
     children,
     footer,
-    status // Destructure new prop
+    status, // Destructure new prop
+    headerActions // <-- ADD THIS LINE
 }: DataPreviewModalProps) {
 
     if (!isOpen) return null;
@@ -39,20 +40,23 @@ function DataPreviewModal({
             <Card className="max-w-6xl w-full flex flex-col overflow-hidden">
                 
                 {/* Header: Use CardHeader and CardTitle */}
-                {/* MODIFICATION: Align items better and include the StatusBadge */}
                 <CardHeader className="flex-row items-center justify-between p-5 border-b">
                     <CardTitle className="text-xl text-gray-800 p-0 m-0 flex items-center space-x-3">
                         <span>{title}</span>
-                        {/* Status badge goes to the top, next to the title (Point 2) */}
                         <StatusBadge status={status} /> 
                     </CardTitle>
-                    <button 
-                        onClick={onClose} 
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                        aria-label="Close modal"
-                    >
-                        <CloseIcon />
-                    </button>
+
+                    {/* --- ADD THIS WRAPPER --- */}
+                    <div className="flex items-center space-x-3">
+                        {headerActions} {/* <-- RENDER THE NEW BUTTON SLOT HERE */}
+                        <button 
+                            onClick={onClose} 
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            aria-label="Close modal"
+                        >
+                            <CloseIcon />
+                        </button>
+                    </div>
                 </CardHeader>
 
                 {/* Body: Use CardContent for padding, but customize for scrolling/background */}

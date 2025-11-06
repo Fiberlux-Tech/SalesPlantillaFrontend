@@ -1,5 +1,6 @@
 // src/features/transactions/TransactionDashboard.tsx
 import { useState, useMemo, useEffect, useRef, RefObject } from 'react';
+import { UploadIcon } from '@/components/shared/Icons';
 
 // --- Shared Imports ---
 import DataPreviewModal from '@/components/shared/DataPreviewModal';
@@ -74,9 +75,49 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const datePickerRef = useRef<HTMLDivElement>(null);
 
+    const createEmptyTransactionData = (): TransactionDetailResponse['data'] => ({
+        transactions: {
+            id: 0,
+            clientName: '',
+            salesman: user.username || '',
+            submissionDate: new Date().toISOString(),
+            ApprovalStatus: 'PENDING',
+            MRC: 0,
+            NRC: 0,
+            mrc_currency: 'PEN',
+            nrc_currency: 'PEN',
+            plazoContrato: 12, // Default
+            tipoCambio: 0,
+            costoCapitalAnual: 0,
+            costoInstalacion: 0,
+            VAN: 0,
+            TIR: 0,
+            payback: 0,
+            totalRevenue: 0,
+            totalExpense: 0,
+            grossMargin: 0,
+            grossMarginRatio: 0,
+            costoInstalacionRatio: 0,
+            comisiones: 0,
+            unidadNegocio: '', // This will show "Selecciona obligatorio"
+            aplicaCartaFianza: false,
+            tasaCartaFianza: 0,
+            costoCartaFianza: 0,
+        } as Transaction, // Cast to satisfy the type
+        fixed_costs: [],
+        recurring_services: [],
+        timeline: {
+            periods: [],
+            revenues: { nrc: [], mrc: [] },
+            expenses: { comisiones: [], egreso: [], fixed_costs: [] },
+            net_cash_flow: []
+        },
+        fileName: "Nueva Plantilla"
+    });
+
     // --- 3. VIEW-SPECIFIC MODAL STATE ---
     // Sales Modal State
-    const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+    const [isUploaderPoppedUp, setIsUploaderPoppedUp] = useState<boolean>(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
 
@@ -93,10 +134,12 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 // Sales Handlers
     useEffect(() => {
         if (view === 'SALES' && setSalesActions) {
-            setSalesActions({
-                uploadLabel: 'Crear Plantilla', // <--- Set the new button text
-                onUpload: () => setIsUploadModalOpen(true),
-                // onExport is gone
+                setSalesActions({
+                uploadLabel: 'Crear Plantilla',
+                onUpload: () => {
+                    setUploadedData(null); // Clear any previous data
+                    setIsPreviewModalOpen(true); // Open the main modal
+                },
             });
             // Cleanup function
             return () => {
@@ -114,12 +157,11 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         setApiError(null);
         const result = await uploadExcelForPreview(file);
         if (result.success && result.data) {
-            setUploadedData(result.data);
-            setIsUploadModalOpen(false);
-            setIsPreviewModalOpen(true);
+            setUploadedData(result.data); // Set the new data
+            setIsUploaderPoppedUp(false); // Close the popup
         } else {
-            setApiError(result.error || 'Unknown upload error');
-            setIsUploadModalOpen(false);
+            // Show error in the popup
+            alert(result.error || 'Unknown upload error');
         }
     };
 
@@ -141,6 +183,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const handleCloseSalesModal = () => {
         setIsPreviewModalOpen(false);
         setUploadedData(null);
+        setIsUploaderPoppedUp(false); // Also close the popup
     };
 
     // Finance Handlers
@@ -302,22 +345,39 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             {/* --- Conditional Sales Modals --- */}
             {view === 'SALES' && (
                 <>
+                    {/* The FileUploader is now a popup controlled by new state */}
                     <FileUploadModal 
-                        isOpen={isUploadModalOpen} 
-                        onClose={() => setIsUploadModalOpen(false)} 
+                        isOpen={isUploaderPoppedUp} 
+                        onClose={() => setIsUploaderPoppedUp(false)} 
                         onNext={handleUploadNext} 
                     />
-                    {uploadedData && (
+
+                    {/* The Preview Modal now opens if EITHER it's empty OR has data */}
+                    {isPreviewModalOpen && (
                         <TransactionPreviewProvider
-                            baseTransaction={uploadedData}
+                            // IMPORTANT: Use the uploaded data OR the new empty template
+                            baseTransaction={uploadedData || createEmptyTransactionData()}
+                            // Add a key to force re-render when uploadedData changes from null to something
+                            key={(uploadedData?.fileName || 'empty') + (uploadedData?.transactions.id || '0')}
                             view="SALES"
                         >
                             <DataPreviewModal
                                 isOpen={isPreviewModalOpen}
-                                title={`Preview: ${uploadedData.fileName}`}
+                                // Title is dynamic
+                                title={uploadedData ? `Preview: ${uploadedData.fileName}` : "Nueva Plantilla"}
                                 onClose={handleCloseSalesModal}
-                                // Pass status for the new modal header structure (Point 2)
-                                status={uploadedData.transactions.ApprovalStatus} 
+                                // Status is dynamic
+                                status={(uploadedData || createEmptyTransactionData()).transactions.ApprovalStatus} 
+                                // Pass the new "Cargar Excel" button to the header
+                                headerActions={
+                                    <button
+                                        onClick={() => setIsUploaderPoppedUp(true)}
+                                        className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50"
+                                    >
+                                        <UploadIcon className="w-4 h-4" />
+                                        <span>Cargar Excel</span>
+                                    </button>
+                                }
                                 footer={
                                     <SalesPreviewFooter
                                         onConfirm={handleConfirmSubmission}
