@@ -140,12 +140,5 @@ export const FixedCostEmptyState = ({ onToggle }: { onToggle: () => void }) => (
     <div className="flex flex-col items-center justify-center py-6 text-center">
         <p className="text-gray-500 mb-1">No hay datos de inversión cargados.</p>
         <p className="text-sm text-gray-400 mb-4">Use el botón 'Cargar' para agregar datos por código.</p>
-        <Button 
-            onClick={onToggle}
-            variant="outline" 
-            size="sm"
-        >
-            Cargar
-        </Button>
     </div>
 );

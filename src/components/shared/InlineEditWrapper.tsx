@@ -88,7 +88,7 @@ export function InlineEditWrapper<T>({
         return (
             <div className="flex items-center space-x-2">
                 {/* Render the custom input/select field */}
-                <div className={localCurrency ? "flex items-center space-x-1" : "flex-grow max-w-[200px]"}>
+                <div className={localCurrency ? "flex items-center space-x-2" : ""}>
                     {renderEdit(localValue, setLocalValue, localCurrency, setLocalCurrency, handleConfirm)}
                 </div>
 

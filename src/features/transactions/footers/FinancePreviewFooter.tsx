@@ -57,10 +57,8 @@ export function FinancePreviewFooter({
 
     return (
         <div className="flex justify-between items-center p-5 border-t bg-white space-x-3">
-            
-            <div className="flex-grow"></div> 
-
-            <button
+             <div className="flex-grow"></div> 
+             <button
                 onClick={handleCalculateCommissionClick}
                 className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
                 disabled={!canModify}

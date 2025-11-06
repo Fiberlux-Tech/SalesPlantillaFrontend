@@ -36,7 +36,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     // 3. UI state is now LOCAL to this component
     const [isCodeManagerOpen, setIsCodeManagerOpen] = useState(false);
     const [openSections, setOpenSections] = useState<OpenSectionsState>({
-        'cashFlow': true,
+        'cashFlow': false,
         'recurringCosts': false,
         'fixedCosts': false
     });
@@ -151,23 +151,20 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                             EmptyStateComponent={() => <FixedCostEmptyState onToggle={() => setIsCodeManagerOpen(true)} />}
                         />
                     </CostBreakdownRow>
-
-                    {timeline && (
-                        <CostBreakdownRow
-                            title="Flujo"
-                            items={timeline.periods?.length || 0}
-                            total={null}
-                            isOpen={openSections['cashFlow']}
-                            onToggle={() => toggleSection('cashFlow')}
-                            customTotalsNode={
-                                <div className="text-xs text-gray-500 text-right">
-                                    Valores por periodo
-                                </div>
-                            }
-                        >
-                            <CashFlowTimelineTable timeline={timeline} />
-                        </CostBreakdownRow>
-                    )}
+                    <CostBreakdownRow
+                        title="Flujo"
+                        items={timeline?.periods?.length || 0}
+                        total={null}
+                        isOpen={openSections['cashFlow']}
+                        onToggle={() => toggleSection('cashFlow')}
+                        customTotalsNode={
+                            <div className="text-xs text-gray-500 text-right">
+                                Valores por periodo
+                            </div>
+                        }
+                    >
+                        <CashFlowTimelineTable timeline={timeline} />
+                    </CostBreakdownRow>
                 </div>
             </div>
         </>

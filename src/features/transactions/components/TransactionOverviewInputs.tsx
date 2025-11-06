@@ -15,15 +15,17 @@ import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { InlineEditWrapper } from '@/components/shared/InlineEditWrapper'; 
 
 
-// --- PROPS ARE THE SAME ---
-interface TransactionOverviewInputsProps {
-    isFinanceView: boolean;
-}
 
 // Local utility to format value and append currency for display mode
 const formatCurrencyDisplay = (value: number | string | null | undefined, currency: string | null | undefined = 'PEN'): string => {
-    // Use formatCurrency for value formatting, which handles the '-' for zero/null/undefined
-    return `${formatCurrency(value)} ${currency || 'PEN'}`;
+    const formattedValue = formatCurrency(value);
+    
+    // Only add the currency if the value is not "-"
+    if (formattedValue === '-') {
+        return formattedValue;
+    }
+    
+    return `${formattedValue} ${currency || 'PEN'}`;
 };
 
 // --- Custom Renderer Components for InlineEditWrapper ---
@@ -42,7 +44,6 @@ const SelectInput: React.FC<SelectInputProps & {
     valueKey, 
     localValue, 
     setLocalValue,
-    onConfirm // Pass through is important for enter key/focus management
 }) => (
     <Select value={localValue as string || ''} onValueChange={setLocalValue}>
         <SelectTrigger className="text-sm h-9 bg-white">
@@ -87,14 +88,14 @@ const CurrencyInput: React.FC<{
             value={localValue ?? ''} 
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalValue(e.target.value)}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && onConfirm()}
-            className="h-9 w-20 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white" 
+            className="h-9 w-24 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white" 
             min="0" 
             step="0.01" 
             autoFocus
         />
         
         {/* Select for Currency */}
-        <div className="w-16">
+        <div className="w-20">
             <Select 
                 value={localCurrency || ''} 
                 onValueChange={(value) => setLocalCurrency(value)}
@@ -113,7 +114,7 @@ const CurrencyInput: React.FC<{
 // --- End Custom Renderer Components ---
 
 
-export function TransactionOverviewInputs({ isFinanceView }: TransactionOverviewInputsProps) {
+export function TransactionOverviewInputs() {
 
     // Removed: All local state for editing (isEditingPlazo, editedPlazo, etc.)
 
@@ -359,13 +360,18 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                         onConfirm={handleConfirmNrc}
                     />
                 </div>
-
                 {/* 7. COMISION DE VENTAS (Static Field) */}
-                <StaticField 
-                    label="Comisión de Ventas" 
-                    value={formatCurrency(kpiData.comisiones)} 
-                    currency="PEN" 
-                />
+                {((): React.ReactNode => {
+                    const formattedValue = formatCurrency(kpiData.comisiones);
+                    const displayCurrency = formattedValue === '-' ? undefined : "PEN";
+                    return (
+                        <StaticField 
+                            label="Comisión de Ventas" 
+                            value={formattedValue} 
+                            currency={displayCurrency} 
+                        />
+                    );
+                })()}
 
                 {/* --- GIGALAN FIELDS --- */}
                 {confirmedUnidad === 'GIGALAN' && (

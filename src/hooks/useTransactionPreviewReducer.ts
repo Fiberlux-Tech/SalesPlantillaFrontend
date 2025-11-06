@@ -35,7 +35,7 @@ export function getInitialState(
 ): PreviewState {
     const initialKpis = {
         ...baseTransaction.transactions,
-        timeline: baseTransaction.timeline,
+        timeline: baseTransaction.transactions.timeline || baseTransaction.timeline,
     };
     return {
         liveEdits: {},

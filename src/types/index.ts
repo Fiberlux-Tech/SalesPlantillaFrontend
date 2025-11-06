@@ -54,6 +54,8 @@ export interface Transaction {
   gigalan_region?: string;
   gigalan_sale_type?: "NUEVO" | "EXISTENTE";
   gigalan_old_mrc?: number | null;
+
+  timeline?: CashFlowTimeline; // <-- ADD THIS LINE
 }
 
 export interface FixedCost {
