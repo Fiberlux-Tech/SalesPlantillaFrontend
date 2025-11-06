@@ -1,6 +1,6 @@
 // src/components/shared/FixedCostsTable.tsx
-import { EditableTableCell } from '@/components/shared/EditableTableCell';
-import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell';
+import { EditableTableCell } from '@/features/transactions/components/EditableTableCell';
+import { EditableCurrencyCell } from '@/features/transactions/components/EditableCurrencyCell';
 import type { FixedCost } from '@/types';
 import type { ReactNode } from 'react';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';

@@ -1,5 +1,5 @@
 // src/features/finance/components/FinanceStatsGrid.tsx
-import StatsCard from '@/components/shared/StatsCard'; // Assumes StatsCard.tsx
+import StatsCard from '@/features/transactions/components/StatsCard'; // Assumes StatsCard.tsx
 import { 
     ClockIcon,
     TrendUpIcon,

@@ -1,5 +1,5 @@
 // src/components/shared/RecurringServicesTable.tsx
-import { EditableCurrencyCell } from '@/components/shared/EditableCurrencyCell';
+import { EditableCurrencyCell } from '@/features/transactions/components/EditableCurrencyCell';
 import type { RecurringService } from '@/types';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';

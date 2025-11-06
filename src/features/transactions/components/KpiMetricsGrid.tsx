@@ -1,5 +1,5 @@
 // src/features/transactions/components/KpiMetricsGrid.tsx
-import KpiCard from '@/components/shared/KpiCard';
+import KpiCard from './KpiCard';
 // REMOVED: EditableKpiCard is no longer needed here
 import { formatCurrency } from '@/lib/formatters';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; 

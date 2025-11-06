@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/formatters';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; 
-import { InlineEditWrapper } from '@/components/shared/InlineEditWrapper'; 
+import { InlineEditWrapper } from './InlineEditWrapper'; 
 
 
 interface TransactionOverviewInputsProps {

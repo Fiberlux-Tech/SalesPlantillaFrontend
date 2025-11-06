@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useRef, RefObject } from 'react';
 import { UploadIcon } from '@/components/shared/Icons';
 
 // --- Shared Imports ---
-import DataPreviewModal from '@/components/shared/DataPreviewModal';
+import DataPreviewModal from '@/features/transactions/components/DataPreviewModal';
 import { TransactionPreviewProvider } from '@/contexts/TransactionPreviewContext';
 import { useTransactionDashboard } from '@/hooks/useTransactionDashboard';
 import { useAuth } from '@/contexts/AuthContext';

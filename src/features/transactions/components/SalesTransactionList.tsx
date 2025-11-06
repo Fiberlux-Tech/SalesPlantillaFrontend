@@ -1,6 +1,6 @@
 // src/features/transactions/components/SalesTransactionList.tsx
-import StatusBadge from '@/components/shared/StatusBadge';
-import { PaginatedTable, type ColumnDef } from '@/components/shared/PaginatedTable';
+import StatusBadge from '@/features/transactions/components/StatusBadge';
+import { PaginatedTable, type ColumnDef } from './PaginatedTable';
 import { TableCell, TableRow } from '@/components/ui/table';
 import type { FormattedSalesTransaction } from '../services/sales.service';
 

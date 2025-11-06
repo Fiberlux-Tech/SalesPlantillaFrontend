@@ -1,6 +1,6 @@
 // src/features/transactions/components/TransactionDashboardLayout.tsx
 import React from 'react';
-import { DashboardToolbar } from '@/components/shared/DashboardToolBar';
+import { DashboardToolbar } from '@/features/transactions/components/DashboardToolBar';
 
 // Define the props for the layout
 interface TransactionDashboardLayoutProps {

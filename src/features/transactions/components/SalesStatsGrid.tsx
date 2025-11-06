@@ -1,5 +1,5 @@
 // src/features/sales/components/SalesStatsGrid.tsx
-import StatsCard from '../../../components/shared/StatsCard'; // Assumes StatsCard.tsx
+import StatsCard from './StatsCard'; // Assumes StatsCard.tsx
 import {
     ClockIcon,
     TrendUpIcon,

@@ -1,15 +1,15 @@
 // src/features/transactions/components/TransactionPreviewContent.tsx
 import { useState, useMemo } from 'react';
-import CostBreakdownRow from '@/components/shared/CostBreakdownRow';
+import CostBreakdownRow from '@/features/transactions/components/CostBreakdownRow';
 import {
     WarningIcon,
     CheckCircleIcon,
 } from '@/components/shared/Icons';
-import FixedCostsTable from '@/components/shared/FixedCostsTable';
-import RecurringServicesTable from '@/components/shared/RecurringServicesTable';
-import CashFlowTimelineTable from '@/components/shared/CashFlowTimelineTable';
+import FixedCostsTable from '@/features/transactions/components/FixedCostsTable';
+import RecurringServicesTable from './RecurringServicesTable';
+import CashFlowTimelineTable from '@/features/transactions/components/CashFlowTimelineTable';
 import { formatCurrency } from '@/lib/formatters';
-import { FixedCostCodeManager, FixedCostEmptyState } from '@/components/shared/FixedCostCodeManager';
+import { FixedCostCodeManager, FixedCostEmptyState } from '@/features/transactions/components/FixedCostCodeManager';
 import { TransactionOverviewInputs } from './TransactionOverviewInputs';
 import { KpiMetricsGrid } from './KpiMetricsGrid';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
