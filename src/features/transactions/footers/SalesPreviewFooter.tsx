@@ -2,6 +2,7 @@
 import { CheckCircleIcon } from '../../../components/shared/Icons';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import type { TransactionDetailResponse } from '@/types';
+import { UNIDADES_NEGOCIO } from '@/lib/constants'; // <-- ADD THIS IMPORT
 
 // --- PROPS INTERFACE (No change) ---
 interface SalesPreviewFooterProps {
@@ -31,15 +32,24 @@ export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterPro
         // 3. Use dispatch to set the error state
         dispatch({ type: 'SET_API_ERROR', payload: null });
 
+        // Combine base transaction with any live edits to get the final state
+        const finalTransactionState = { ...baseTransaction.transactions, ...liveEdits };
+
+        // --- ADD THIS VALIDATION BLOCK ---
+        if (!finalTransactionState.unidadNegocio || !UNIDADES_NEGOCIO.includes(finalTransactionState.unidadNegocio)) {
+            const errorMsg = "Selección obligatoria: Por favor, selecciona una 'Unidad de Negocio' válida.";
+            dispatch({ type: 'SET_API_ERROR', payload: errorMsg });
+            alert(errorMsg);
+            return; // Stop the submission
+        }
+        // --- END OF VALIDATION BLOCK ---
+
         // Build the final payload from context state
         const finalPayload = {
             ...baseTransaction,
             fixed_costs: currentFixedCosts,
             recurring_services: currentRecurringServices,
-            transactions: {
-                ...baseTransaction.transactions,
-                ...liveEdits,
-            }
+            transactions: finalTransactionState, // Use the already merged object
         };
 
         // Pass the complete, live payload up to the dashboard handler
