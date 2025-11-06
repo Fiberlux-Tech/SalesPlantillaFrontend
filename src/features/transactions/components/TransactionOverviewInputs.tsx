@@ -49,7 +49,7 @@ const SelectInput: React.FC<SelectInputProps & {
     setLocalValue,
 }) => (
     <Select value={localValue as string || ''} onValueChange={setLocalValue}>
-        <SelectTrigger className="text-sm h-9 bg-white">
+        <SelectTrigger className="text-sm h-9 bg-white w-40"> {/* <-- ADD w-40 HERE */}
             <SelectValue placeholder={`Selecciona ${valueKey}...`} />
         </SelectTrigger>
         <SelectContent>

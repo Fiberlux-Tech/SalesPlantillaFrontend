@@ -14,7 +14,6 @@ import { TransactionPreviewContent } from './components/TransactionPreviewConten
 // --- Sales-Specific Imports ---
 import { SalesStatsGrid } from './components/SalesStatsGrid';
 import { SalesTransactionList } from './components/SalesTransactionList';
-import FileUploadModal from './components/FileUploadModal';
 import { SalesPreviewFooter } from './footers/SalesPreviewFooter';
 import {
     uploadExcelForPreview,
@@ -74,6 +73,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const datePickerRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null); // <-- ADD THIS LINE
 
     const createEmptyTransactionData = (): TransactionDetailResponse['data'] => ({
         transactions: {
@@ -117,7 +117,6 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 
     // --- 3. VIEW-SPECIFIC MODAL STATE ---
     // Sales Modal State
-    const [isUploaderPoppedUp, setIsUploaderPoppedUp] = useState<boolean>(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
 
@@ -152,16 +151,23 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         }
     }, [view, setSalesActions]);
 
-    const handleUploadNext = async (file: File | null) => {
-        if (!file) return;
+    const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!event.target.files || !event.target.files[0]) {
+            return; // No file selected
+        }
+        const file = event.target.files[0];
+        
         setApiError(null);
         const result = await uploadExcelForPreview(file);
         if (result.success && result.data) {
             setUploadedData(result.data); // Set the new data
-            setIsUploaderPoppedUp(false); // Close the popup
         } else {
-            // Show error in the popup
             alert(result.error || 'Unknown upload error');
+        }
+
+        // Reset the input value so the user can upload the same file again
+        if (event.target) {
+            event.target.value = "";
         }
     };
 
@@ -183,7 +189,6 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const handleCloseSalesModal = () => {
         setIsPreviewModalOpen(false);
         setUploadedData(null);
-        setIsUploaderPoppedUp(false); // Also close the popup
     };
 
     // Finance Handlers
@@ -345,12 +350,15 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             {/* --- Conditional Sales Modals --- */}
             {view === 'SALES' && (
                 <>
-                    {/* The FileUploader is now a popup controlled by new state */}
-                    <FileUploadModal 
-                        isOpen={isUploaderPoppedUp} 
-                        onClose={() => setIsUploaderPoppedUp(false)} 
-                        onNext={handleUploadNext} 
+                    {/* --- 1. ADD THE HIDDEN FILE INPUT --- */}
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelected}
+                        className="hidden"
+                        accept=".xlsx, .xls"
                     />
+                    {/* --- 2. REMOVED the <FileUploadModal> --- */}
 
                     {/* The Preview Modal now opens if EITHER it's empty OR has data */}
                     {isPreviewModalOpen && (
@@ -368,10 +376,10 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                 onClose={handleCloseSalesModal}
                                 // Status is dynamic
                                 status={(uploadedData || createEmptyTransactionData()).transactions.ApprovalStatus} 
-                                // Pass the new "Cargar Excel" button to the header
+                                // --- 3. UPDATE THE BUTTON'S onClick ---
                                 headerActions={
                                     <button
-                                        onClick={() => setIsUploaderPoppedUp(true)}
+                                        onClick={() => fileInputRef.current?.click()}
                                         className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50"
                                     >
                                         <UploadIcon className="w-4 h-4" />
