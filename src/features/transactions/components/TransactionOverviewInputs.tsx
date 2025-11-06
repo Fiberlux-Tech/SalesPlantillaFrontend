@@ -15,6 +15,9 @@ import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { InlineEditWrapper } from '@/components/shared/InlineEditWrapper'; 
 
 
+interface TransactionOverviewInputsProps {
+    isFinanceView: boolean;
+}
 
 // Local utility to format value and append currency for display mode
 const formatCurrencyDisplay = (value: number | string | null | undefined, currency: string | null | undefined = 'PEN'): string => {
@@ -117,7 +120,7 @@ const BooleanSelectInput: React.FC<{
     localValue: boolean | null | undefined;
     setLocalValue: React.Dispatch<React.SetStateAction<any>>;
     onConfirm: () => void;
-}> = ({ localValue, setLocalValue, onConfirm }) => (
+}> = ({ localValue, setLocalValue }) => (
     <Select
         // We convert the boolean to a string for the Select component
         value={localValue === true ? "true" : "false"}
@@ -138,9 +141,7 @@ const BooleanSelectInput: React.FC<{
 // --- END of new component ---
 
 
-export function TransactionOverviewInputs() {
-
-    // Removed: All local state for editing (isEditingPlazo, editedPlazo, etc.)
+export function TransactionOverviewInputs({ isFinanceView }: TransactionOverviewInputsProps) {
 
     const {
         baseTransaction,

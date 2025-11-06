@@ -30,6 +30,7 @@ interface UpdatePayload {
 const VARIABLE_LABELS: Record<string, string> = {
     'costoCapital': 'Costo Capital',
     'tipoCambio': 'Tipo de Cambio',
+    'tasaCartaFianza': 'Tasa Carta Fianza (%)', // <-- ADD THIS LINE
 };
 
 const parseEditableConfig = (response: any): EditableVariableConfig[] => {
