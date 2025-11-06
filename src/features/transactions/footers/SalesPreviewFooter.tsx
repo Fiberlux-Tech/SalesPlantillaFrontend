@@ -47,7 +47,7 @@ export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterPro
     };
 
     return (
-        <div className="flex justify-between items-center p-5 border-t bg-white space-x-3">
+        <div className="w-full flex justify-between items-center p-5 border-t bg-white space-x-3">
             <div className="flex-grow flex items-center text-sm">
                 {/* 4. Read error from draftState */}
                 {apiError ? (

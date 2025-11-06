@@ -82,7 +82,7 @@ export default function GlobalHeader({
                                 className={primaryButtonStyles}
                             >
                                 <UploadIcon />
-                                <span>Cargar Archivo</span>
+                                <span>Crear Plantilla</span>
                             </button>
                         </>
                     )}

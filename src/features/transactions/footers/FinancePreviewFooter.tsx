@@ -56,7 +56,7 @@ export function FinancePreviewFooter({
     };
 
     return (
-        <div className="flex justify-between items-center p-5 border-t bg-white space-x-3">
+        <div className="w-full flex justify-between items-center p-5 border-t bg-white space-x-3">
              <div className="flex-grow"></div> 
              <button
                 onClick={handleCalculateCommissionClick}
