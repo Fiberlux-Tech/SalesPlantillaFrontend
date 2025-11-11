@@ -5,6 +5,7 @@ import React, {
     useReducer,
     useMemo,
     useEffect,
+    useRef,
 } from 'react';
 import { calculatePreview } from '@/features/transactions/services/shared.service';
 import type { TransactionDetailResponse } from '@/types';
@@ -45,6 +46,11 @@ export function TransactionPreviewProvider({
         getInitialState
     );
 
+    // --- 2. ADD THIS REF ---
+    // This ref will help us skip the very first run of the effect
+    const isInitialRender = useRef(true);
+    // --- END OF ADDITION ---
+
     // 1. FIX: Memoize the set of inputs that should trigger a recalculation.
     // This object reference only changes when one of its deep dependencies change.
     const recalculationInputs = useMemo(() => ({
@@ -65,6 +71,14 @@ export function TransactionPreviewProvider({
 
     // 4. This useEffect now handles ALL recalculations automatically (WITH DEBOUNCING)
     useEffect(() => {
+        // --- 3. ADD THIS BLOCK ---
+        // On the very first render, set the ref to false and do nothing.
+        // On all subsequent renders (when dependencies change), this will be false.
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
+        // --- END OF MODIFIED BLOCK ---
         // MODIFIED: Destructure values *from the memoized input object*
         const { liveEdits, currentFixedCosts, currentRecurringServices } = recalculationInputs;
         
@@ -75,11 +89,6 @@ export function TransactionPreviewProvider({
         const handler = setTimeout(() => {
             // Define the async function *inside* the timer callback
             const recalculate = async () => {
-                // Ensure recalculation doesn't run if the state is already empty (e.g. initial run after mount)
-                if (Object.keys(liveEdits).length === 0 && currentFixedCosts.length === 0 && currentRecurringServices.length === 0) {
-                    // Avoid unnecessary recalculation if initial state is clean
-                    return;
-                }
 
                 dispatch({ type: 'RECALCULATION_START' });
 
