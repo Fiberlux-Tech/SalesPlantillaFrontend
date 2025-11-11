@@ -10,6 +10,12 @@ import RecurringServicesTable from './RecurringServicesTable';
 import CashFlowTimelineTable from '@/features/transactions/components/CashFlowTimelineTable';
 import { formatCurrency } from '@/lib/formatters';
 import { FixedCostCodeManager, FixedCostEmptyState } from '@/features/transactions/components/FixedCostCodeManager';
+// --- ADD THESE IMPORTS ---
+import { 
+    RecurringServiceCodeManager, 
+    RecurringServiceEmptyState 
+} from './RecurringServiceCodeManager'; // Assuming you created this file
+// --- END OF ADDED IMPORTS ---
 import { TransactionOverviewInputs } from './TransactionOverviewInputs';
 import { KpiMetricsGrid } from './KpiMetricsGrid';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
@@ -35,6 +41,9 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
 
     // 3. UI state is now LOCAL to this component
     const [isCodeManagerOpen, setIsCodeManagerOpen] = useState(false);
+    // --- ADD THIS STATE ---
+    const [isRecurringCodeManagerOpen, setIsRecurringCodeManagerOpen] = useState(false);
+    // --- END OF ADDED STATE ---
     const [openSections, setOpenSections] = useState<OpenSectionsState>({
         'cashFlow': false,
         'recurringCosts': false,
@@ -59,7 +68,15 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             .map(c => c.ticket)
             .filter((code, index, self) => code && self.indexOf(code) === index);
     }, [currentFixedCosts]);
-    // --- (End of unchanged logic) ---
+    
+    // --- ADD THIS MEMOIZED VALUE ---
+    const loadedRecurringServiceCodes = useMemo(() => {
+        // The 'id' field in RecurringService holds the code (e.g., "Q-12345")
+        return (currentRecurringServices || [])
+            .map(c => String(c.id)) 
+            .filter((code, index, self) => code && self.indexOf(code) === index);
+    }, [currentRecurringServices]);
+    // --- END OF ADDED VALUE ---
 
 
     // 4. This sub-component is now simplified
@@ -107,6 +124,57 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
         );
     };
 
+    // --- ADD THIS NEW SUB-COMPONENT ---
+    const CustomRecurringServiceTotalsNode = () => {
+        const showCodeManagerUI = !isFinanceView || canEdit;
+
+        // This is the totals block (Ingreso/Egreso)
+        const totalsNode = (
+            <div className="flex space-x-4"> 
+                <div> 
+                    <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> 
+                    <p className="text-xs text-gray-500 text-right">Ingreso</p> 
+                </div> 
+                <div> 
+                    <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> 
+                    <p className="text-xs text-gray-500 text-right">Egreso</p> 
+                </div> 
+            </div>
+        );
+
+        if (!showCodeManagerUI) {
+            return totalsNode; // Just show totals if edits aren't allowed
+        }
+
+        // If edits are allowed, wrap totals with the "Cargar" button and modal
+        return (
+            <div className="flex items-center space-x-3 relative">
+                {totalsNode}
+                <button
+                    onClick={(e) => { e.stopPropagation(); setIsRecurringCodeManagerOpen(true); }}
+                    className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                    Cargar
+                </button>
+
+                {isRecurringCodeManagerOpen && (
+                    <RecurringServiceCodeManager
+                        loadedCodes={loadedRecurringServiceCodes}
+                        onRecurringServiceAdd={(newServices) => {
+                            dispatch({ type: 'ADD_RECURRING_SERVICES', payload: newServices });
+                        }}
+                        onToggle={() => setIsRecurringCodeManagerOpen(false)}
+                        onCodeRemove={(code) => {
+                            // The reducer expects the ID (which we are using as the code)
+                            dispatch({ type: 'REMOVE_RECURRING_SERVICE', payload: code });
+                        }}
+                    />
+                )}
+            </div>
+        );
+    };
+    // --- END OF NEW SUB-COMPONENT ---
+
     return (
         <>
             {/* --- (All banners remain the same) --- */}
@@ -114,7 +182,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">Por favor revisar la data cargada de manera minuciosa</p> <p className="text-sm text-yellow-700">Asegúrate que toda la información sea correcta antes de confirmarla.</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'APPROVED' && ( <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">Plantilla Aprobada!</p> <p className="text-sm text-green-700">Esta plantilla ya fue aprobada. Felicidades</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> </div> </div> )}
+            {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> ... </div> </div> )}
 
             {/* 6. These components now read from the new context internally */}
             <TransactionOverviewInputs
@@ -130,12 +198,16 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     <CostBreakdownRow
                         title="Servicios Recurrentes"
                         items={(currentRecurringServices || []).length}
-                        total={totalRecurringCosts}
+                        total={null} // Total is now handled by the custom node
                         isOpen={openSections['recurringCosts']}
                         onToggle={() => toggleSection('recurringCosts')}
-                        customTotalsNode={ <div className="flex space-x-4"> <div> <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> <p className="text-xs text-gray-500 text-right">Ingreso</p> </div> <div> <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> <p className="text-xs text-gray-500 text-right">Egreso</p> </div> </div> }
+                        // --- MODIFIED: Use the new totals component ---
+                        customTotalsNode={<CustomRecurringServiceTotalsNode />}
                     >
-                        <RecurringServicesTable />
+                        {/* --- MODIFIED: Pass the empty state component --- */}
+                        <RecurringServicesTable
+                            EmptyStateComponent={() => <RecurringServiceEmptyState onToggle={() => setIsRecurringCodeManagerOpen(true)} />}
+                        />
                     </CostBreakdownRow>
 
                     <CostBreakdownRow

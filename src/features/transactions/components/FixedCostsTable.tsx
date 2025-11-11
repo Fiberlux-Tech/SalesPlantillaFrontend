@@ -64,7 +64,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.categoria)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.tipo_servicio)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.ticket)}</td>
-                            <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.ubicacion)}</td>
+                            <td className="px-4 py-2 truncate text-gray-800" title={item.ubicacion || undefined}> {formatCellData(item.ubicacion)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">{formatCellData(item.cantidad)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-right">{formatCurrency(item.costoUnitario)}</td>
 

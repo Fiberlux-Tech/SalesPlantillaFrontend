@@ -3,8 +3,13 @@ import { EditableCurrencyCell } from '@/features/transactions/components/Editabl
 import type { RecurringService } from '@/types';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
+import type { ReactNode } from 'react';
 
-const RecurringServicesTable = () => {
+interface RecurringServicesTableProps {
+    EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
+}
+
+const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableProps) => {
 
     // 1. Get dispatch and draftState from the context
     const {
@@ -26,6 +31,10 @@ const RecurringServicesTable = () => {
     }
 
     if (!data || data.length === 0) {
+        if (EmptyStateComponent) {
+            // Use the passed-in empty state
+            return <EmptyStateComponent canEdit={canEdit} />;
+        }
         return <p className="text-center text-gray-500 py-4">No recurring services data available.</p>;
     }
 
@@ -54,7 +63,7 @@ const RecurringServicesTable = () => {
                     {data.map((item, index) => (
                         <tr key={item.id || index} className="hover:bg-gray-50">
                             <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.tipo_servicio)}</td>
-                            <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.ubicacion)}</td>
+                            <td className="px-3 py-2 text-gray-800 align-middle truncate"title={item.ubicacion || undefined}>{formatCellData(item.ubicacion)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">{formatCellData(item.Q)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-right whitespace-nowrap">{formatCurrency(item.P)}</td>
 
