@@ -64,7 +64,7 @@ export interface Transaction {
 }
 
 export interface FixedCost {
-  id: number;
+  id: number | string;
   categoria: string;
   tipo_servicio: string;
   ticket: string;
@@ -78,7 +78,7 @@ export interface FixedCost {
 }
 
 export interface RecurringService {
-  id: number;
+  id: number | string;
   tipo_servicio: string;
   ubicacion: string;
   Q: number;

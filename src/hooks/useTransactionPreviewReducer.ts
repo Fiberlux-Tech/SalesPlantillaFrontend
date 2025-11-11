@@ -24,6 +24,8 @@ export type PreviewAction =
     | { type: 'REMOVE_FIXED_COST'; payload: string } // payload is 'ticket' code
     | { type: 'UPDATE_FIXED_COST'; payload: { index: number; field: keyof FixedCost; value: any } }
     | { type: 'UPDATE_RECURRING_SERVICE'; payload: { index: number; field: keyof RecurringService; value: any } }
+    | { type: 'ADD_RECURRING_SERVICES'; payload: RecurringService[] }
+    | { type: 'REMOVE_RECURRING_SERVICE'; payload: number | string }
     | { type: 'RECALCULATION_START' }
     | { type: 'RECALCULATION_SUCCESS'; payload: KpiCalculationResponse['data'] }
     | { type: 'RECALCULATION_ERROR'; payload: string }
@@ -121,6 +123,26 @@ export function transactionPreviewReducer(
             return { ...state, currentRecurringServices: newServices };
             // --- END OF MODIFIED BLOCK ---
         }
+
+        // --- NEW CASE: Add Recurring Services ---
+        case 'ADD_RECURRING_SERVICES':
+            return {
+                ...state,
+                currentRecurringServices: [
+                    ...state.currentRecurringServices,
+                    ...action.payload,
+                ],
+            };
+        
+        // --- NEW CASE: Remove Recurring Service by ID/Code (Group Removal) ---
+        case 'REMOVE_RECURRING_SERVICE':
+            return {
+                ...state,
+                currentRecurringServices: state.currentRecurringServices.filter(
+                    // Filter by the ID, which is the quotation code string for group removal
+                    (service) => service.id !== action.payload
+                ),
+            };
 
         case 'RECALCULATION_START':
             return {

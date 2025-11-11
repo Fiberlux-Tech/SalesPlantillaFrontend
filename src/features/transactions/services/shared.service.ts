@@ -2,7 +2,8 @@
 import { api } from '@/lib/api';
 import type { 
     KpiCalculationResponse,
-    FixedCost, 
+    FixedCost,
+    RecurringService 
 } from '@/types';
 
 // --- Types ---
@@ -50,6 +51,24 @@ export async function getFixedCostsByCodes(codes: string[]): Promise<{ success: 
             return { success: true, data: fixedCosts };
         } else {
             return { success: false, error: result.error || 'Failed to fetch fixed costs.' };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Network error during code lookup.' };
+    }
+}
+
+export async function getRecurringServicesByCodes(codes: string[]): Promise<{ success: true; data: RecurringService[] } | { success: false; error: string; data?: undefined }> {
+    try {
+        const payload = { service_codes: codes }; 
+        const result = await api.post<{ success: boolean, data: { recurring_services: RecurringService[] }, error?: string }>(
+            '/api/recurring-services/lookup', 
+            payload
+        );
+        if (result.success) {
+            const recurringServices = result.data?.recurring_services || [];
+            return { success: true, data: recurringServices };
+        } else {
+            return { success: false, error: result.error || 'Failed to fetch recurring services.' };
         }
     } catch (error: any) {
         return { success: false, error: error.message || 'Network error during code lookup.' };
