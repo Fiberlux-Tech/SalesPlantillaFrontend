@@ -3,25 +3,34 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CloseIcon } from '../../../components/shared/Icons';
-// MODIFIED: Import the correct service
 import { getRecurringServicesByCodes } from '@/features/transactions/services/shared.service';
-// MODIFIED: Import the correct type
 import type { RecurringService } from '@/types';
 
-// MODIFIED: Define props for this component
+// 1. Define the type we expect from the service
+interface RecurringServiceLookupResponse {
+    recurring_services: RecurringService[];
+}
+
+// 2. Define props for this component
 interface RecurringServiceCodeManagerProps {
     loadedCodes: string[]; 
-    onRecurringServiceAdd: (newServices: RecurringService[]) => void;
+    // This prop's signature now matches the service's return type
+    onRecurringServiceAdd: (data: RecurringServiceLookupResponse) => void;
     onToggle: () => void; 
     onCodeRemove: (codeToRemove: string) => void;
 }
 
-export function RecurringServiceCodeManager({ loadedCodes, onRecurringServiceAdd, onToggle, onCodeRemove }: RecurringServiceCodeManagerProps) {
+export function RecurringServiceCodeManager({ 
+    loadedCodes, 
+    onRecurringServiceAdd, 
+    onToggle, 
+    onCodeRemove 
+}: RecurringServiceCodeManagerProps) {
     const [newCodeInput, setNewCodeInput] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     
-    const managerRef = useRef<HTMLDivElement>(null); 
+    const managerRef = useRef<HTMLDivElement>(null);
     
     // Click-away logic (unchanged)
     useEffect(() => {
@@ -51,11 +60,11 @@ export function RecurringServiceCodeManager({ loadedCodes, onRecurringServiceAdd
         setIsLoading(true);
         setError(null);
 
-        // MODIFIED: Call the recurring service endpoint
         const result = await getRecurringServicesByCodes([code]); 
 
-        if (result.success && result.data.length > 0) {
-            // MODIFIED: Call the correct prop
+        // 3. Update the success logic
+        if (result.success && result.data.recurring_services.length > 0) {
+            // Pass the entire 'data' object { recurring_services: [...] } up
             onRecurringServiceAdd(result.data); 
             setNewCodeInput('');
             onToggle(); 
@@ -71,15 +80,13 @@ export function RecurringServiceCodeManager({ loadedCodes, onRecurringServiceAdd
 
 
     return (
+        // (The JSX for this component remains exactly the same)
         <div ref={managerRef} className="absolute right-0 w-80 mt-2 bg-white border border-gray-300 rounded-lg shadow-xl z-20 p-4" onClick={(e) => e.stopPropagation()}>
-            {/* MODIFIED: Title */}
             <h4 className="text-md font-semibold mb-3">Código de Servicio Recurrente</h4>
-            
             <div className="flex space-x-2 items-center">
                 <div className="flex-grow">
                     <Input
                         type="text"
-                        // MODIFIED: Placeholder
                         placeholder="E.G., Q-12345"
                         value={newCodeInput}
                         onChange={(e) => { 
@@ -92,7 +99,6 @@ export function RecurringServiceCodeManager({ loadedCodes, onRecurringServiceAdd
                     />
                     {error && <p className="mt-1 text-sm text-red-600">{error}</p>} 
                 </div>
-                
                 <Button 
                     onClick={handleAddAndConfirmCode} 
                     size="default" 
@@ -102,9 +108,7 @@ export function RecurringServiceCodeManager({ loadedCodes, onRecurringServiceAdd
                     Ir
                 </Button>
             </div>
-            
             <hr className="my-4 border-gray-200" />
-            
             {loadedCodes.length > 0 && (
                 <div className="pt-2">
                     <p className="text-sm font-medium text-gray-700 mb-2">Códigos Cargados:</p>
@@ -131,7 +135,6 @@ export function RecurringServiceCodeManager({ loadedCodes, onRecurringServiceAdd
     );
 }
 
-// MODIFIED: New empty state component
 export const RecurringServiceEmptyState = ({ onToggle }: { onToggle: () => void }) => (
     <div className="flex flex-col items-center justify-center py-6 text-center">
         <p className="text-gray-500 mb-1">No hay servicios recurrentes cargados.</p>

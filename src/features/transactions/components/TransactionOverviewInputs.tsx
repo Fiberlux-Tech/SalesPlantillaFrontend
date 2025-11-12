@@ -179,6 +179,9 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     const confirmedNrcValue = liveEdits?.NRC ?? kpiData.NRC ?? tx.NRC;
     const confirmedNrcCurrency = liveEdits?.nrc_currency ?? kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN';
     const confirmedAplicaCartaFianza = liveEdits?.aplicaCartaFianza ?? tx.aplicaCartaFianza;
+
+    const confirmedCompanyID = liveEdits?.companyID ?? tx.companyID;
+    const confirmedClientName = liveEdits?.clientName ?? tx.clientName;
     
     // Helper for static display blocks (RUC/DNI, Nombre Cliente, Comisión)
     const StaticField = ({ label, value, currency }: { label: string, value: React.ReactNode, currency?: string }) => (
@@ -335,10 +338,10 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                     />
                 </div>
                 {/* 2. RUC/DNI (Static Field) */}
-                <StaticField label="RUC/DNI" value={tx.companyID || '-'} />
+                <StaticField label="RUC/DNI" value={confirmedCompanyID || '-'} />
 
                 {/* 3. NOMBRE CLIENTE (Static Field) */}
-                <StaticField label="Nombre Cliente" value={tx.clientName} />
+                <StaticField label="Nombre Cliente" value={confirmedClientName} />
                 
                 {/* 4. PLAZO DE CONTRATO (Using InlineEditWrapper) */}
                 <div className="min-h-[60px]">

@@ -10,81 +10,70 @@ import RecurringServicesTable from './RecurringServicesTable';
 import CashFlowTimelineTable from '@/features/transactions/components/CashFlowTimelineTable';
 import { formatCurrency } from '@/lib/formatters';
 import { FixedCostCodeManager, FixedCostEmptyState } from '@/features/transactions/components/FixedCostCodeManager';
-// --- ADD THESE IMPORTS ---
 import { 
     RecurringServiceCodeManager, 
     RecurringServiceEmptyState 
-} from './RecurringServiceCodeManager'; // Assuming you created this file
-// --- END OF ADDED IMPORTS ---
+} from './RecurringServiceCodeManager';
 import { TransactionOverviewInputs } from './TransactionOverviewInputs';
 import { KpiMetricsGrid } from './KpiMetricsGrid';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
+
+// --- 1. Definir los tipos de data que esperamos ---
+import type { RecurringService } from '@/types';
+// This interface now matches the 'data' object from the API
+interface RecurringServiceLookupResponse {
+    recurring_services: RecurringService[];
+    // We no longer expect a client_data key
+}
 
 type OpenSectionsState = Record<string, boolean>;
 
 export function TransactionPreviewContent({ isFinanceView = false }: { isFinanceView?: boolean }) {
 
-    // 1. Get new state and dispatch from context
+    // (State and Memos remain the same)
     const {
         baseTransaction,
         draftState,
         dispatch,
         canEdit
     } = useTransactionPreview();
-
-    // 2. De-structure the draftState
     const {
         liveKpis,
         currentFixedCosts,
         currentRecurringServices
     } = draftState;
-
-    // 3. UI state is now LOCAL to this component
     const [isCodeManagerOpen, setIsCodeManagerOpen] = useState(false);
-    // --- ADD THIS STATE ---
     const [isRecurringCodeManagerOpen, setIsRecurringCodeManagerOpen] = useState(false);
-    // --- END OF ADDED STATE ---
     const [openSections, setOpenSections] = useState<OpenSectionsState>({
         'cashFlow': false,
         'recurringCosts': false,
         'fixedCosts': false
     });
-
-    // --- (This logic remains the same) ---
     const tx = baseTransaction.transactions;
     const timeline = liveKpis?.timeline || baseTransaction?.timeline;
     const isPending = tx.ApprovalStatus === 'PENDING';
-
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
-
     const totalFixedCosts = useMemo(() => (currentFixedCosts || []).reduce((acc, item) => acc + (item.total || 0), 0), [currentFixedCosts]);
     const totalRecurringCosts = useMemo(() => (currentRecurringServices || []).reduce((acc, item) => acc + (item.egreso || 0), 0), [currentRecurringServices]);
     const totalRecurringIncome = useMemo(() => (currentRecurringServices || []).reduce((acc, item) => acc + (item.ingreso || 0), 0), [currentRecurringServices]);
-
     const loadedFixedCostCodes = useMemo(() => {
         return (currentFixedCosts || [])
             .map(c => c.ticket)
             .filter((code, index, self) => code && self.indexOf(code) === index);
     }, [currentFixedCosts]);
-    
-    // --- ADD THIS MEMOIZED VALUE ---
     const loadedRecurringServiceCodes = useMemo(() => {
-        // The 'id' field in RecurringService holds the code (e.g., "Q-12345")
         return (currentRecurringServices || [])
             .map(c => String(c.id)) 
             .filter((code, index, self) => code && self.indexOf(code) === index);
     }, [currentRecurringServices]);
-    // --- END OF ADDED VALUE ---
-
-
-    // 4. This sub-component is now simplified
+    
+    
+    // (CustomFixedCostTotalsNode remains the same)
     const CustomFixedCostTotalsNode = () => {
         const showCodeManagerUI = !isFinanceView || canEdit;
-
         if (!showCodeManagerUI) {
-            // ... (this part is unchanged)
             return (
                 <div>
                     <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p>
@@ -92,22 +81,18 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                 </div>
             );
         }
-
         return (
             <div className="flex items-center space-x-3 relative">
                 <div className="text-right">
                     <p className="font-semibold text-red-600">{formatCurrency(totalFixedCosts)}</p>
                     <p className="text-xs text-gray-500">Total</p>
                 </div>
-
                 <button
                     onClick={(e) => { e.stopPropagation(); setIsCodeManagerOpen(true); }}
                     className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
                     Cargar
                 </button>
-
-                {/* 5. Handlers are now simplified to use dispatch and local state */}
                 {isCodeManagerOpen && (
                     <FixedCostCodeManager
                         loadedCodes={loadedFixedCostCodes}
@@ -124,11 +109,10 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
         );
     };
 
-    // --- ADD THIS NEW SUB-COMPONENT ---
+    // --- 2. THIS COMPONENT CONTAINS THE FIX ---
     const CustomRecurringServiceTotalsNode = () => {
         const showCodeManagerUI = !isFinanceView || canEdit;
 
-        // This is the totals block (Ingreso/Egreso)
         const totalsNode = (
             <div className="flex space-x-4"> 
                 <div> 
@@ -143,10 +127,9 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
         );
 
         if (!showCodeManagerUI) {
-            return totalsNode; // Just show totals if edits aren't allowed
+            return totalsNode;
         }
 
-        // If edits are allowed, wrap totals with the "Cargar" button and modal
         return (
             <div className="flex items-center space-x-3 relative">
                 {totalsNode}
@@ -160,12 +143,63 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                 {isRecurringCodeManagerOpen && (
                     <RecurringServiceCodeManager
                         loadedCodes={loadedRecurringServiceCodes}
-                        onRecurringServiceAdd={(newServices) => {
-                            dispatch({ type: 'ADD_RECURRING_SERVICES', payload: newServices });
+                        // --- 3. THIS IS THE KEY LOGIC CHANGE ---
+                        // The 'data' param now matches the API: { recurring_services: [...] }
+                        onRecurringServiceAdd={(data: RecurringServiceLookupResponse) => {
+                            const newServices = data.recurring_services;
+                            
+                            if (!newServices || newServices.length === 0) {
+                                alert("Error: El código no devolvió ningún servicio.");
+                                return;
+                            }
+
+                            // --- FIX ---
+                            // Get client data from the *first service* in the list
+                            // We cast to 'any' because 'ruc' and 'razon_social' are
+                            // not in the base 'RecurringService' type in /types/index.ts
+                            const firstService = newServices[0] as any;
+                            const newRUC = firstService.ruc;
+                            const newClientName = firstService.razon_social;
+                            // --- END FIX ---
+
+                            if (!newRUC || !newClientName) {
+                                alert("Error: Los datos del cliente (RUC/Razón Social) no vinieron en la respuesta. Contactar a backend.");
+                                return;
+                            }
+
+                            // Get current client data from our modal's state
+                            const currentState = { ...baseTransaction.transactions, ...draftState.liveEdits };
+                            const currentRUC = currentState.companyID;
+                            const currentClientName = currentState.clientName;
+
+                            // VALIDATION LOGIC
+                            // Case 1: RUC is empty (e.g., "Nueva Plantilla"). Populate it.
+                            if (!currentRUC || currentRUC === '-') {
+                                dispatch({
+                                    type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS',
+                                    payload: {
+                                        companyID: newRUC,
+                                        clientName: newClientName
+                                    }
+                                });
+                                dispatch({ type: 'ADD_RECURRING_SERVICES', payload: newServices });
+                            }
+                            // Case 2: The RUC matches. Just add the services.
+                            else if (currentRUC === newRUC) {
+                                dispatch({ type: 'ADD_RECURRING_SERVICES', payload: newServices });
+                            }
+                            // Case 3: The RUC does not match. Show an error.
+                            else {
+                                alert(
+                                    `Error: No puedes agregar servicios de un cliente diferente.\n\n` +
+                                    `Cliente Actual: ${currentClientName} (RUC: ${currentRUC})\n` +
+                                    `Nuevo Cliente: ${newClientName} (RUC: ${newRUC})\n\n` +
+                                    `Todos los servicios deben pertenecer al mismo cliente.`
+                                );
+                            }
                         }}
                         onToggle={() => setIsRecurringCodeManagerOpen(false)}
                         onCodeRemove={(code) => {
-                            // The reducer expects the ID (which we are using as the code)
                             dispatch({ type: 'REMOVE_RECURRING_SERVICE', payload: code });
                         }}
                     />
@@ -173,23 +207,21 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             </div>
         );
     };
-    // --- END OF NEW SUB-COMPONENT ---
+    // --- END OF LOGIC CHANGE ---
 
     return (
         <>
-            {/* --- (All banners remain the same) --- */}
+            {/* (Banners, Overview, and KPIs remain the same) ... */}
             {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">Transaction Status: {tx.ApprovalStatus}</p> <p className="text-sm text-red-700">Modification of key inputs is not allowed once a transaction has been reviewed.</p> </div> </div> )}
             {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">Por favor revisar la data cargada de manera minuciosa</p> <p className="text-sm text-yellow-700">Asegúrate que toda la información sea correcta antes de confirmarla.</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> </div> </div> )}
             {isFinanceView && tx.ApprovalStatus === 'APPROVED' && ( <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">Plantilla Aprobada!</p> <p className="text-sm text-green-700">Esta plantilla ya fue aprobada. Felicidades</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> ... </div> </div> )}
+            {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> </div> </div> )}
 
-            {/* 6. These components now read from the new context internally */}
             <TransactionOverviewInputs
                 isFinanceView={isFinanceView}
             />
 
-            {/* 2. Key Performance Indicators (NEW POSITION) */}
             <KpiMetricsGrid />
 
             <div className="mb-6">
@@ -198,13 +230,11 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     <CostBreakdownRow
                         title="Servicios Recurrentes"
                         items={(currentRecurringServices || []).length}
-                        total={null} // Total is now handled by the custom node
+                        total={null} 
                         isOpen={openSections['recurringCosts']}
                         onToggle={() => toggleSection('recurringCosts')}
-                        // --- MODIFIED: Use the new totals component ---
                         customTotalsNode={<CustomRecurringServiceTotalsNode />}
                     >
-                        {/* --- MODIFIED: Pass the empty state component --- */}
                         <RecurringServicesTable
                             EmptyStateComponent={() => <RecurringServiceEmptyState onToggle={() => setIsRecurringCodeManagerOpen(true)} />}
                         />
@@ -218,7 +248,6 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         onToggle={() => toggleSection('fixedCosts')}
                         customTotalsNode={CustomFixedCostTotalsNode()}
                     >
-                        {/* 7. Pass the local state setter to the empty state component */}
                         <FixedCostsTable
                             EmptyStateComponent={() => <FixedCostEmptyState onToggle={() => setIsCodeManagerOpen(true)} />}
                         />

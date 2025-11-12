@@ -8,6 +8,13 @@ import type {
 
 // --- Types ---
 
+// 1. Define the structure the API is ACTUALLY sending in its 'data' key
+//    (Based on your lookup, it's an object containing the array)
+interface RecurringServiceLookupResponse {
+    recurring_services: RecurringService[];
+    // We no longer expect a separate 'client_data' key
+}
+
 type CalculatePreviewResult = {
     success: true;
     data: KpiCalculationResponse['data'];
@@ -21,11 +28,9 @@ type CalculatePreviewResult = {
 
 /**
  * Sends modified data to the backend for KPI recalculation (PREVIEW ONLY).
- * This function is used by both Sales and Finance.
  */
 export async function calculatePreview(payload: any): Promise<CalculatePreviewResult> {
     try {
-        // The API response is expected to match KpiCalculationResponse on success
         const result = await api.post<KpiCalculationResponse>('/api/calculate-preview', payload); 
 
         if (result && result.success) {
@@ -57,16 +62,31 @@ export async function getFixedCostsByCodes(codes: string[]): Promise<{ success: 
     }
 }
 
-export async function getRecurringServicesByCodes(codes: string[]): Promise<{ success: true; data: RecurringService[] } | { success: false; error: string; data?: undefined }> {
+//
+// --- 2. THIS FUNCTION IS NOW CORRECTED ---
+//
+export async function getRecurringServicesByCodes(codes: string[]): Promise<{ 
+    success: true; 
+    data: RecurringServiceLookupResponse // Return the object: { recurring_services: [...] }
+} | { 
+    success: false; 
+    error: string; 
+    data?: undefined 
+}> {
     try {
         const payload = { service_codes: codes }; 
-        const result = await api.post<{ success: boolean, data: { recurring_services: RecurringService[] }, error?: string }>(
+        // We expect the API to return { success: true, data: { recurring_services: [...] } }
+        const result = await api.post<{ 
+            success: boolean, 
+            data: RecurringServiceLookupResponse, // This now matches the API
+            error?: string 
+        }>(
             '/api/recurring-services/lookup', 
             payload
         );
         if (result.success) {
-            const recurringServices = result.data?.recurring_services || [];
-            return { success: true, data: recurringServices };
+            // Return the entire 'data' object
+            return { success: true, data: result.data };
         } else {
             return { success: false, error: result.error || 'Failed to fetch recurring services.' };
         }
