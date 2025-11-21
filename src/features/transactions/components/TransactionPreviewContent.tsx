@@ -10,19 +10,27 @@ import RecurringServicesTable from './RecurringServicesTable';
 import CashFlowTimelineTable from '@/features/transactions/components/CashFlowTimelineTable';
 import { formatCurrency } from '@/lib/formatters';
 import { FixedCostCodeManager, FixedCostEmptyState } from '@/features/transactions/components/FixedCostCodeManager';
-import { 
-    RecurringServiceCodeManager, 
-    RecurringServiceEmptyState 
+import {
+    RecurringServiceCodeManager,
+    RecurringServiceEmptyState
 } from './RecurringServiceCodeManager';
 import { TransactionOverviewInputs } from './TransactionOverviewInputs';
 import { KpiMetricsGrid } from './KpiMetricsGrid';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
+import { TRANSACTION_STATUS, VALIDATION_MESSAGES, STATUS_MESSAGES, UI_LABELS, BUTTON_LABELS } from '@/config';
 
 // --- 1. Definir los tipos de data que esperamos ---
 import type { RecurringService } from '@/types';
+
+// Extended interface for RecurringService with client data from API
+interface RecurringServiceWithClientData extends RecurringService {
+    ruc?: string;
+    razon_social?: string;
+}
+
 // This interface now matches the 'data' object from the API
 interface RecurringServiceLookupResponse {
-    recurring_services: RecurringService[];
+    recurring_services: RecurringServiceWithClientData[];
     // We no longer expect a client_data key
 }
 
@@ -51,7 +59,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     });
     const tx = baseTransaction.transactions;
     const timeline = liveKpis?.timeline || baseTransaction?.timeline;
-    const isPending = tx.ApprovalStatus === 'PENDING';
+    const isPending = tx.ApprovalStatus === TRANSACTION_STATUS.PENDING;
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
@@ -64,9 +72,15 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             .filter((code, index, self) => code && self.indexOf(code) === index);
     }, [currentFixedCosts]);
     const loadedRecurringServiceCodes = useMemo(() => {
+        // Use Set for O(1) lookup instead of indexOf which is O(n)
+        const seen = new Set<string>();
         return (currentRecurringServices || [])
-            .map(c => String(c.id)) 
-            .filter((code, index, self) => code && self.indexOf(code) === index);
+            .map(c => String(c.id))
+            .filter(code => {
+                if (!code || seen.has(code)) return false;
+                seen.add(code);
+                return true;
+            });
     }, [currentRecurringServices]);
     
     
@@ -91,7 +105,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     onClick={(e) => { e.stopPropagation(); setIsCodeManagerOpen(true); }}
                     className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
-                    Cargar
+                    {BUTTON_LABELS.CARGAR}
                 </button>
                 {isCodeManagerOpen && (
                     <FixedCostCodeManager
@@ -137,7 +151,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     onClick={(e) => { e.stopPropagation(); setIsRecurringCodeManagerOpen(true); }}
                     className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
-                    Cargar
+                    {BUTTON_LABELS.CARGAR}
                 </button>
 
                 {isRecurringCodeManagerOpen && (
@@ -149,21 +163,19 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                             const newServices = data.recurring_services;
                             
                             if (!newServices || newServices.length === 0) {
-                                alert("Error: El código no devolvió ningún servicio.");
+                                alert(VALIDATION_MESSAGES.NO_SERVICE_RETURNED);
                                 return;
                             }
 
-                            // --- FIX ---
                             // Get client data from the *first service* in the list
-                            // We cast to 'any' because 'ruc' and 'razon_social' are
-                            // not in the base 'RecurringService' type in /types/index.ts
-                            const firstService = newServices[0] as any;
+                            // Using RecurringServiceWithClientData which extends RecurringService
+                            // with ruc and razon_social fields from the API response
+                            const firstService = newServices[0];
                             const newRUC = firstService.ruc;
                             const newClientName = firstService.razon_social;
-                            // --- END FIX ---
 
                             if (!newRUC || !newClientName) {
-                                alert("Error: Los datos del cliente (RUC/Razón Social) no vinieron en la respuesta. Contactar a backend.");
+                                alert(VALIDATION_MESSAGES.NO_CLIENT_DATA);
                                 return;
                             }
 
@@ -191,10 +203,10 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                             // Case 3: The RUC does not match. Show an error.
                             else {
                                 alert(
-                                    `Error: No puedes agregar servicios de un cliente diferente.\n\n` +
-                                    `Cliente Actual: ${currentClientName} (RUC: ${currentRUC})\n` +
-                                    `Nuevo Cliente: ${newClientName} (RUC: ${newRUC})\n\n` +
-                                    `Todos los servicios deben pertenecer al mismo cliente.`
+                                    `${VALIDATION_MESSAGES.CLIENT_MISMATCH_TITLE}\n\n` +
+                                    `${VALIDATION_MESSAGES.CLIENT_MISMATCH_CURRENT.replace('{name}', currentClientName).replace('{ruc}', currentRUC)}\n` +
+                                    `${VALIDATION_MESSAGES.CLIENT_MISMATCH_NEW.replace('{name}', newClientName).replace('{ruc}', newRUC)}\n\n` +
+                                    `${VALIDATION_MESSAGES.CLIENT_MISMATCH_FOOTER}`
                                 );
                             }
                         }}
@@ -212,11 +224,11 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     return (
         <>
             {/* (Banners, Overview, and KPIs remain the same) ... */}
-            {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">Transaction Status: {tx.ApprovalStatus}</p> <p className="text-sm text-red-700">Modification of key inputs is not allowed once a transaction has been reviewed.</p> </div> </div> )}
-            {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">Por favor revisar la data cargada de manera minuciosa</p> <p className="text-sm text-yellow-700">Asegúrate que toda la información sea correcta antes de confirmarla.</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === 'PENDING' && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">Finance Edit Mode Active</p> <p className="text-sm text-blue-700">Puedes modificar los valores clave (Unidad, Plazo, MRC, NRC, Gigalan, Periodos) antes de aprobar/rechazar.</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === 'APPROVED' && ( <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">Plantilla Aprobada!</p> <p className="text-sm text-green-700">Esta plantilla ya fue aprobada. Felicidades</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === 'REJECTED' && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">Plantilla Rechazada!</p> <p className="text-sm text-red-700">No se logro aprobar. Comunicate con mesadeprecios@fiberlux.pe para indagar porque.</p> </div> </div> )}
+            {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.TRANSACTION_STATUS.replace('{status}', tx.ApprovalStatus)}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.MODIFICATION_NOT_ALLOWED}</p> </div> </div> )}
+            {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">{STATUS_MESSAGES.REVIEW_DATA_CAREFULLY}</p> <p className="text-sm text-yellow-700">{STATUS_MESSAGES.REVIEW_DATA_MESSAGE}</p> </div> </div> )}
+            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.PENDING && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">{STATUS_MESSAGES.FINANCE_EDIT_MODE}</p> <p className="text-sm text-blue-700">{STATUS_MESSAGES.FINANCE_EDIT_INFO}</p> </div> </div> )}
+            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED && ( <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">{STATUS_MESSAGES.APPROVED_TITLE}</p> <p className="text-sm text-green-700">{STATUS_MESSAGES.APPROVED_MESSAGE}</p> </div> </div> )}
+            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.REJECTED_TITLE}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.REJECTED_MESSAGE}</p> </div> </div> )}
 
             <TransactionOverviewInputs
                 isFinanceView={isFinanceView}
@@ -225,10 +237,10 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             <KpiMetricsGrid />
 
             <div className="mb-6">
-                <h3 className="font-semibold text-gray-800 mb-3 text-lg">Detalle de Servicios</h3>
+                <h3 className="font-semibold text-gray-800 mb-3 text-lg">{UI_LABELS.DETALLE_SERVICIOS}</h3>
                 <div className="space-y-3">
                     <CostBreakdownRow
-                        title="Servicios Recurrentes"
+                        title={UI_LABELS.SERVICIOS_RECURRENTES}
                         items={(currentRecurringServices || []).length}
                         total={null} 
                         isOpen={openSections['recurringCosts']}
@@ -241,7 +253,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     </CostBreakdownRow>
 
                     <CostBreakdownRow
-                        title="Inversión (Costos Fijos)"
+                        title={UI_LABELS.INVERSION_COSTOS_FIJOS}
                         items={(currentFixedCosts || []).length}
                         total={totalFixedCosts}
                         isOpen={openSections['fixedCosts']}
@@ -253,7 +265,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         />
                     </CostBreakdownRow>
                     <CostBreakdownRow
-                        title="Flujo"
+                        title={UI_LABELS.FLUJO_CAJA}
                         items={timeline?.periods?.length || 0}
                         total={null}
                         isOpen={openSections['cashFlow']}

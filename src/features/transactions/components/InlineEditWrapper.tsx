@@ -60,7 +60,7 @@ export function InlineEditWrapper<T>({
             setLocalValue(initialValue);
             setLocalCurrency(initialCurrency);
         }
-    }, [initialValue, initialCurrency, isEditing, currentValue, currentCurrency]); // Added explicit value deps
+    }, [initialValue, initialCurrency, isEditing]); // initialValue/initialCurrency already capture currentValue/currentCurrency changes
 
     const handleStartEditing = useCallback(() => {
         if (!canEdit) return;

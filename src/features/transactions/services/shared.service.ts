@@ -1,10 +1,11 @@
 // src/features/transactions/services/shared.service.ts
 import { api } from '@/lib/api';
-import type { 
+import type {
     KpiCalculationResponse,
     FixedCost,
-    RecurringService 
+    RecurringService
 } from '@/types';
+import { API_CONFIG } from '@/config';
 
 // --- Types ---
 
@@ -31,7 +32,7 @@ type CalculatePreviewResult = {
  */
 export async function calculatePreview(payload: any): Promise<CalculatePreviewResult> {
     try {
-        const result = await api.post<KpiCalculationResponse>('/api/calculate-preview', payload); 
+        const result = await api.post<KpiCalculationResponse>(API_CONFIG.ENDPOINTS.CALCULATE_PREVIEW, payload); 
 
         if (result && result.success) {
             return { success: true, data: result.data };
@@ -48,7 +49,7 @@ export async function getFixedCostsByCodes(codes: string[]): Promise<{ success: 
     try {
         const payload = { investment_codes: codes };
         const result = await api.post<{ success: boolean, data: { fixed_costs: FixedCost[] }, error?: string }>(
-            '/api/fixed-costs/lookup', 
+            API_CONFIG.ENDPOINTS.FIXED_COSTS_LOOKUP,
             payload
         );
         if (result.success) {
@@ -81,7 +82,7 @@ export async function getRecurringServicesByCodes(codes: string[]): Promise<{
             data: RecurringServiceLookupResponse, // This now matches the API
             error?: string 
         }>(
-            '/api/recurring-services/lookup', 
+            API_CONFIG.ENDPOINTS.RECURRING_SERVICES_LOOKUP,
             payload
         );
         if (result.success) {

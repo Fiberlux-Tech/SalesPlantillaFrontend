@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CloseIcon } from '../../../components/shared/Icons';
 import { getRecurringServicesByCodes } from '@/features/transactions/services/shared.service';
 import type { RecurringService } from '@/types';
+import { PLACEHOLDERS } from '@/config';
 
 // 1. Define the type we expect from the service
 interface RecurringServiceLookupResponse {
@@ -29,21 +30,27 @@ export function RecurringServiceCodeManager({
     const [newCodeInput, setNewCodeInput] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     const managerRef = useRef<HTMLDivElement>(null);
-    
-    // Click-away logic (unchanged)
+    const onToggleRef = useRef(onToggle);
+
+    // Keep onToggleRef up to date
     useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
+        onToggleRef.current = onToggle;
+    }, [onToggle]);
+
+    // Click-away logic
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
             if (managerRef.current && !managerRef.current.contains(event.target as Node)) {
-                onToggle();
+                onToggleRef.current();
             }
-        }
+        };
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [onToggle]);
+    }, []); // Empty deps - listener only added/removed once
 
     const handleAddAndConfirmCode = useCallback(async () => {
         const code = newCodeInput.trim().toUpperCase();
@@ -60,10 +67,10 @@ export function RecurringServiceCodeManager({
         setIsLoading(true);
         setError(null);
 
-        const result = await getRecurringServicesByCodes([code]); 
+        const result = await getRecurringServicesByCodes([code]);
 
         // 3. Update the success logic
-        if (result.success && result.data.recurring_services.length > 0) {
+        if (result.success && result.data?.recurring_services?.length > 0) {
             // Pass the entire 'data' object { recurring_services: [...] } up
             onRecurringServiceAdd(result.data); 
             setNewCodeInput('');
@@ -87,7 +94,7 @@ export function RecurringServiceCodeManager({
                 <div className="flex-grow">
                     <Input
                         type="text"
-                        placeholder="E.G., Q-12345"
+                        placeholder={PLACEHOLDERS.SERVICE_CODE}
                         value={newCodeInput}
                         onChange={(e) => { 
                             setNewCodeInput(e.target.value); 
@@ -135,7 +142,7 @@ export function RecurringServiceCodeManager({
     );
 }
 
-export const RecurringServiceEmptyState = ({ onToggle }: { onToggle: () => void }) => (
+export const RecurringServiceEmptyState = ({ onToggle: _onToggle }: { onToggle: () => void }) => (
     <div className="flex flex-col items-center justify-center py-6 text-center">
         <p className="text-gray-500 mb-1">No hay servicios recurrentes cargados.</p>
         <p className="text-sm text-gray-400 mb-4">Use el botón 'Cargar' para agregar servicios por código.</p>

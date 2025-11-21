@@ -9,31 +9,37 @@ import {
 } from '@/components/ui/select';
 import { EditPencilIcon, EditCheckIcon, EditXIcon } from '@/components/shared/Icons';
 import { formatCellData } from '@/lib/formatters';
+import { CURRENCIES, type Currency } from '@/config';
 
-// 1. Define the currency type
-type Currency = "PEN" | "USD";
-
-// 2. Define props interface
+// Define props interface
 interface EditableCurrencyCellProps {
     currentValue: Currency | string | null | undefined;
     onConfirm: (newValue: Currency) => void;
     canEdit: boolean;
 }
 
-export function EditableCurrencyCell({ 
-    currentValue, 
-    onConfirm, 
+// Helper function to validate and normalize currency
+const validateCurrency = (value: Currency | string | null | undefined): Currency => {
+    if (typeof value === 'string' && CURRENCIES.LIST.includes(value as Currency)) {
+        return value as Currency;
+    }
+    return CURRENCIES.DEFAULT_FIXED_COST; // Default fallback
+};
+
+export function EditableCurrencyCell({
+    currentValue,
+    onConfirm,
     canEdit
 }: EditableCurrencyCellProps) {
-    // 3. Type the internal state
+    // 3. Type the internal state with validated currency
     const [isEditing, setIsEditing] = useState(false);
     const [editedValue, setEditedValue] = useState<Currency>(
-        (currentValue as Currency) || 'USD'
+        validateCurrency(currentValue)
     );
 
     useEffect(() => {
         if (!isEditing) {
-            setEditedValue((currentValue as Currency) || 'USD');
+            setEditedValue(validateCurrency(currentValue));
         }
     }, [currentValue, isEditing]);
 
@@ -43,12 +49,12 @@ export function EditableCurrencyCell({
     };
 
     const handleCancel = () => {
-        setEditedValue((currentValue as Currency) || 'USD');
+        setEditedValue(validateCurrency(currentValue));
         setIsEditing(false);
     };
-    
+
     const handleStartEditing = () => {
-        setEditedValue((currentValue as Currency) || 'USD');
+        setEditedValue(validateCurrency(currentValue));
         setIsEditing(true);
     };
 
@@ -66,8 +72,8 @@ export function EditableCurrencyCell({
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="PEN">PEN</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
+                            <SelectItem value={CURRENCIES.PEN}>{CURRENCIES.PEN}</SelectItem>
+                            <SelectItem value={CURRENCIES.USD}>{CURRENCIES.USD}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

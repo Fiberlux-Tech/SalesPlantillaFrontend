@@ -95,12 +95,11 @@ export function useTransactionDashboard({ view, onLogout }: DashboardOptions): D
         currentPage,
         totalPages,
         // 5. setCurrentPage is now a simple function that triggers a fetch
-        setCurrentPage: (newPage: number) => {
-            if (newPage !== currentPage) {
-                fetchTransactions(newPage);
-            }
-        },
-        fetchTransactions: () => fetchTransactions(currentPage),
+        // Use useCallback to get latest currentPage value
+        setCurrentPage: useCallback((newPage: number) => {
+            fetchTransactions(newPage);
+        }, [fetchTransactions]),
+        fetchTransactions: useCallback(() => fetchTransactions(currentPage), [fetchTransactions, currentPage]),
 
         // --- (All filter and date state returns are REMOVED) ---
 

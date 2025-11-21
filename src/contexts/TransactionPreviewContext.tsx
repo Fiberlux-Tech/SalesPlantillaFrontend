@@ -81,9 +81,12 @@ export function TransactionPreviewProvider({
         // --- END OF MODIFIED BLOCK ---
         // MODIFIED: Destructure values *from the memoized input object*
         const { liveEdits, currentFixedCosts, currentRecurringServices } = recalculationInputs;
-        
+
         // Do not run on initial render or if data is missing
         if (!baseTransaction) return;
+
+        // Create AbortController for this request
+        const abortController = new AbortController();
 
         // --- MODIFICATION: Set up a 500ms timer ---
         const handler = setTimeout(() => {
@@ -124,6 +127,12 @@ export function TransactionPreviewProvider({
 
                 try {
                     const result = await calculatePreview(recalculationPayload);
+
+                    // Check if request was aborted
+                    if (abortController.signal.aborted) {
+                        return;
+                    }
+
                     if (result.success) {
                         dispatch({
                             type: 'RECALCULATION_SUCCESS',
@@ -136,10 +145,13 @@ export function TransactionPreviewProvider({
                         });
                     }
                 } catch (error: any) {
-                    dispatch({
-                        type: 'RECALCULATION_ERROR',
-                        payload: 'Network error calculating preview.',
-                    });
+                    // Don't dispatch error if request was aborted
+                    if (!abortController.signal.aborted) {
+                        dispatch({
+                            type: 'RECALCULATION_ERROR',
+                            payload: 'Network error calculating preview.',
+                        });
+                    }
                 }
             };
 
@@ -150,6 +162,8 @@ export function TransactionPreviewProvider({
         // --- MODIFICATION: Cleanup function ---
         return () => {
             clearTimeout(handler);
+            // Abort in-flight request
+            abortController.abort();
         };
     }, [
         recalculationInputs, // <--- CRITICAL FIX: Use the memoized input object as dependency

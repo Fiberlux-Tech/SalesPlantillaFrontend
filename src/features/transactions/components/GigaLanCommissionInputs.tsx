@@ -1,6 +1,7 @@
 // src/features/sales/components/GigaLanCommissionInputs.tsx
 import type { ChangeEvent } from 'react'; // FIX: Import type explicitly
 import { Input } from "@/components/ui/input";
+import { SALE_TYPES, PLACEHOLDERS, UI_LABELS } from '@/config';
 
 // 1. Define the shape of the 'inputs' prop
 interface GigalanInputs {
@@ -16,21 +17,26 @@ interface GigaLanCommissionInputsProps {
 }
 
 export function GigaLanCommissionInputs({ inputs, onInputChange }: GigaLanCommissionInputsProps) {
-    if (inputs.gigalan_sale_type !== 'EXISTENTE') {
+    if (inputs.gigalan_sale_type !== SALE_TYPES.EXISTENTE) {
         return null;
     }
 
     return (
         <div>
-            <label className="block text-xs font-medium text-gray-700 uppercase mb-1">MRC PREVIO</label>
+            <label className="block text-xs font-medium text-gray-700 uppercase mb-1">{UI_LABELS.MRC_PREVIO}</label>
             <Input
                 type="number"
-                placeholder="Enter amount"
+                placeholder={PLACEHOLDERS.ENTER_AMOUNT}
                 value={inputs.gigalan_old_mrc ?? ""}
-                // 3. Type the event handler
+                // 3. Type the event handler with validation
                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     const value = parseFloat(e.target.value);
-                    onInputChange('gigalan_old_mrc', isNaN(value) ? null : value);
+                    // Validate: must be a number and non-negative
+                    if (isNaN(value) || value < 0) {
+                        onInputChange('gigalan_old_mrc', null);
+                    } else {
+                        onInputChange('gigalan_old_mrc', value);
+                    }
                 }}
                 className="text-sm"
                 min="0"

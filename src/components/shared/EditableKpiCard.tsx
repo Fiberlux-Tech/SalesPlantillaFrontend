@@ -10,9 +10,7 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { EditPencilIcon, EditCheckIcon, EditXIcon } from '@/components/shared/Icons';
-
-// 1. Define currency type
-type Currency = "PEN" | "USD";
+import { CURRENCIES, DISPLAY_VALUES, type Currency } from '@/config';
 
 // 2. Define props interface
 interface EditableKpiCardProps {
@@ -48,13 +46,13 @@ export function EditableKpiCard({
     const [isEditing, setIsEditing] = useState(false);
     const [editedValue, setEditedValue] = useState<string | number>(currentValue ?? '');
     const [editedCurrency, setEditedCurrency] = useState<Currency>(
-        (currentCurrency as Currency) || 'PEN'
+        (currentCurrency as Currency) || CURRENCIES.DEFAULT
     );
 
     useEffect(() => {
         if (!isEditing) {
             setEditedValue(currentValue ?? '');
-            setEditedCurrency((currentCurrency as Currency) || 'PEN');
+            setEditedCurrency((currentCurrency as Currency) || CURRENCIES.DEFAULT);
         }
     }, [currentValue, currentCurrency, isEditing]);
 
@@ -71,13 +69,13 @@ export function EditableKpiCard({
 
     const handleCancelEdit = () => {
         setEditedValue(currentValue ?? '');
-        setEditedCurrency((currentCurrency as Currency) || 'PEN');
+        setEditedCurrency((currentCurrency as Currency) || CURRENCIES.DEFAULT);
         setIsEditing(false);
     };
 
     const handleStartEditing = () => {
         setEditedValue(currentValue ?? '');
-        setEditedCurrency((currentCurrency as Currency) || 'PEN');
+        setEditedCurrency((currentCurrency as Currency) || CURRENCIES.DEFAULT);
         setIsEditing(true);
     };
 
@@ -105,8 +103,8 @@ export function EditableKpiCard({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="PEN">PEN</SelectItem>
-                                    <SelectItem value="USD">USD</SelectItem>
+                                    <SelectItem value={CURRENCIES.PEN}>{CURRENCIES.PEN}</SelectItem>
+                                    <SelectItem value={CURRENCIES.USD}>{CURRENCIES.USD}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -119,7 +117,7 @@ export function EditableKpiCard({
                     <KpiCard
                         title={title}
                         value={displayValue}
-                        currency={currentCurrency || 'N/A'}
+                        currency={currentCurrency || DISPLAY_VALUES.NOT_AVAILABLE}
                         subtext={subtext}
                     />
                     {canEdit && (

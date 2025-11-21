@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CloseIcon } from '../../../components/shared/Icons';
 import { getFixedCostsByCodes } from '@/features/transactions/services/shared.service';
 import type { FixedCost } from '@/types';
+import { PLACEHOLDERS } from '@/config';
 
 // FIX: Define the shape of the component's state and props clearly before use
 interface FixedCostCodeManagerProps {
@@ -18,21 +19,27 @@ export function FixedCostCodeManager({ loadedCodes, onFixedCostAdd, onToggle, on
     const [newCodeInput, setNewCodeInput] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    
-    const managerRef = useRef<HTMLDivElement>(null); 
-    
+
+    const managerRef = useRef<HTMLDivElement>(null);
+    const onToggleRef = useRef(onToggle);
+
+    // Keep onToggleRef up to date
+    useEffect(() => {
+        onToggleRef.current = onToggle;
+    }, [onToggle]);
+
     // UseEffect for click-away logic
     useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
+        const handleClickOutside = (event: MouseEvent) => {
             if (managerRef.current && !managerRef.current.contains(event.target as Node)) {
-                onToggle();
+                onToggleRef.current();
             }
-        }
+        };
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [onToggle]);
+    }, []); // Empty deps - listener only added/removed once
 
     const handleAddAndConfirmCode = useCallback(async () => {
         const code = newCodeInput.trim().toUpperCase();
@@ -50,9 +57,9 @@ export function FixedCostCodeManager({ loadedCodes, onFixedCostAdd, onToggle, on
         setError(null);
 
         // 1. Fetch data for the single new code
-        const result = await getFixedCostsByCodes([code]); 
+        const result = await getFixedCostsByCodes([code]);
 
-        if (result.success && result.data.length > 0) {
+        if (result.success && result.data?.length > 0) {
             // Success path
             onFixedCostAdd(result.data); 
             setNewCodeInput('');
@@ -79,7 +86,7 @@ export function FixedCostCodeManager({ loadedCodes, onFixedCostAdd, onToggle, on
                 <div className="flex-grow">
                     <Input
                         type="text"
-                        placeholder="E.G., WIN-001"
+                        placeholder={PLACEHOLDERS.INVESTMENT_CODE}
                         value={newCodeInput}
                         onChange={(e) => { 
                             setNewCodeInput(e.target.value); 

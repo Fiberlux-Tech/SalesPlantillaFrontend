@@ -1,6 +1,7 @@
 // src/features/transactions/footers/FinancePreviewFooter.tsx
 import type { Transaction, FixedCost, RecurringService } from '@/types';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
+import { TRANSACTION_STATUS, CONFIRMATION_MESSAGES, BUTTON_LABELS } from '@/config';
 
 // --- PROPS INTERFACE (No change) ---
 interface FinancePreviewFooterProps {
@@ -30,11 +31,11 @@ export function FinancePreviewFooter({
     } = draftState;
 
     const tx = baseTransaction.transactions;
-    const canModify = tx.ApprovalStatus === 'PENDING';
+    const canModify = tx.ApprovalStatus === TRANSACTION_STATUS.PENDING;
 
     // 3. Handlers now read from draftState variables
     const handleApproveClick = () => {
-        if (window.confirm('¿Estás seguro/a de aprobar esta transacción?')) {
+        if (window.confirm(CONFIRMATION_MESSAGES.APPROVE_TRANSACTION)) {
             const modifiedFields = { ...tx, ...liveEdits };
             // Pass the current draft state up to the parent handler
             onApprove(tx.id, 'approve', modifiedFields, currentFixedCosts, currentRecurringServices);
@@ -42,7 +43,7 @@ export function FinancePreviewFooter({
     };
 
     const handleRejectClick = () => {
-        if (window.confirm('¿Estás seguro/a de rechazar esta transacción?')) {
+        if (window.confirm(CONFIRMATION_MESSAGES.REJECT_TRANSACTION)) {
             const modifiedFields = { ...tx, ...liveEdits };
             // Pass the current draft state up to the parent handler
             onReject(tx.id, 'reject', modifiedFields, currentFixedCosts, currentRecurringServices);
@@ -50,7 +51,7 @@ export function FinancePreviewFooter({
     };
 
     const handleCalculateCommissionClick = () => {
-        if (window.confirm('¿Estás seguro/a de realizar el cálculo de comisión? Esto actualizará la base de datos.')) {
+        if (window.confirm(CONFIRMATION_MESSAGES.CALCULATE_COMMISSION)) {
             onCalculateCommission(tx.id);
         }
     };
@@ -63,7 +64,7 @@ export function FinancePreviewFooter({
                 className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
                 disabled={!canModify}
             >
-                Comisiones
+                {BUTTON_LABELS.COMISIONES}
             </button>
 
             <button
@@ -71,7 +72,7 @@ export function FinancePreviewFooter({
                 className="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-400"
                 disabled={!canModify}
             >
-                Rechazar
+                {BUTTON_LABELS.RECHAZAR}
             </button>
 
             <button
@@ -79,7 +80,7 @@ export function FinancePreviewFooter({
                 className="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
                 disabled={!canModify}
             >
-                Aprobar
+                {BUTTON_LABELS.APROBAR}
             </button>
         </div>
     );

@@ -51,7 +51,7 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
                 </td>
                 
                 {formattedValues.map((formattedValue, index) => {
-                    const numValue = parseFloat(values[index] as any);
+                    const numValue = typeof values[index] === 'number' ? values[index] : parseFloat(String(values[index]));
                     const isZero = formattedValue === '-';
                     
                     const colorClass = isZero

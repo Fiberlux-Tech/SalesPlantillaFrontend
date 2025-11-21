@@ -9,9 +9,9 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { UNIDADES_NEGOCIO, REGIONS, SALE_TYPES } from '@/lib/constants';
+import { BUSINESS_UNITS, REGIONS, SALE_TYPES, CURRENCIES, PLACEHOLDERS, VALIDATION_MESSAGES, UI_LABELS, BOOLEAN_LABELS } from '@/config';
 import { formatCurrency } from '@/lib/formatters';
-import { useTransactionPreview } from '@/contexts/TransactionPreviewContext'; 
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { InlineEditWrapper } from './InlineEditWrapper'; 
 
 
@@ -20,22 +20,22 @@ interface TransactionOverviewInputsProps {
 }
 
 // Local utility to format value and append currency for display mode
-const formatCurrencyDisplay = (value: number | string | null | undefined, currency: string | null | undefined = 'PEN'): string => {
+const formatCurrencyDisplay = (value: number | string | null | undefined, currency: string | null | undefined = CURRENCIES.DEFAULT): string => {
     const formattedValue = formatCurrency(value);
-    
+
     // Only add the currency if the value is not "-"
     if (formattedValue === '-') {
         return formattedValue;
     }
-    
-    return `${formattedValue} ${currency || 'PEN'}`;
+
+    return `${formattedValue} ${currency || CURRENCIES.DEFAULT}`;
 };
 
 // --- Custom Renderer Components for InlineEditWrapper ---
 
 // Custom Rendering Component for Select fields (Unidad, Region, Sale Type)
 interface SelectInputProps {
-    options: string[];
+    options: readonly string[];
     valueKey: string;
 }
 const SelectInput: React.FC<SelectInputProps & { 
@@ -50,7 +50,7 @@ const SelectInput: React.FC<SelectInputProps & {
 }) => (
     <Select value={localValue as string || ''} onValueChange={setLocalValue}>
         <SelectTrigger className="text-sm h-9 bg-white w-40"> {/* <-- ADD w-40 HERE */}
-            <SelectValue placeholder={`Selecciona ${valueKey}...`} />
+            <SelectValue placeholder={PLACEHOLDERS.SELECT_FIELD.replace('{field}', valueKey)} />
         </SelectTrigger>
         <SelectContent>
             {options.map(option => (<SelectItem key={option} value={option}>{option}</SelectItem>))}
@@ -107,8 +107,8 @@ const CurrencyInput: React.FC<{
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="PEN">PEN</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value={CURRENCIES.PEN}>{CURRENCIES.PEN}</SelectItem>
+                    <SelectItem value={CURRENCIES.USD}>{CURRENCIES.USD}</SelectItem>
                 </SelectContent>
             </Select>
         </div>
@@ -133,15 +133,15 @@ const BooleanSelectInput: React.FC<{
             <SelectValue />
         </SelectTrigger>
         <SelectContent>
-            <SelectItem value="true">SI</SelectItem>
-            <SelectItem value="false">NO</SelectItem>
+            <SelectItem value="true">{BOOLEAN_LABELS.TRUE}</SelectItem>
+            <SelectItem value="false">{BOOLEAN_LABELS.FALSE}</SelectItem>
         </SelectContent>
     </Select>
 );
 // --- END of new component ---
 
 
-export function TransactionOverviewInputs({ isFinanceView }: TransactionOverviewInputsProps) {
+export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: TransactionOverviewInputsProps) {
 
     const {
         baseTransaction,
@@ -175,9 +175,9 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     const confirmedSaleType = liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type;
 
     const confirmedMrcValue = liveEdits?.MRC ?? kpiData.MRC ?? tx.MRC;
-    const confirmedMrcCurrency = liveEdits?.mrc_currency ?? kpiData.mrc_currency ?? tx.mrc_currency ?? 'PEN';
+    const confirmedMrcCurrency = liveEdits?.mrc_currency ?? kpiData.mrc_currency ?? tx.mrc_currency ?? CURRENCIES.DEFAULT;
     const confirmedNrcValue = liveEdits?.NRC ?? kpiData.NRC ?? tx.NRC;
-    const confirmedNrcCurrency = liveEdits?.nrc_currency ?? kpiData.nrc_currency ?? tx.nrc_currency ?? 'PEN';
+    const confirmedNrcCurrency = liveEdits?.nrc_currency ?? kpiData.nrc_currency ?? tx.nrc_currency ?? CURRENCIES.DEFAULT;
     const confirmedAplicaCartaFianza = liveEdits?.aplicaCartaFianza ?? tx.aplicaCartaFianza;
 
     const confirmedCompanyID = liveEdits?.companyID ?? tx.companyID;
@@ -202,29 +202,29 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 payload: { plazoContrato: newPlazo }
             });
         } else {
-            alert("Please enter a valid whole number greater than 0 for Plazo Contrato.");
+            alert(VALIDATION_MESSAGES.PLAZO_INVALID);
         }
     };
     
     const handleConfirmUnidad = (finalValue: string | number | null) => {
-        if (!finalValue || !UNIDADES_NEGOCIO.includes(finalValue as string)) {
-            alert("Selección obligatoria: Por favor, selecciona una Unidad de Negocio válida.");
+        if (!finalValue || !(BUSINESS_UNITS.LIST as readonly string[]).includes(finalValue as string)) {
+            alert(VALIDATION_MESSAGES.UNIDAD_REQUIRED);
             return;
         }
         onValueChange('unidadNegocio', finalValue as string);
     };
     
     const handleConfirmRegion = (finalValue: string | number | null) => {
-        if (!finalValue || !REGIONS.includes(finalValue as string)) {
-            alert("Selección obligatoria: Por favor, selecciona una Región válida.");
+        if (!finalValue || !(REGIONS.LIST as readonly string[]).includes(finalValue as string)) {
+            alert(VALIDATION_MESSAGES.REGION_REQUIRED);
             return;
         }
         onValueChange('gigalan_region', finalValue as string);
     };
     
     const handleConfirmSaleType = (finalValue: string | number | null) => {
-        if (!finalValue || !SALE_TYPES.includes(finalValue as any)) {
-            alert("Selección obligatoria: Por favor, selecciona un Tipo de Venta válido.");
+        if (!finalValue || !SALE_TYPES.LIST.includes(finalValue as any)) {
+            alert(VALIDATION_MESSAGES.TIPO_VENTA_REQUIRED);
             return;
         }
         onValueChange('gigalan_sale_type', finalValue as "NUEVO" | "EXISTENTE");
@@ -245,7 +245,7 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 }
             });
         } else {
-            alert("Please enter a valid non-negative number for MRC.");
+            alert(VALIDATION_MESSAGES.MRC_INVALID);
         }
     };
     
@@ -263,7 +263,7 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 }
             });
         } else {
-            alert("Please enter a valid non-negative number for NRC.");
+            alert(VALIDATION_MESSAGES.NRC_INVALID);
         }
     };
 
@@ -283,31 +283,31 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
     return (
         <div className="mb-6">
             <div className="flex justify-between items-start mb-3"> 
-                <h3 className="font-semibold text-gray-800 text-lg">Transaction Overview</h3>
-                
+                <h3 className="font-semibold text-gray-800 text-lg">{UI_LABELS.TRANSACTION_OVERVIEW}</h3>
+
                 {/* --- Master Variables (Horizontal) --- */}
                 <div className="flex space-x-4 text-xs text-gray-500">
                     <p>
-                        Tipo de Cambio:
+                        {UI_LABELS.TIPO_CAMBIO}:
                         <span className="font-semibold text-gray-700 ml-1">
                             {formatCurrency(tx.tipoCambio, { decimals: 4 })}
                         </span>
                     </p>
                     <p>
-                        Costo Capital:
+                        {UI_LABELS.COSTO_CAPITAL}:
                         <span className="font-semibold text-gray-700 ml-1">
                             {formatCurrency(tx.costoCapitalAnual * 100, { decimals: 2 })}%
                         </span>
                     </p>
                     {/* --- ADD THESE TWO <p> BLOCKS --- */}
                     <p>
-                        Tasa Carta Fianza:
+                        {UI_LABELS.TASA_CARTA_FIANZA}:
                         <span className="font-semibold text-gray-700 ml-1">
                             {formatCurrency((tx.tasaCartaFianza || 0) * 100, { decimals: 2 })}%
                         </span>
                     </p>
                     <p>
-                        Costo Carta Fianza:
+                        {UI_LABELS.COSTO_CARTA_FIANZA}:
                         <span className="font-semibold text-gray-700 ml-1">
                             {formatCurrency(kpiData.costoCartaFianza)}
                         </span>
@@ -319,18 +319,18 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 
                 {/* 1. UNIDAD DE NEGOCIO (Using InlineEditWrapper) */}
                 <div className="min-h-[60px]">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Unidad de Negocio</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.UNIDAD_NEGOCIO}</p>
                     <InlineEditWrapper<string | null>
-                        fieldKey="Unidad de Negocio"
+                        fieldKey={UI_LABELS.UNIDAD_NEGOCIO}
                         currentValue={confirmedUnidad}
                         canEdit={canEdit}
                         renderDisplay={(value) => value || "Selecciona obligatorio"}
                         renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
-                            <SelectInput 
-                                options={UNIDADES_NEGOCIO} 
-                                valueKey="Unidad de Negocio" 
-                                localValue={localValue} 
-                                setLocalValue={setLocalValue} 
+                            <SelectInput
+                                options={BUSINESS_UNITS.LIST}
+                                valueKey={UI_LABELS.UNIDAD_NEGOCIO}
+                                localValue={localValue}
+                                setLocalValue={setLocalValue}
                                 onConfirm={onConfirm}
                             />
                         )}
@@ -338,20 +338,20 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                     />
                 </div>
                 {/* 2. RUC/DNI (Static Field) */}
-                <StaticField label="RUC/DNI" value={confirmedCompanyID || '-'} />
+                <StaticField label={UI_LABELS.RUC_DNI} value={confirmedCompanyID || '-'} />
 
                 {/* 3. NOMBRE CLIENTE (Static Field) */}
-                <StaticField label="Nombre Cliente" value={confirmedClientName} />
-                
+                <StaticField label={UI_LABELS.NOMBRE_CLIENTE} value={confirmedClientName} />
+
                 {/* 4. PLAZO DE CONTRATO (Using InlineEditWrapper) */}
                 <div className="min-h-[60px]">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Plazo de Contrato</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.PLAZO_CONTRATO}</p>
                     <InlineEditWrapper<number | null>
-                        fieldKey="Plazo de Contrato"
+                        fieldKey={UI_LABELS.PLAZO_CONTRATO}
                         currentValue={confirmedPlazo}
                         canEdit={canEdit}
                         initialValueTransformer={(value) => value ?? 0}
-                        renderDisplay={(value) => `${value ?? '-'} meses`}
+                        renderDisplay={(value) => `${value ?? '-'} ${UI_LABELS.MESES}`}
                         renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
                             <NumberInput 
                                 localValue={localValue} 
@@ -365,14 +365,14 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
 
                 {/* 5. MRC (Using InlineEditWrapper for dual input) */}
                 <div className="min-h-[60px]">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">MRC (Recurrente Mensual)</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.MRC_RECURRENTE}</p>
                     <InlineEditWrapper<number | null>
-                        fieldKey="MRC"
+                        fieldKey={UI_LABELS.MRC_RECURRENTE}
                         currentValue={confirmedMrcValue}
                         currentCurrency={confirmedMrcCurrency}
                         canEdit={canEdit}
                         initialValueTransformer={(value) => value ?? 0}
-                        initialCurrencyTransformer={(c) => c ?? 'PEN'}
+                        initialCurrencyTransformer={(c) => c ?? CURRENCIES.DEFAULT}
                         renderDisplay={formatCurrencyDisplay}
                         renderEdit={(localValue, setLocalValue, localCurrency, setLocalCurrency, onConfirm) => (
                             <CurrencyInput 
@@ -389,14 +389,14 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 
                 {/* 6. NRC (Using InlineEditWrapper for dual input) */}
                 <div className="min-h-[60px]">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">NRC (Pago Único)</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.NRC_PAGO_UNICO}</p>
                     <InlineEditWrapper<number | null>
-                        fieldKey="NRC"
+                        fieldKey={UI_LABELS.NRC_PAGO_UNICO}
                         currentValue={confirmedNrcValue}
                         currentCurrency={confirmedNrcCurrency}
                         canEdit={canEdit}
                         initialValueTransformer={(value) => value ?? 0}
-                        initialCurrencyTransformer={(c) => c ?? 'PEN'}
+                        initialCurrencyTransformer={(c) => c ?? CURRENCIES.DEFAULT}
                         renderDisplay={formatCurrencyDisplay}
                         renderEdit={(localValue, setLocalValue, localCurrency, setLocalCurrency, onConfirm) => (
                             <CurrencyInput 
@@ -413,25 +413,25 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 {/* 7. COMISION DE VENTAS (Static Field) */}
                 {((): React.ReactNode => {
                     const formattedValue = formatCurrency(kpiData.comisiones);
-                    const displayCurrency = formattedValue === '-' ? undefined : "PEN";
+                    const displayCurrency = formattedValue === '-' ? undefined : CURRENCIES.DEFAULT;
                     return (
-                        <StaticField 
-                            label="Comisión de Ventas" 
-                            value={formattedValue} 
-                            currency={displayCurrency} 
+                        <StaticField
+                            label={UI_LABELS.COMISION_VENTAS}
+                            value={formattedValue}
+                            currency={displayCurrency}
                         />
                     );
                 })()}
 
                 {/* 8. APLICA CARTA FIANZA (Using InlineEditWrapper) */}
                 <div className="min-h-[60px]">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Aplica Carta Fianza</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.APLICA_CARTA_FIANZA}</p>
                     <InlineEditWrapper<boolean | null>
-                        fieldKey="Aplica Carta Fianza"
+                        fieldKey={UI_LABELS.APLICA_CARTA_FIANZA}
                         currentValue={confirmedAplicaCartaFianza || false}
                         canEdit={canEdit}
                         initialValueTransformer={(value) => value === true}
-                        renderDisplay={(value) => (value === true ? "SI" : "NO")}
+                        renderDisplay={(value) => (value === true ? BOOLEAN_LABELS.TRUE : BOOLEAN_LABELS.FALSE)}
                         renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
                             <BooleanSelectInput
                                 localValue={localValue}
@@ -444,22 +444,22 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                 </div>
 
                 {/* --- GIGALAN FIELDS --- */}
-                {confirmedUnidad === 'GIGALAN' && (
+                {confirmedUnidad === BUSINESS_UNITS.GIGALAN && (
                     <>
                         {/* --- EDITABLE REGION (8) --- */}
                         <div className="min-h-[60px]">
-                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Región</p>
+                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.REGION}</p>
                             <InlineEditWrapper<string | null>
-                                fieldKey="Región"
+                                fieldKey={UI_LABELS.REGION}
                                 currentValue={confirmedRegion}
                                 canEdit={canEdit}
                                 renderDisplay={(value) => value || "Selecciona obligatorio"}
                                 renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
-                                    <SelectInput 
-                                        options={REGIONS} 
-                                        valueKey="Región" 
-                                        localValue={localValue} 
-                                        setLocalValue={setLocalValue} 
+                                    <SelectInput
+                                        options={REGIONS.LIST}
+                                        valueKey={UI_LABELS.REGION}
+                                        localValue={localValue}
+                                        setLocalValue={setLocalValue}
                                         onConfirm={onConfirm}
                                     />
                                 )}
@@ -468,18 +468,18 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                         </div>
                         {/* --- EDITABLE TYPE OF SALE --- */}
                         <div className="min-h-[60px]">
-                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Tipo de Venta</p>
+                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.TIPO_VENTA}</p>
                             <InlineEditWrapper<string | null>
-                                fieldKey="Tipo de Venta"
+                                fieldKey={UI_LABELS.TIPO_VENTA}
                                 currentValue={confirmedSaleType}
                                 canEdit={canEdit}
                                 renderDisplay={(value) => value || "Selecciona obligatorio"}
                                 renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
-                                    <SelectInput 
-                                        options={SALE_TYPES} 
-                                        valueKey="Tipo de Venta" 
-                                        localValue={localValue} 
-                                        setLocalValue={setLocalValue} 
+                                    <SelectInput
+                                        options={SALE_TYPES.LIST}
+                                        valueKey={UI_LABELS.TIPO_VENTA}
+                                        localValue={localValue}
+                                        setLocalValue={setLocalValue}
                                         onConfirm={onConfirm}
                                     />
                                 )}
@@ -487,18 +487,18 @@ export function TransactionOverviewInputs({ isFinanceView }: TransactionOverview
                             />
                         </div>
                         {/* --- GigaLan PREVIOUS MONTHLY CHARGE Input (10) --- */}
-                        {canEdit && confirmedSaleType === 'EXISTENTE' && (
+                        {canEdit && confirmedSaleType === SALE_TYPES.EXISTENTE && (
                             <div className="min-h-[60px]">
                                 <GigaLanCommissionInputs
                                     inputs={{ ...gigalanInputs, gigalan_sale_type: confirmedSaleType }}
-                                    onInputChange={handleGigaLanOldMrcChange} 
+                                    onInputChange={handleGigaLanOldMrcChange}
                                 />
                             </div>
                         )}
 
-                        {!canEdit && tx.gigalan_sale_type === 'EXISTENTE' && (
+                        {!canEdit && tx.gigalan_sale_type === SALE_TYPES.EXISTENTE && (
                             <div className="min-h-[60px]">
-                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">MRC Previo</p>
+                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{UI_LABELS.MRC_PREVIO}</p>
                                 <p className="font-semibold text-gray-900">{tx.gigalan_old_mrc ? formatCurrency(tx.gigalan_old_mrc) : '-'}</p>
                             </div>
                         )}

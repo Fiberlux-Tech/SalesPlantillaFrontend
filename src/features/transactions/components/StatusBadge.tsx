@@ -1,10 +1,11 @@
 // src/components/shared/StatusBadge.tsx
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import type { VariantProps } from 'class-variance-authority'; // 1. Import VariantProps
+import { TRANSACTION_STATUS, type TransactionStatus } from '@/config';
 
 // 2. Define the component props
 interface StatusBadgeProps {
-    status: "PENDING" | "APPROVED" | "REJECTED" | string; // Allow other strings
+    status: TransactionStatus | string; // Allow other strings
 }
 
 function StatusBadge({ status }: StatusBadgeProps) {
@@ -12,13 +13,13 @@ function StatusBadge({ status }: StatusBadgeProps) {
     let variant: VariantProps<typeof badgeVariants>['variant'] = 'categoryUser';
     
     switch (status) {
-        case 'PENDING':
+        case TRANSACTION_STATUS.PENDING:
             variant = 'statusPending';
             break;
-        case 'APPROVED':
+        case TRANSACTION_STATUS.APPROVED:
             variant = 'statusApproved';
             break;
-        case 'REJECTED':
+        case TRANSACTION_STATUS.REJECTED:
             variant = 'statusRejected';
             break;
         default:

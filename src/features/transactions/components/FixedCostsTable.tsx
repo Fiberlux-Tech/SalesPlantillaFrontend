@@ -5,6 +5,7 @@ import type { FixedCost } from '@/types';
 import type { ReactNode } from 'react';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
+import { CURRENCIES } from '@/config';
 
 interface FixedCostsTableProps {
     EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
@@ -60,7 +61,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {data.map((item, index) => (
-                        <tr key={item.id || index} className="hover:bg-gray-50">
+                        <tr key={`fixed-cost-${item.id}-${index}`} className="hover:bg-gray-50">
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.categoria)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.tipo_servicio)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.ticket)}</td>
@@ -86,7 +87,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">
                                 <EditableCurrencyCell
-                                    currentValue={item.costo_currency ?? 'USD'}
+                                    currentValue={item.costo_currency ?? CURRENCIES.DEFAULT_FIXED_COST}
                                     onConfirm={(newValue) => onCostChange(index, 'costo_currency', newValue)}
                                     canEdit={canEdit}
                                 />

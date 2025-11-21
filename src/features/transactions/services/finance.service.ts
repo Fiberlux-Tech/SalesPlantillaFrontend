@@ -8,6 +8,7 @@ import type {
     RecurringService,
     FinanceTransactionListResponse
 } from '@/types';
+import { API_CONFIG, PAGINATION, type TransactionStatus } from '@/config';
 
 // --- Types ---
 
@@ -21,7 +22,7 @@ export interface FormattedFinanceTransaction {
     grossMarginRatio: number;
     payback: number;
     submissionDate: string;
-    status: "PENDING" | "APPROVED" | "REJECTED";
+    status: TransactionStatus;
 }
 
 interface GetFinanceTransactionsResult {
@@ -53,7 +54,7 @@ type CalculateCommissionResult = {
 
 export async function getFinanceTransactions(page: number): Promise<GetFinanceTransactionsResult> {
     try {
-        const result = await api.get<FinanceTransactionListResponse>(`/api/transactions?page=${page}&per_page=30`); 
+        const result = await api.get<FinanceTransactionListResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTIONS_LIST}?page=${page}&per_page=${PAGINATION.PER_PAGE}`); 
  
         if (result.success) {
             const formattedTransactions: FormattedFinanceTransaction[] = result.data.transactions.map((tx: Transaction) => ({
@@ -85,7 +86,7 @@ export async function getFinanceTransactions(page: number): Promise<GetFinanceTr
 
 export async function getTransactionDetails(transactionId: number): Promise<GetTransactionDetailsResult> {
     try {
-        const result = await api.get<TransactionDetailResponse>(`/api/transaction/${transactionId}`);
+        const result = await api.get<TransactionDetailResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTION_DETAIL}/${transactionId}`);
         if (result.success) {
             return { success: true, data: result.data };
         } else {
@@ -104,7 +105,7 @@ export async function updateTransactionStatus(
     recurringServices: RecurringService[] | null = null
 ): Promise<BaseApiResponse> {
     
-    const endpoint = action === 'approve' ? 'approve' : 'reject';
+    const endpoint = action === 'approve' ? API_CONFIG.ENDPOINTS.APPROVE_TRANSACTION : API_CONFIG.ENDPOINTS.REJECT_TRANSACTION;
     
     const payload: {
         transactions: Partial<Transaction>;
@@ -122,7 +123,7 @@ export async function updateTransactionStatus(
     }
     
     try {
-        const result = await api.post<BaseApiResponse>(`/api/transaction/${endpoint}/${transactionId}`, payload);
+        const result = await api.post<BaseApiResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTION_DETAIL}/${endpoint}/${transactionId}`, payload);
         
         if (result.success) {
             return { success: true };
@@ -137,8 +138,8 @@ export async function updateTransactionStatus(
 export async function calculateCommission(transactionId: number): Promise<CalculateCommissionResult> {
     try {
         const result = await api.post<TransactionDetailResponse>(
-            `/api/transaction/${transactionId}/calculate-commission`, 
-            {} 
+            `${API_CONFIG.ENDPOINTS.TRANSACTION_DETAIL}/${transactionId}/calculate-commission`,
+            {}
         );
         
         if (result.success) { 

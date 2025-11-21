@@ -4,6 +4,7 @@ import type { RecurringService } from '@/types';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
 import type { ReactNode } from 'react';
+import { CURRENCIES } from '@/config';
 
 interface RecurringServicesTableProps {
     EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
@@ -61,7 +62,7 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {data.map((item, index) => (
-                        <tr key={item.id || index} className="hover:bg-gray-50">
+                        <tr key={`recurring-service-${item.id}-${index}`} className="hover:bg-gray-50">
                             <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.tipo_servicio)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle truncate"title={item.ubicacion || undefined}>{formatCellData(item.ubicacion)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">{formatCellData(item.Q)}</td>
@@ -69,7 +70,7 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
 
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">
                                 <EditableCurrencyCell
-                                    currentValue={item.p_currency ?? 'PEN'}
+                                    currentValue={item.p_currency ?? CURRENCIES.DEFAULT_RECURRING_P}
                                     onConfirm={(newValue) => onServiceChange(index, 'p_currency', newValue)}
                                     canEdit={canEdit}
                                 />
@@ -82,7 +83,7 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
 
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">
                                 <EditableCurrencyCell
-                                    currentValue={item.cu_currency ?? 'USD'}
+                                    currentValue={item.cu_currency ?? CURRENCIES.DEFAULT_RECURRING_CU}
                                     onConfirm={(newValue) => onServiceChange(index, 'cu_currency', newValue)}
                                     canEdit={canEdit}
                                 />

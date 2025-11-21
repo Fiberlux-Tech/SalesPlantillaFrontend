@@ -6,6 +6,7 @@ import type {
     BaseApiResponse,
     Transaction,
 } from '@/types';
+import { API_CONFIG, PAGINATION, DISPLAY_VALUES, TRANSACTION_STATUS, type TransactionStatus } from '@/config';
 
 // --- Types ---
 
@@ -17,7 +18,7 @@ export interface FormattedSalesTransaction {
     payback: number;
     submissionDate: string;
     approvalDate: string;
-    status: "PENDING" | "APPROVED" | "REJECTED";
+    status: TransactionStatus;
 }
 
 interface GetSalesTransactionsResult {
@@ -37,7 +38,7 @@ interface UploadExcelResult {
 
 export async function getSalesTransactions(page: number): Promise<GetSalesTransactionsResult> {
     try {
-        const result = await api.get<SalesTransactionListResponse>(`/api/transactions?page=${page}&per_page=30`);
+        const result = await api.get<SalesTransactionListResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTIONS_LIST}?page=${page}&per_page=${PAGINATION.PER_PAGE}`);
         
         if (result.success) {
             const formattedTransactions: FormattedSalesTransaction[] = result.data.transactions.map((tx: Transaction) => ({
@@ -47,7 +48,7 @@ export async function getSalesTransactions(page: number): Promise<GetSalesTransa
                 grossMarginRatio: tx.grossMarginRatio,
                 payback: tx.payback,
                 submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
-                approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : 'N/A',
+                approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : DISPLAY_VALUES.NOT_AVAILABLE,
                 status: tx.ApprovalStatus,
             }));
             return { 
@@ -68,7 +69,7 @@ export async function uploadExcelForPreview(file: File): Promise<UploadExcelResu
     formData.append('file', file);
     
     try {
-        const result = await api.postForm<TransactionDetailResponse>(`/api/process-excel`, formData);
+        const result = await api.postForm<TransactionDetailResponse>(API_CONFIG.ENDPOINTS.PROCESS_EXCEL, formData);
 
         if (result.success) {
             const dataWithFilename = { ...result.data, fileName: file.name };
@@ -83,7 +84,7 @@ export async function uploadExcelForPreview(file: File): Promise<UploadExcelResu
 
 export async function submitFinalTransaction(finalPayload: any): Promise<BaseApiResponse> {
     try {
-        const result = await api.post<BaseApiResponse>('/api/submit-transaction', finalPayload);
+        const result = await api.post<BaseApiResponse>(API_CONFIG.ENDPOINTS.SUBMIT_TRANSACTION, finalPayload);
 
         if (result.success) {
             return { success: true };

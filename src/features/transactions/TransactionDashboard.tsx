@@ -281,9 +281,12 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 
     // Generalized Filter Logic
     const filteredTransactions = useMemo(() => {
+        // Pre-compute selectedDate string if needed (outside the loop)
+        const selectedDateString = selectedDate?.toDateString();
+
         return transactions.filter(t => {
             const filterLower = filter.toLowerCase();
-            
+
             // Handle different property names for client
             let clientMatch = false;
             if (view === 'SALES') {
@@ -292,10 +295,12 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                 clientMatch = (t as FormattedFinanceTx).clientName.toLowerCase().includes(filterLower);
             }
 
-            // Common date logic
-            if (!selectedDate) return clientMatch;
-            const transactionDate = new Date(t.submissionDate + 'T00:00:00');
-            return clientMatch && transactionDate.toDateString() === selectedDate.toDateString();
+            // Common date logic - only create Date object if we need to compare
+            if (!selectedDateString) return clientMatch;
+
+            // Create date without unnecessary string concatenation
+            const transactionDate = new Date(t.submissionDate);
+            return clientMatch && transactionDate.toDateString() === selectedDateString;
         });
     }, [transactions, filter, selectedDate, view]); // Added 'view' to dependency array
 
