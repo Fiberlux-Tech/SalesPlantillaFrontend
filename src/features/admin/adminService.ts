@@ -1,6 +1,7 @@
 // src/features/admin/adminService.ts
-import { api } from '@/lib/api'; 
-import type { User, BaseApiResponse } from '@/types'; // 1. Import shared types
+import { api } from '@/lib/api';
+import type { User, BaseApiResponse } from '@/types';
+import { ERROR_MESSAGES } from '@/config';
 
 // 2. Define a more specific type for the service function's return
 interface GetUsersResult {
@@ -19,7 +20,7 @@ export async function getAllUsers(): Promise<GetUsersResult> {
         
         return { success: true, data: data.users || [] };
     } catch (error: any) {
-        return { success: false, error: error.message || "Failed to load user data." };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_LOAD_USER_DATA };
     }
 }
 
@@ -32,7 +33,7 @@ export async function updateUserRole(userId: number, newRole: string): Promise<B
         await api.post<BaseApiResponse>(`/api/admin/users/${userId}/role`, { role: newRole.toUpperCase() });
         return { success: true };
     } catch (error: any) {
-        return { success: false, error: error.message || "Failed to update role." };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_UPDATE_ROLE };
     }
 }
 
@@ -44,6 +45,6 @@ export async function resetUserPassword(userId: number, newPassword: string): Pr
         await api.post<BaseApiResponse>(`/api/admin/users/${userId}/reset-password`, { new_password: newPassword });
         return { success: true };
     } catch (error: any) {
-        return { success: false, error: error.message || "Failed to reset password." };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_RESET_PASSWORD };
     }
 }

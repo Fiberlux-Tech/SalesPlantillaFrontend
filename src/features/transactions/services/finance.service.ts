@@ -8,7 +8,7 @@ import type {
     RecurringService,
     FinanceTransactionListResponse
 } from '@/types';
-import { API_CONFIG, PAGINATION, type TransactionStatus } from '@/config';
+import { API_CONFIG, PAGINATION, ERROR_MESSAGES, type TransactionStatus } from '@/config';
 
 // --- Types ---
 
@@ -70,17 +70,17 @@ export async function getFinanceTransactions(page: number): Promise<GetFinanceTr
                 status: tx.ApprovalStatus,
             }));
             
-            return { 
-                success: true, 
-                data: formattedTransactions, 
+            return {
+                success: true,
+                data: formattedTransactions,
                 pages: result.data.pages
             };
         } else {
-            return { success: false, error: result.error || 'Failed to fetch transactions.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_TRANSACTIONS };
         }
- 
+
  	} catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER };
  	}
 }
 
@@ -90,10 +90,10 @@ export async function getTransactionDetails(transactionId: number): Promise<GetT
         if (result.success) {
             return { success: true, data: result.data };
         } else {
-            return { success: false, error: result.error || 'Failed to fetch transaction details.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_TRANSACTION_DETAILS };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER };
     }
 }
 
@@ -128,10 +128,10 @@ export async function updateTransactionStatus(
         if (result.success) {
             return { success: true };
         } else {
-            return { success: false, error: result.error || `Failed to ${action} transaction.` };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_ACTION_TRANSACTION.replace('{action}', action) };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER };
     }
 }
 
@@ -142,12 +142,12 @@ export async function calculateCommission(transactionId: number): Promise<Calcul
             {}
         );
         
-        if (result.success) { 
+        if (result.success) {
             return { success: true, data: result.data };
         } else {
-            return { success: false, error: result.error || `Failed to calculate commission.` };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_CALCULATE_COMMISSION };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server for commission calculation.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER_COMMISSION };
     }
 }

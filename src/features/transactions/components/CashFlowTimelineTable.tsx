@@ -1,9 +1,10 @@
 // src/components/shared/CashFlowTimelineTable.tsx
-import type { ReactNode } from 'react'; // FIX: Import type explicitly
+import type { ReactNode } from 'react';
 import type { CashFlowTimeline } from '@/types';
 import { formatCurrency } from '@/lib/formatters';
+import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
-// 2. Define the props interface
+// Define the props interface
 interface CashFlowTimelineTableProps {
     timeline: CashFlowTimeline | null | undefined;
 }
@@ -15,9 +16,9 @@ const isRowEmpty = (values: number[] | null | undefined): boolean => {
     return !values.some(val => val); // true if *no* value is truthy (not 0)
 };
 
-const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { // 3. Apply props
+const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => {
     if (!timeline || !timeline.periods) {
-        return <p className="text-center text-gray-500 py-4">No cash flow data available.</p>;
+        return <p className="text-center text-gray-500 py-4">{EMPTY_STATE_MESSAGES.NO_CASH_FLOW}</p>;
     }
 
     const {
@@ -30,30 +31,29 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
     /**
      * Renders a single row in the timeline table.
      */
-    // 4. Type the helper function's parameters
     const renderRow = (
-        title: string, 
-        values: number[], 
-        isNegative = false, 
-        isBold = false, 
+        title: string,
+        values: number[],
+        isNegative = false,
+        isBold = false,
         isIndented = false
-    ): ReactNode => { // 5. Define return type (FIX: Use imported type)
-        
+    ): ReactNode => {
+
         const formattedValues = values.map(val => formatCurrency(val, { decimals: 0 }));
-        
+
         return (
             <tr className={isBold ? "bg-gray-100" : ""}>
-                <td className={`py-2 text-left text-xs whitespace-nowrap 
-                    ${isBold ? "font-bold text-gray-800 px-3" : "font-medium text-gray-600"} 
+                <td className={`py-2 text-left text-xs whitespace-nowrap
+                    ${isBold ? "font-bold text-gray-800 px-3" : "font-medium text-gray-600"}
                     ${isIndented ? "pl-6 pr-3" : "px-3"}`}
                 >
                     {title}
                 </td>
-                
+
                 {formattedValues.map((formattedValue, index) => {
                     const numValue = typeof values[index] === 'number' ? values[index] : parseFloat(String(values[index]));
                     const isZero = formattedValue === '-';
-                    
+
                     const colorClass = isZero
                         ? "text-gray-500"
                         : isBold
@@ -61,7 +61,7 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
                             : isNegative
                                 ? "text-red-600"
                                 : "text-green-600";
-                    
+
                     return (
                         <td key={index} className={`px-3 py-2 text-right text-xs whitespace-nowrap font-mono ${colorClass}`}>
                             {formattedValue}
@@ -78,10 +78,10 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
                 <thead className="bg-gray-50">
                     <tr>
                         <th className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Flujo de Caja
+                            {UI_LABELS.FLUJO_CAJA}
                         </th>
                         {periods.map(period => (
-                            <th 
+                            <th
                                 key={period}
                                 className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                             >
@@ -92,24 +92,24 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {/* Revenues */}
-                    {revenues?.nrc && !isRowEmpty(revenues.nrc) && 
-                        renderRow('Ingreso (NRC)', revenues.nrc, false)}
-                        
-                    {revenues?.mrc && !isRowEmpty(revenues.mrc) && 
-                        renderRow('Ingreso (MRC)', revenues.mrc, false)}
-                    
+                    {revenues?.nrc && !isRowEmpty(revenues.nrc) &&
+                        renderRow(UI_LABELS.INGRESO_NRC, revenues.nrc, false)}
+
+                    {revenues?.mrc && !isRowEmpty(revenues.mrc) &&
+                        renderRow(UI_LABELS.INGRESO_MRC, revenues.mrc, false)}
+
                     {/* Expenses */}
-                    {expenses?.comisiones && !isRowEmpty(expenses.comisiones) && 
-                        renderRow('Egreso (Comisiones)', expenses.comisiones, true)}
-                        
-                    {expenses?.egreso && !isRowEmpty(expenses.egreso) && 
-                        renderRow('Egreso (Recurrente)', expenses.egreso, true)}
-                    
+                    {expenses?.comisiones && !isRowEmpty(expenses.comisiones) &&
+                        renderRow(UI_LABELS.EGRESO_COMISIONES, expenses.comisiones, true)}
+
+                    {expenses?.egreso && !isRowEmpty(expenses.egreso) &&
+                        renderRow(UI_LABELS.EGRESO_RECURRENTE, expenses.egreso, true)}
+
                     {/* Fixed Costs (Loop) */}
                     {expenses?.fixed_costs && expenses.fixed_costs.map((cost) => (
-                        !isRowEmpty(cost.timeline_values) && 
+                        !isRowEmpty(cost.timeline_values) &&
                             renderRow(
-                                cost.tipo_servicio || cost.categoria || `Costo Fijo (ID ${cost.id})`,
+                                cost.tipo_servicio || cost.categoria || UI_LABELS.COSTO_FIJO_ID.replace('{id}', String(cost.id)),
                                 cost.timeline_values,
                                 true,  // isNegative
                                 false, // isBold
@@ -118,8 +118,8 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => { //
                     ))}
 
                     {/* Net Cash Flow (Always show this row) */}
-                    {net_cash_flow.length > 0 && 
-                        renderRow('Net Cash Flow', net_cash_flow, false, true)}
+                    {net_cash_flow.length > 0 &&
+                        renderRow(UI_LABELS.NET_CASH_FLOW, net_cash_flow, false, true)}
                 </tbody>
             </table>
         </div>

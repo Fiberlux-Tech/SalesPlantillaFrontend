@@ -1,11 +1,12 @@
 // src/components/shared/GlobalHeader.tsx
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LogOutIcon, ArrowLeftIcon, UploadIcon } from './Icons';
-import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
+import { useAuth } from '@/contexts/AuthContext';
+import { UI_LABELS } from '@/config';
 
 // CORRECTED SalesActions interface
 interface SalesActions {
-    uploadLabel: string; // <-- New field
+    uploadLabel: string;
     onUpload: () => void;
 }
 
@@ -13,30 +14,30 @@ interface GlobalHeaderProps {
     salesActions: SalesActions;
 }
 
-// ... (Helper function getPageTitle remains the same) ...
+// Helper function getPageTitle using centralized constants
 const getPageTitle = (pathname: string): string => {
     switch (pathname) {
         case '/sales':
-            return 'Plantillas Economicas';
+            return UI_LABELS.PAGE_TITLE_SALES;
         case '/finance':
-            return 'Aprobación de Plantillas Economicas';
+            return UI_LABELS.PAGE_TITLE_FINANCE;
         case '/admin/users':
-            return 'Manejo de Permisos';
+            return UI_LABELS.PAGE_TITLE_ADMIN_USERS;
         case '/admin/master-data':
-            return 'Maestro de Variables';
+            return UI_LABELS.PAGE_TITLE_ADMIN_MASTER_DATA;
         case '/':
         default:
-            return 'Menu Principal';
+            return UI_LABELS.PAGE_TITLE_MAIN_MENU;
     }
 };
 
 export default function GlobalHeader({
     salesActions
-}: GlobalHeaderProps) { // <-- 3. Remove onLogout from props
+}: GlobalHeaderProps) {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const { logout } = useAuth(); // <-- 4. Get logout from the context
+    const { logout } = useAuth();
     const pathname = location.pathname;
 
     const buttonStyles = "flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50";
@@ -57,13 +58,13 @@ export default function GlobalHeader({
                             className={buttonStyles}
                         >
                             <ArrowLeftIcon className="w-5 h-5 mr-2 text-gray-500" />
-                            Atrás
+                            {UI_LABELS.BACK}
                         </button>
                     ) : (
                         <div className="invisible pointer-events-none">
                             <button className={buttonStyles}>
                                 <ArrowLeftIcon className="w-5 h-5 mr-2 text-gray-500" />
-                                Atrás
+                                {UI_LABELS.BACK}
                             </button>
                         </div>
                     )}
@@ -76,23 +77,23 @@ export default function GlobalHeader({
                 <div className="flex items-center space-x-2">
                     {showSalesActions && salesActions && (
                         <>
-                            
-                            <button 
+
+                            <button
                                 onClick={salesActions.onUpload}
                                 className={primaryButtonStyles}
                             >
                                 <UploadIcon />
-                                <span>Crear Plantilla</span>
+                                <span>{UI_LABELS.CREATE_TEMPLATE}</span>
                             </button>
                         </>
                     )}
-                    
-                    <button 
-                        onClick={logout} // <-- 5. Use logout from context
+
+                    <button
+                        onClick={logout}
                         className={buttonStyles}
                     >
                         <LogOutIcon className="w-5 h-5 mr-2 text-gray-500" />
-                        Logout
+                        {UI_LABELS.LOGOUT}
                     </button>
                 </div>
             </div>

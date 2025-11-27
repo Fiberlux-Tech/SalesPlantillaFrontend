@@ -12,7 +12,7 @@ function getCsrfToken(): string | null {
 
     for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
-        if (API_CONFIG.CSRF.COOKIE_NAMES.includes(name)) {
+        if (API_CONFIG.CSRF.COOKIE_NAMES.includes(name as any)) {
             return decodeURIComponent(value);
         }
     }
@@ -38,7 +38,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 
     // 3. Add CSRF token for state-changing requests
     const method = config.method?.toUpperCase();
-    if (method && API_CONFIG.CSRF.METHODS_REQUIRING_CSRF.includes(method)) {
+    if (method && API_CONFIG.CSRF.METHODS_REQUIRING_CSRF.includes(method as any)) {
         const csrfToken = getCsrfToken();
         if (csrfToken) {
             // Use X-XSRF-TOKEN header (common pattern with XSRF-TOKEN cookie)

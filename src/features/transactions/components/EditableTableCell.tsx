@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { EditPencilIcon, EditCheckIcon, EditXIcon } from '@/components/shared/Icons';
 import { formatCellData } from '@/lib/formatters';
+import { ARIA_LABELS } from '@/config';
 
 // 1. Define the props interface
 interface EditableTableCellProps {
@@ -74,17 +75,17 @@ export function EditableTableCell({
                     autoFocus
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleConfirm()}
                 />
-                <button 
-                    onClick={handleConfirm} 
-                    className="p-1 rounded hover:bg-gray-200 text-green-600" 
-                    aria-label="Confirm"
+                <button
+                    onClick={handleConfirm}
+                    className="p-1 rounded hover:bg-gray-200 text-green-600"
+                    aria-label={ARIA_LABELS.CONFIRM}
                 >
                     <EditCheckIcon />
                 </button>
-                <button 
-                    onClick={handleCancel} 
-                    className="p-1 rounded hover:bg-gray-200 text-red-600" 
-                    aria-label="Cancel"
+                <button
+                    onClick={handleCancel}
+                    className="p-1 rounded hover:bg-gray-200 text-red-600"
+                    aria-label={ARIA_LABELS.CANCEL}
                 >
                     <EditXIcon />
                 </button>
@@ -100,7 +101,7 @@ export function EditableTableCell({
             <span>{formatCellData(currentValue)}</span>
             <button
                 className="absolute right-0 p-1 rounded bg-gray-100 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-200"
-                aria-label="Edit value"
+                aria-label={ARIA_LABELS.EDIT_VALUE}
             >
                 <EditPencilIcon />
             </button>

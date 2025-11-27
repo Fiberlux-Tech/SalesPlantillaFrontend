@@ -1,8 +1,9 @@
 // src/components/shared/DatePicker.tsx
 import React, { useState } from 'react';
-import { ChevronUpIcon, ChevronDownIcon } from '../../../components/shared/Icons'; // Assumes Icons.tsx
+import { ChevronUpIcon, ChevronDownIcon } from '../../../components/shared/Icons';
+import { DATE_PICKER, BUTTON_LABELS } from '@/config';
 
-// 1. Define the props interface
+// Define the props interface
 interface DatePickerProps {
     selectedDate: Date | null;
     onSelectDate: (date: Date) => void;
@@ -11,28 +12,28 @@ interface DatePickerProps {
 }
 
 function DatePicker({ selectedDate, onSelectDate, onClear, onSelectToday }: DatePickerProps) {
-    // 2. Type the internal state
+    // Type the internal state
     const [displayDate, setDisplayDate] = useState<Date>(selectedDate || new Date());
-    const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+    const days = DATE_PICKER.DAYS;
 
     const changeMonth = (delta: number) => {
         setDisplayDate(new Date(displayDate.getFullYear(), displayDate.getMonth() + delta, 1));
     };
-    
+
     const firstDayOfMonth = new Date(displayDate.getFullYear(), displayDate.getMonth(), 1);
     const startingDay = (firstDayOfMonth.getDay() + 6) % 7;
     const daysInMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 0).getDate();
-    
-    // 3. Type the calendarDays array
+
+    // Type the calendarDays array
     const calendarDays: React.ReactNode[] = Array.from({ length: startingDay }, (_, i) => <div key={`empty-${i}`}></div>);
-    
+
     for (let i = 1; i <= daysInMonth; i++) {
         const date = new Date(displayDate.getFullYear(), displayDate.getMonth(), i);
         const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
         calendarDays.push(
-            <div 
-                key={i} 
-                className={`flex items-center justify-center h-8 w-8 rounded-full cursor-pointer ${isSelected ? 'bg-black text-white' : 'hover:bg-gray-100'}`} 
+            <div
+                key={i}
+                className={`flex items-center justify-center h-8 w-8 rounded-full cursor-pointer ${isSelected ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
                 onClick={() => onSelectDate(date)}
             >
                 {i}
@@ -52,8 +53,8 @@ function DatePicker({ selectedDate, onSelectDate, onClear, onSelectToday }: Date
             </div>
             <div className="grid grid-cols-7 gap-1 text-sm">{calendarDays}</div>
              <div className="flex justify-between items-center mt-4 pt-2 border-t">
-                <button onClick={onClear} className="text-sm text-blue-600 hover:underline">Clear</button>
-                <button onClick={onSelectToday} className="text-sm text-blue-600 hover:underline">Today</button>
+                <button onClick={onClear} className="text-sm text-blue-600 hover:underline">{BUTTON_LABELS.CLEAR}</button>
+                <button onClick={onSelectToday} className="text-sm text-blue-600 hover:underline">{BUTTON_LABELS.TODAY}</button>
             </div>
         </div>
     );

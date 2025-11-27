@@ -91,7 +91,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             return (
                 <div>
                     <p className="font-semibold text-red-600 text-right">{formatCurrency(totalFixedCosts)}</p>
-                    <p className="text-xs text-gray-500 text-right">Total</p>
+                    <p className="text-xs text-gray-500 text-right">{UI_LABELS.TOTAL}</p>
                 </div>
             );
         }
@@ -99,7 +99,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             <div className="flex items-center space-x-3 relative">
                 <div className="text-right">
                     <p className="font-semibold text-red-600">{formatCurrency(totalFixedCosts)}</p>
-                    <p className="text-xs text-gray-500">Total</p>
+                    <p className="text-xs text-gray-500">{UI_LABELS.TOTAL}</p>
                 </div>
                 <button
                     onClick={(e) => { e.stopPropagation(); setIsCodeManagerOpen(true); }}
@@ -128,15 +128,15 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
         const showCodeManagerUI = !isFinanceView || canEdit;
 
         const totalsNode = (
-            <div className="flex space-x-4"> 
-                <div> 
-                    <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p> 
-                    <p className="text-xs text-gray-500 text-right">Ingreso</p> 
-                </div> 
-                <div> 
-                    <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p> 
-                    <p className="text-xs text-gray-500 text-right">Egreso</p> 
-                </div> 
+            <div className="flex space-x-4">
+                <div>
+                    <p className="font-semibold text-green-600 text-right">{formatCurrency(totalRecurringIncome)}</p>
+                    <p className="text-xs text-gray-500 text-right">{UI_LABELS.INGRESO}</p>
+                </div>
+                <div>
+                    <p className="font-semibold text-red-600 text-right">{formatCurrency(totalRecurringCosts)}</p>
+                    <p className="text-xs text-gray-500 text-right">{UI_LABELS.EGRESO}</p>
+                </div>
             </div>
         );
 
@@ -272,7 +272,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         onToggle={() => toggleSection('cashFlow')}
                         customTotalsNode={
                             <div className="text-xs text-gray-500 text-right">
-                                Valores por periodo
+                                {UI_LABELS.VALORES_POR_PERIODO}
                             </div>
                         }
                     >

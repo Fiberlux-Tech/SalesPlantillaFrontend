@@ -5,7 +5,7 @@ import type { FixedCost } from '@/types';
 import type { ReactNode } from 'react';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
-import { CURRENCIES } from '@/config';
+import { CURRENCIES, UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 interface FixedCostsTableProps {
     EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
@@ -36,7 +36,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
         if (EmptyStateComponent) {
             return <EmptyStateComponent canEdit={canEdit} />;
         }
-        return <p className="text-center text-gray-500 py-4">No fixed cost data available.</p>;
+        return <p className="text-center text-gray-500 py-4">{EMPTY_STATE_MESSAGES.NO_FIXED_COSTS}</p>;
     }
 
     // 4. The entire JSX render tree remains UNCHANGED
@@ -46,16 +46,16 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                 <thead className="bg-gray-50">
                     {/* --- THIS SECTION WAS COMMENTED OUT --- */}
                     <tr>
-                        <th scope="col" className="w-32 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-                        <th scope="col" className="w-40 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Servicio</th>
-                        <th scope="col" className="w-32 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
-                        <th scope="col" className="w-40 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th>
-                        <th scope="col" className="w-20 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                        <th scope="col" className="w-28 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Costo Unitario</th>
-                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Inicio (Mes)</th>
-                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Duración (Meses)</th>
-                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Moneda</th>
-                        <th scope="col" className="w-28 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th scope="col" className="w-32 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CATEGORIA}</th>
+                        <th scope="col" className="w-40 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
+                        <th scope="col" className="w-32 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TICKET}</th>
+                        <th scope="col" className="w-40 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.UBICACION}</th>
+                        <th scope="col" className="w-20 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CANTIDAD}</th>
+                        <th scope="col" className="w-28 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.COSTO_UNITARIO}</th>
+                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.INICIO_MES}</th>
+                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.DURACION_MESES}</th>
+                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MONEDA}</th>
+                        <th scope="col" className="w-28 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TOTAL}</th>
                     </tr>
                     {/* --- END OF FIX --- */}
                 </thead>

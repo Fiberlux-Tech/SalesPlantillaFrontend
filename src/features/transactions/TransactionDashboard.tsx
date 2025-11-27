@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
 import { TransactionDashboardLayout } from './components/TransactionDashboardLayout';
 import { TransactionPreviewContent } from './components/TransactionPreviewContent';
+import { UI_LABELS, ERROR_MESSAGES } from '@/config';
 
 // --- Sales-Specific Imports ---
 import { SalesStatsGrid } from './components/SalesStatsGrid';
@@ -52,7 +53,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const { user, logout } = useAuth();
 
     if (!user) {
-        return <div className="text-center py-12">Loading user data...</div>;
+        return <div className="text-center py-12">{UI_LABELS.LOADING_USER_DATA}</div>;
     }
 
     // --- 1. CORE DATA HOOK ---
@@ -112,7 +113,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             expenses: { comisiones: [], egreso: [], fixed_costs: [] },
             net_cash_flow: []
         },
-        fileName: "Nueva Plantilla"
+        fileName: UI_LABELS.NUEVA_PLANTILLA
     });
 
     // --- 3. VIEW-SPECIFIC MODAL STATE ---
@@ -134,7 +135,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     useEffect(() => {
         if (view === 'SALES' && setSalesActions) {
                 setSalesActions({
-                uploadLabel: 'Crear Plantilla',
+                uploadLabel: UI_LABELS.CREATE_TEMPLATE,
                 onUpload: () => {
                     setUploadedData(null); // Clear any previous data
                     setIsPreviewModalOpen(true); // Open the main modal
@@ -143,8 +144,8 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             // Cleanup function
             return () => {
                 setSalesActions({
-                    uploadLabel: 'Crear Plantilla', // Revert default
-                    onUpload: () => console.log('Upload not yet available'),
+                    uploadLabel: UI_LABELS.CREATE_TEMPLATE, // Revert default
+                    onUpload: () => console.log(UI_LABELS.UPLOAD_NOT_AVAILABLE),
                     // onExport is gone
                 });
             };
@@ -162,7 +163,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         if (result.success && result.data) {
             setUploadedData(result.data); // Set the new data
         } else {
-            alert(result.error || 'Unknown upload error');
+            alert(result.error || ERROR_MESSAGES.UNKNOWN_UPLOAD_ERROR);
         }
 
         // Reset the input value so the user can upload the same file again
@@ -182,7 +183,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             setIsPreviewModalOpen(false);
             setUploadedData(null);
         } else {
-            alert(result.error || 'Unknown submission error');
+            alert(result.error || ERROR_MESSAGES.UNKNOWN_SUBMISSION_ERROR);
         }
     };
 
@@ -200,7 +201,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             setSelectedTransaction(result.data);
             setIsDetailModalOpen(true);
         } else {
-            setApiError(result.error || 'Unknown error');
+            setApiError(result.error || ERROR_MESSAGES.UNKNOWN_ERROR);
         }
     };
 
@@ -218,7 +219,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             setSelectedTransaction(null);
             fetchTransactions(currentPage);
         } else {
-            alert(`Error: ${result.error}`);
+            alert(`${UI_LABELS.ERROR_PREFIX}${result.error}`);
         }
     };
 
@@ -229,7 +230,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             setSelectedTransaction(result.data); // Re-set data to show commission changes
             fetchTransactions(currentPage); // Re-fetch list to update status/values
         } else {
-            alert(`Error: ${result.error}`);
+            alert(`${UI_LABELS.ERROR_PREFIX}${result.error}`);
         }
     };
 
@@ -311,9 +312,9 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             <TransactionDashboardLayout
                 apiError={apiError}
                 placeholder={
-                    view === 'SALES' 
-                        ? "Filtra por nombre de cliente..." 
-                        : "Filter by client name..."
+                    view === 'SALES'
+                        ? UI_LABELS.FILTRA_POR_CLIENTE
+                        : UI_LABELS.FILTER_BY_CLIENT
                 }
                 statsGrid={
                     view === 'SALES' 
@@ -377,7 +378,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                             <DataPreviewModal
                                 isOpen={isPreviewModalOpen}
                                 // Title is dynamic
-                                title={uploadedData ? `Preview: ${uploadedData.fileName}` : "Nueva Plantilla"}
+                                title={uploadedData ? UI_LABELS.PREVIEW_LABEL.replace('{fileName}', uploadedData.fileName || '') : UI_LABELS.NUEVA_PLANTILLA}
                                 onClose={handleCloseSalesModal}
                                 // Status is dynamic
                                 status={(uploadedData || createEmptyTransactionData()).transactions.ApprovalStatus} 
@@ -388,7 +389,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                         className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50"
                                     >
                                         <UploadIcon className="w-4 h-4" />
-                                        <span>Cargar Excel</span>
+                                        <span>{UI_LABELS.CARGAR_EXCEL}</span>
                                     </button>
                                 }
                                 footer={
@@ -413,7 +414,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                 >
                     <DataPreviewModal
                         isOpen={isDetailModalOpen}
-                        title={`Transaction ID: ${selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id}`}
+                        title={UI_LABELS.TRANSACTION_ID_LABEL.replace('{id}', String(selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id))}
                         onClose={handleCloseFinanceModal}
                         // Pass status for the new modal header structure (Point 2)
                         status={selectedTransaction.transactions.ApprovalStatus} 

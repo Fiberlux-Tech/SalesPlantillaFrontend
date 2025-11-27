@@ -6,7 +6,7 @@ import type {
     BaseApiResponse,
     Transaction,
 } from '@/types';
-import { API_CONFIG, PAGINATION, DISPLAY_VALUES, TRANSACTION_STATUS, type TransactionStatus } from '@/config';
+import { API_CONFIG, PAGINATION, DISPLAY_VALUES, TRANSACTION_STATUS, ERROR_MESSAGES, type TransactionStatus } from '@/config';
 
 // --- Types ---
 
@@ -51,16 +51,16 @@ export async function getSalesTransactions(page: number): Promise<GetSalesTransa
                 approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : DISPLAY_VALUES.NOT_AVAILABLE,
                 status: tx.ApprovalStatus,
             }));
-            return { 
-                success: true, 
-                data: formattedTransactions, 
-                pages: result.data.pages 
+            return {
+                success: true,
+                data: formattedTransactions,
+                pages: result.data.pages
             };
         } else {
-            return { success: false, error: result.error || 'Failed to fetch transactions.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_TRANSACTIONS };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER };
     }
 }
 
@@ -75,10 +75,10 @@ export async function uploadExcelForPreview(file: File): Promise<UploadExcelResu
             const dataWithFilename = { ...result.data, fileName: file.name };
             return { success: true, data: dataWithFilename };
         } else {
-            return { success: false, error: result.error || 'An unknown error occurred during processing.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_PROCESS_EXCEL };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server for upload.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER_UPLOAD };
     }
 }
 
@@ -89,9 +89,9 @@ export async function submitFinalTransaction(finalPayload: any): Promise<BaseApi
         if (result.success) {
             return { success: true };
         } else {
-            return { success: false, error: result.error || 'An unknown error occurred during submission.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_SUBMIT_TRANSACTION };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server for submission.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER_SUBMISSION };
     }
 }

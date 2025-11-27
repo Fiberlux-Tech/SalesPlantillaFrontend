@@ -3,8 +3,9 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { UI_LABELS, BUTTON_LABELS, PLACEHOLDERS } from '@/config';
 
-// 1. Define types for props
+// Define types for props
 interface EditableConfigItem {
     name: string;
     label: string;
@@ -25,15 +26,15 @@ interface VariableUpdateFormProps {
     isLoading: boolean;
 }
 
-export function VariableUpdateForm({ 
-    editableConfig, 
-    formInput, 
-    setFormInput, 
-    handleUpdateSubmit, 
-    isLoading 
+export function VariableUpdateForm({
+    editableConfig,
+    formInput,
+    setFormInput,
+    handleUpdateSubmit,
+    isLoading
 }: VariableUpdateFormProps) {
-    
-    // 2. Type event handlers
+
+    // Type event handlers
     const onVariableChange = (value: string) => {
         setFormInput(prev => ({ ...prev, variable_name: value }));
     };
@@ -45,21 +46,21 @@ export function VariableUpdateForm({
     const onCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormInput(prev => ({ ...prev, comment: e.target.value }));
     };
-    
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 className="text-xl font-semibold mb-4">Update Variable</h2>
-            
+            <h2 className="text-xl font-semibold mb-4">{UI_LABELS.UPDATE_VARIABLE}</h2>
+
             <div className="flex space-x-4 items-end">
-                
+
                 <div className="w-[160px] flex-shrink-0">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Variable</label>
-                    <Select 
-                        value={formInput.variable_name} 
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{UI_LABELS.VARIABLE}</label>
+                    <Select
+                        value={formInput.variable_name}
                         onValueChange={onVariableChange}
                     >
                         <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecciona una variable" />
+                            <SelectValue placeholder={PLACEHOLDERS.SELECT_VARIABLE} />
                         </SelectTrigger>
                         <SelectContent>
                             {editableConfig.map(config => (
@@ -70,30 +71,30 @@ export function VariableUpdateForm({
                         </SelectContent>
                     </Select>
                 </div>
-                
+
                 <div className="w-[160px] flex-shrink-0">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Value</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{UI_LABELS.VALUE}</label>
                     <Input
                         type="number"
-                        placeholder="Ingresa el valor"
+                        placeholder={PLACEHOLDERS.ENTER_VALUE}
                         value={formInput.variable_value}
                         onChange={onValueChange}
                     />
                 </div>
-                
+
                 <div className="flex-1 min-w-[150px]">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Comentario</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{UI_LABELS.COMENTARIO}</label>
                     <Input
                         type="text"
-                        placeholder="Comentario opcional (máximo 50 caracteres)"
+                        placeholder={PLACEHOLDERS.OPTIONAL_COMMENT}
                         value={formInput.comment}
                         onChange={onCommentChange}
                         maxLength={50}
                     />
                 </div>
-                
+
                 <Button onClick={handleUpdateSubmit} disabled={isLoading}>
-                    Update Variable
+                    {BUTTON_LABELS.UPDATE_VARIABLE}
                 </Button>
             </div>
         </div>

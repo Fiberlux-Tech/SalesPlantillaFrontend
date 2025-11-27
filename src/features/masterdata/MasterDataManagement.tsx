@@ -1,17 +1,15 @@
 // src/features/masterdata/MasterDataManagement.tsx
 import { useState, useEffect } from 'react';
-import { getMasterVariableHistory, getEditableConfig, updateMasterVariable, type HistoryItem } from './masterDataService'; 
+import { getMasterVariableHistory, getEditableConfig, updateMasterVariable, type HistoryItem } from './masterDataService';
 import { VariableUpdateForm } from './components/VariableUpdateForm';
 import { HistoryTable } from './components/HistoryTable';
-import { useAuth } from '@/contexts/AuthContext'; // <-- 1. Import the hook
-// import type { User } from '@/types'; // No longer needed
+import { useAuth } from '@/contexts/AuthContext';
+import { USER_ROLES, UI_LABELS, VALIDATION_MESSAGES, SUCCESS_MESSAGES } from '@/config';
 
 interface MasterDataManagementProps {
-    // 2. REMOVE user prop
-    // user: User;
 }
 
-// ... (State interface definitions remain the same) ...
+// State interface definitions
 interface EditableConfigItem {
     name: string;
     label: string;
@@ -23,30 +21,30 @@ interface FormInputState {
     comment: string;
 }
 
-export default function MasterDataManagement({}: MasterDataManagementProps) { // <-- 3. Remove prop
-    const { user } = useAuth(); // <-- 4. Get user from context
+export default function MasterDataManagement({}: MasterDataManagementProps) {
+    const { user } = useAuth();
 
-    const [history, setHistory] = useState<HistoryItem[]>([]);
-    const [editableConfig, setEditableConfig] = useState<EditableConfigItem[]>([]); 
-    const [apiError, setApiError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [formInput, setFormInput] = useState<FormInputState>({
-        variable_name: '',
-        variable_value: '',
-        comment: '',
-    });
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [editableConfig, setEditableConfig] = useState<EditableConfigItem[]>([]);
+    const [apiError, setApiError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [formInput, setFormInput] = useState<FormInputState>({
+        variable_name: '',
+        variable_value: '',
+        comment: '',
+    });
 
-    // 5. Add a check for user
+    // Add a check for user
     if (!user) {
-        return <div className="text-center py-12">Loading user data...</div>;
+        return <div className="text-center py-12">{UI_LABELS.LOADING_USER_DATA}</div>;
     }
 
-    const isAuthorizedForWrite = user.role === 'ADMIN' || user.role === 'FINANCE';
+    const isAuthorizedForWrite = user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.FINANCE;
 
-    const loadData = async (): Promise<void> => {
-        setIsLoading(true);
-        setApiError(null);
-        
+    const loadData = async (): Promise<void> => {
+        setIsLoading(true);
+        setApiError(null);
+
         const historyResponse = await getMasterVariableHistory();
         if (historyResponse.success) {
             setHistory(historyResponse.data || []);
@@ -65,66 +63,67 @@ export default function MasterDataManagement({}: MasterDataManagementProps) { //
                 setApiError(configResponse.error || 'Unknown error');
             }
         }
-        setIsLoading(false);
-    };
+        setIsLoading(false);
+    };
 
-    // 6. Add 'isAuthorizedForWrite' to the dependency array
-    useEffect(() => {
-        loadData();
-    }, [isAuthorizedForWrite]);
+    useEffect(() => {
+        loadData();
+    }, [isAuthorizedForWrite]);
 
-    const handleUpdateSubmit = async (): Promise<void> => {
-        setApiError(null);
-          const valueAsNumber = parseFloat(formInput.variable_value); 
+    const handleUpdateSubmit = async (): Promise<void> => {
+        setApiError(null);
+          const valueAsNumber = parseFloat(formInput.variable_value);
 
-        if (!formInput.variable_name || !formInput.variable_value) {
-            setApiError('Please select a variable and enter a value.');
-            return;
-        }
-        if (isNaN(valueAsNumber) || valueAsNumber <= 0) {
-            setApiError('Please enter a valid numeric value greater than zero.');
-            return;
-        }
-        
+        if (!formInput.variable_name || !formInput.variable_value) {
+            setApiError(VALIDATION_MESSAGES.VARIABLE_AND_VALUE_REQUIRED);
+            return;
+        }
+        if (isNaN(valueAsNumber) || valueAsNumber <= 0) {
+            setApiError(VALIDATION_MESSAGES.VALUE_MUST_BE_POSITIVE);
+            return;
+        }
+
         const payload = {
             variable_name: formInput.variable_name,
             variable_value: valueAsNumber,
             comment: formInput.comment,
         };
-        const result = await updateMasterVariable(payload);
+        const result = await updateMasterVariable(payload);
 
-        if (result.success) {
-            alert(`Variable "${formInput.variable_name}" updated successfully to ${valueAsNumber}.`);
-            setFormInput(prev => ({ ...prev, variable_value: '', comment: '' })); 
+        if (result.success) {
+            alert(SUCCESS_MESSAGES.VARIABLE_UPDATED
+                .replace('{variable}', formInput.variable_name)
+                .replace('{value}', valueAsNumber.toString()));
+            setFormInput(prev => ({ ...prev, variable_value: '', comment: '' }));
             // We need to reload data to see the new history entry
             await loadData();
-        } else {
-            setApiError(result.error || 'Unknown submission error');
-        }
-    };
+        } else {
+            setApiError(result.error || 'Unknown submission error');
+        }
+    };
 
-    return (
-        <div className="container mx-auto px-8 py-8">
-            {apiError && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 mb-6">{apiError}</div>}
+    return (
+        <div className="container mx-auto px-8 py-8">
+            {apiError && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 mb-6">{apiError}</div>}
 
-            {isAuthorizedForWrite ? (
-                <VariableUpdateForm
-                    editableConfig={editableConfig}
-                    formInput={formInput}
-                    setFormInput={setFormInput}
-                    handleUpdateSubmit={handleUpdateSubmit}
-                    isLoading={isLoading}
-                />
-            ) : (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800 mb-6">
-                    <p className="text-sm font-medium">Viewing Access Only: Your role ({user.role}) does not permit updating Master Variables.</p>
-                </div>
-            )}
-            
-            <HistoryTable
-                isLoading={isLoading}
-                  history={history}
-            />
-        </div>
-    );
+            {isAuthorizedForWrite ? (
+                <VariableUpdateForm
+                    editableConfig={editableConfig}
+                    formInput={formInput}
+                    setFormInput={setFormInput}
+                    handleUpdateSubmit={handleUpdateSubmit}
+                    isLoading={isLoading}
+                />
+            ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800 mb-6">
+                    <p className="text-sm font-medium">{UI_LABELS.VIEWING_ACCESS_ONLY}: {UI_LABELS.ROLE_NO_UPDATE_PERMISSION.replace('{role}', user.role)}</p>
+                </div>
+            )}
+
+            <HistoryTable
+                isLoading={isLoading}
+                  history={history}
+            />
+        </div>
+    );
 }

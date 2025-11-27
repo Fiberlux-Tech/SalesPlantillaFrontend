@@ -4,7 +4,7 @@ import type { RecurringService } from '@/types';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
 import type { ReactNode } from 'react';
-import { CURRENCIES } from '@/config';
+import { CURRENCIES, UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 interface RecurringServicesTableProps {
     EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
@@ -36,7 +36,7 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
             // Use the passed-in empty state
             return <EmptyStateComponent canEdit={canEdit} />;
         }
-        return <p className="text-center text-gray-500 py-4">No recurring services data available.</p>;
+        return <p className="text-center text-gray-500 py-4">{EMPTY_STATE_MESSAGES.NO_RECURRING_SERVICES}</p>;
     }
 
     // 4. The entire JSX render tree remains UNCHANGED
@@ -46,17 +46,17 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                 <thead className="bg-gray-50">
                     {/* --- THIS SECTION WAS COMMENTED OUT --- */}
                     <tr>
-                        <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Servicio</th>
-                        <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th>
-                        <th scope="col" className="w-20 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Q</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Moneda</th>
-                        <th scope="col" className="w-28 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ingreso</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CU1</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CU2</th>
-                        <th scope="col" className="w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Moneda</th>
-                        <th scope="col" className="w-28 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Egreso</th>
+                        <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
+                        <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.UBICACION}</th>
+                        <th scope="col" className="w-20 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.Q}</th>
+                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.P}</th>
+                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MONEDA}</th>
+                        <th scope="col" className="w-28 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.INGRESO}</th>
+                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CU1}</th>
+                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CU2}</th>
+                        <th scope="col" className="w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.PROVEEDOR}</th>
+                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MONEDA}</th>
+                        <th scope="col" className="w-28 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.EGRESO}</th>
                     </tr>
                     {/* --- END OF FIX --- */}
                 </thead>

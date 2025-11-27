@@ -68,6 +68,20 @@ export const SALE_TYPES = {
 export type SaleType = typeof SALE_TYPES.NUEVO | typeof SALE_TYPES.EXISTENTE;
 
 /**
+ * User Role Configuration
+ * Defines all user roles in the system
+ */
+export const USER_ROLES = {
+  ADMIN: 'ADMIN' as const,
+  SALES: 'SALES' as const,
+  FINANCE: 'FINANCE' as const,
+  USER: 'USER' as const,
+  LIST: ['ADMIN', 'SALES', 'FINANCE', 'USER'] as const,
+} as const;
+
+export type UserRole = typeof USER_ROLES.ADMIN | typeof USER_ROLES.SALES | typeof USER_ROLES.FINANCE | typeof USER_ROLES.USER;
+
+/**
  * API Configuration
  * Centralized API endpoints and related configuration
  */
@@ -100,12 +114,12 @@ export const API_CONFIG = {
 
   // CSRF Configuration
   CSRF: {
-    COOKIE_NAMES: ['XSRF-TOKEN', 'csrf_token', 'csrftoken'],
+    COOKIE_NAMES: ['XSRF-TOKEN', 'csrf_token', 'csrftoken'] as const,
     HEADERS: {
       XSRF: 'X-XSRF-TOKEN',
       CSRF: 'X-CSRF-Token',
     },
-    METHODS_REQUIRING_CSRF: ['POST', 'PUT', 'DELETE', 'PATCH'],
+    METHODS_REQUIRING_CSRF: ['POST', 'PUT', 'DELETE', 'PATCH'] as const,
   },
 
   // HTTP Configuration
@@ -116,7 +130,7 @@ export const API_CONFIG = {
     METHOD_GET: 'GET',
     METHOD_POST: 'POST',
   },
-} as const;
+};
 
 /**
  * Pagination Configuration
@@ -238,6 +252,22 @@ export const UI_LABELS = {
   MONEDA: 'Moneda',
   TOTAL: 'Total',
 
+  // Table Headers - Finance Transaction List
+  ID: 'ID',
+  ID_TRANSACCION: 'ID Transacción',
+  CLIENTE: 'Cliente',
+  VENDEDOR: 'Vendedor',
+  MRC: 'MRC',
+  PLAZO: 'Plazo',
+  MARGEN_PERCENT: 'Margen %',
+  PAYBACK_MESES: 'Payback (Meses)',
+  FECHA: 'Fecha',
+  FECHA_APROBACION: 'Fecha Aprobación',
+  STATUS: 'Status',
+
+  // Error Messages Display
+  ERROR_LABEL: 'Error: ',
+
   // Table Headers - Recurring Services
   Q: 'Q',
   P: 'P',
@@ -254,6 +284,9 @@ export const UI_LABELS = {
   EGRESO_COMISIONES: 'Egreso (Comisiones)',
   EGRESO_RECURRENTE: 'Egreso (Recurrente)',
   NET_CASH_FLOW: 'Net Cash Flow',
+  COSTO_FIJO_ID: 'Costo Fijo (ID {id})',
+  ITEMS: 'items',
+  VALORES_POR_PERIODO: 'Valores por periodo',
 
   // Service Details
   DETALLE_SERVICIOS: 'Detalle de Servicios',
@@ -263,6 +296,109 @@ export const UI_LABELS = {
   // Units
   MESES: 'meses',
   PERCENTAGE: '%',
+
+  // Page Titles
+  PAGE_TITLE_SALES: 'Plantillas Economicas',
+  PAGE_TITLE_FINANCE: 'Aprobación de Plantillas Economicas',
+  PAGE_TITLE_ADMIN_USERS: 'Manejo de Permisos',
+  PAGE_TITLE_ADMIN_MASTER_DATA: 'Maestro de Variables',
+  PAGE_TITLE_MAIN_MENU: 'Menu Principal',
+
+  // Navigation
+  BACK: 'Atrás',
+  LOGOUT: 'Logout',
+  CREATE_TEMPLATE: 'Crear Plantilla',
+
+  // Transaction Dashboard
+  NUEVA_PLANTILLA: 'Nueva Plantilla',
+  UPLOAD_NOT_AVAILABLE: 'Upload not yet available',
+  FILTRA_POR_CLIENTE: 'Filtra por nombre de cliente...',
+  FILTER_BY_CLIENT: 'Filter by client name...',
+  PREVIEW_LABEL: 'Preview: {fileName}',
+  CARGAR_EXCEL: 'Cargar Excel',
+  TRANSACTION_ID_LABEL: 'Transaction ID: {id}',
+  ERROR_PREFIX: 'Error: ',
+
+  // Admin Panel
+  USER_MANAGEMENT: 'User Management',
+  VIEW_ALL_USERS: 'View all users and manage their roles',
+  USERNAME: 'Username',
+  EMAIL: 'Email',
+  CURRENT_ROLE: 'Current Role',
+  CHANGE_ROLE: 'Change Role',
+  NO_USERS_FOUND: 'No users found',
+  LOADING: 'Loading...',
+  LOADING_USER_DATA: 'Loading user data...',
+  RESET_USER_PASSWORD: 'Reset User Password',
+  SELECT_USER_PASSWORD: 'Select a user and set a new password',
+  NEW_PASSWORD: 'New Password',
+  CONFIRM_PASSWORD: 'Confirm Password',
+  SELECTED: 'Selected',
+  TYPE_USERNAME: 'Type username...',
+  ENTER_NEW_PASSWORD: 'Enter new password',
+  CONFIRM_NEW_PASSWORD: 'Confirm new password',
+
+  // Master Data
+  UPDATE_VARIABLE: 'Update Variable',
+  VARIABLE: 'Variable',
+  VALUE: 'Value',
+  COMENTARIO: 'Comentario',
+  UPDATE_HISTORY: 'Update History',
+  RECENT_UPDATES: 'Recent variable updates and changes',
+  CATEGORY: 'Category',
+  DATE_UPDATED: 'Date Updated',
+  USER_UPDATER: 'User Updater',
+  COMMENT: 'Comment',
+  LOADING_HISTORY: 'Loading history...',
+  NO_HISTORY: 'No update history available.',
+  VIEWING_ACCESS_ONLY: 'Viewing Access Only',
+  ROLE_NO_UPDATE_PERMISSION: 'Your role ({role}) does not permit updating Master Variables.',
+
+  // Auth & Landing Page
+  WELCOME_BACK: 'Welcome Back',
+  CREATE_ACCOUNT: 'Create Account',
+  USUARIO: 'Usuario',
+  CONTRASENA: 'Contraseña',
+  PROCESSING: 'Processing...',
+  LOGIN: 'Login',
+  SIGN_UP: 'Sign Up',
+  NEED_ACCOUNT: 'Need an account? Sign Up',
+  ALREADY_HAVE_ACCOUNT: 'Already have an account? Login',
+  NO_MODULES_AVAILABLE: 'No hay modulos disponible para ti ({role})',
+
+  // Module Descriptions
+  MODULE_SALES_NAME: 'Plantillas Economicas',
+  MODULE_SALES_DESC: 'Ingresa y revisa el estado de tus plantillas.',
+  MODULE_FINANCE_NAME: 'Aprobación de Plantillas Economicas',
+  MODULE_FINANCE_DESC: 'Aprueba las plantillas economicas.',
+  MODULE_ADMIN_NAME: 'Manejo de Permisos',
+  MODULE_ADMIN_DESC: 'Maneja usuarios, roles y asignación de modulos.',
+  MODULE_MASTER_DATA_NAME: 'Maestro de Variables',
+  MODULE_MASTER_DATA_DESC: 'Visualiza y actualizar variables clave.',
+
+  // Fixed Cost Code Manager
+  CODIGO_INVERSION: 'Código de Inversión',
+  IR: 'Ir',
+  CODIGOS_CARGADOS: 'Códigos Cargados:',
+  REMOVE_CODE: 'Remove code {code}',
+  NO_DATOS_INVERSION: 'No hay datos de inversión cargados.',
+  USE_CARGAR_BUTTON_HINT: 'Use el botón \'Cargar\' para agregar datos por código.',
+
+  // Recurring Service Code Manager
+  CODIGO_SERVICIO_RECURRENTE: 'Código de Servicio Recurrente',
+  NO_SERVICIOS_RECURRENTES: 'No hay servicios recurrentes cargados.',
+  USE_CARGAR_BUTTON_SERVICIOS: 'Use el botón \'Cargar\' para agregar servicios por código.',
+
+  // Section Headings
+  KEY_PERFORMANCE_INDICATORS: 'Key Performance Indicators',
+
+  // Pagination
+  PREVIO: 'Previo',
+  SIGUIENTE: 'Siguiente',
+  PAGINA_DE: 'Pagina {current} de {total}',
+
+  // Loading States
+  LOADING_TRANSACTIONS: 'Loading transactions...',
 } as const;
 
 /**
@@ -276,6 +412,41 @@ export const BUTTON_LABELS = {
   CANCELAR: 'Cancelar',
   CONFIRMAR: 'Confirmar',
   CARGAR: 'Cargar',
+  RESET_PASSWORD: 'Reset Password',
+  UPDATE_VARIABLE: 'Update Variable',
+  CLEAR: 'Clear',
+  TODAY: 'Today',
+} as const;
+
+/**
+ * Aria Labels
+ * Accessibility labels for screen readers
+ */
+export const ARIA_LABELS = {
+  CONFIRM: 'Confirm',
+  CANCEL: 'Cancel',
+  EDIT_VALUE: 'Edit value',
+  CONFIRM_FIELD: 'Confirm {field}',
+  CANCEL_FIELD: 'Cancel {field}',
+} as const;
+
+/**
+ * Finance Stats Labels
+ * Labels for finance statistics cards
+ */
+export const FINANCE_STATS_LABELS = {
+  VALOR_TOTAL_APROBADO: 'Valor Total Aprobado',
+  MARGEN_PROMEDIO: 'Margen Promedio',
+  HIGH_RISK_DEALS: 'High-Risk Deals',
+  DEALS_THIS_MONTH: 'Deals This Month',
+} as const;
+
+/**
+ * Date Picker Labels
+ * Day abbreviations and date picker labels
+ */
+export const DATE_PICKER = {
+  DAYS: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const,
 } as const;
 
 /**
@@ -297,6 +468,68 @@ export const VALIDATION_MESSAGES = {
   CLIENT_MISMATCH_CURRENT: 'Cliente Actual: {name} (RUC: {ruc})',
   CLIENT_MISMATCH_NEW: 'Nuevo Cliente: {name} (RUC: {ruc})',
   CLIENT_MISMATCH_FOOTER: 'Todos los servicios deben pertenecer al mismo cliente.',
+
+  // Admin Panel Validation
+  SELECT_USER_REQUIRED: 'Please select a user',
+  PASSWORD_REQUIRED: 'Please enter a new password',
+  PASSWORDS_DO_NOT_MATCH: 'Passwords do not match',
+
+  // Master Data Validation
+  VARIABLE_AND_VALUE_REQUIRED: 'Please select a variable and enter a value.',
+  VALUE_MUST_BE_POSITIVE: 'Please enter a valid numeric value greater than zero.',
+
+  // Fixed Cost Code Manager Validation
+  CODIGO_NO_VALIDO: 'Código no válido.',
+} as const;
+
+/**
+ * Error Messages
+ * Service and API error messages
+ */
+export const ERROR_MESSAGES = {
+  // Admin Service Errors
+  FAILED_LOAD_USER_DATA: 'Failed to load user data.',
+  FAILED_UPDATE_ROLE: 'Failed to update role.',
+  FAILED_RESET_PASSWORD: 'Failed to reset password.',
+
+  // Master Data Service Errors
+  FAILED_FETCH_HISTORY: 'Failed to fetch history.',
+  FAILED_CONNECT_SERVER: 'Failed to connect to server.',
+  FAILED_FETCH_EDITABLE_VARIABLES: 'Failed to fetch editable variables.',
+  FAILED_FETCH_VARIABLE_CONFIG: 'Failed to fetch editable variable configuration.',
+  FAILED_UPDATE_VARIABLE: 'Failed to update variable.',
+  SERVER_ERROR_VARIABLE_UPDATE: 'Server error during variable update.',
+
+  // Transaction Service Errors
+  FAILED_FETCH_TRANSACTIONS: 'Failed to fetch transactions.',
+  FAILED_FETCH_TRANSACTION_DETAILS: 'Failed to fetch transaction details.',
+  FAILED_ACTION_TRANSACTION: 'Failed to {action} transaction.',
+  FAILED_CALCULATE_COMMISSION: 'Failed to calculate commission.',
+  FAILED_CONNECT_SERVER_COMMISSION: 'Failed to connect to the server for commission calculation.',
+  FAILED_PROCESS_EXCEL: 'An unknown error occurred during processing.',
+  FAILED_CONNECT_SERVER_UPLOAD: 'Failed to connect to the server for upload.',
+  FAILED_SUBMIT_TRANSACTION: 'An unknown error occurred during submission.',
+  FAILED_CONNECT_SERVER_SUBMISSION: 'Failed to connect to the server for submission.',
+  FAILED_CALCULATE_PREVIEW: 'Failed to calculate preview.',
+  FAILED_CONNECT_SERVER_PREVIEW: 'Failed to connect to the server for preview calculation.',
+  FAILED_FETCH_FIXED_COSTS: 'Failed to fetch fixed costs.',
+  FAILED_FETCH_RECURRING_SERVICES: 'Failed to fetch recurring services.',
+  NETWORK_ERROR_CODE_LOOKUP: 'Network error during code lookup.',
+  UNKNOWN_UPLOAD_ERROR: 'Unknown upload error',
+  UNKNOWN_SUBMISSION_ERROR: 'Unknown submission error',
+
+  // Generic Errors
+  UNKNOWN_ERROR: 'Unknown error',
+} as const;
+
+/**
+ * Master Data Variable Labels
+ * Labels for master data variables
+ */
+export const VARIABLE_LABELS = {
+  COSTO_CAPITAL: 'Costo Capital',
+  TIPO_CAMBIO: 'Tipo de Cambio',
+  TASA_CARTA_FIANZA: 'Tasa Carta Fianza (%)',
 } as const;
 
 /**
@@ -318,6 +551,9 @@ export const PLACEHOLDERS = {
   ENTER_AMOUNT: 'Enter amount',
   INVESTMENT_CODE: 'E.G., WIN-001',
   SERVICE_CODE: 'E.G., Q-12345',
+  SELECT_VARIABLE: 'Selecciona una variable',
+  ENTER_VALUE: 'Ingresa el valor',
+  OPTIONAL_COMMENT: 'Comentario opcional (máximo 50 caracteres)',
 } as const;
 
 /**
@@ -331,6 +567,8 @@ export const EMPTY_STATE_MESSAGES = {
   NO_INVESTMENT_DATA: 'No hay datos de inversión cargados.',
   NO_RECURRING_SERVICES_LOADED: 'No hay servicios recurrentes cargados.',
   USE_CARGAR_BUTTON: 'Use el botón \'Cargar\' para agregar {type} por código.',
+  NO_TRANSACTIONS_FOUND: 'No transactions found matching your criteria.',
+  NO_DATA_AVAILABLE: 'No data available.',
 } as const;
 
 /**
@@ -349,6 +587,16 @@ export const STATUS_MESSAGES = {
   MODIFICATION_NOT_ALLOWED: 'Modification of key inputs is not allowed once a transaction has been reviewed.',
   REVIEW_DATA_CAREFULLY: 'Por favor revisar la data cargada de manera minuciosa',
   REVIEW_DATA_MESSAGE: 'Asegúrate que toda la información sea correcta antes de confirmarla.',
+} as const;
+
+/**
+ * Success Messages
+ * Success notifications and confirmations
+ */
+export const SUCCESS_MESSAGES = {
+  ROLE_UPDATED: 'Role updated successfully to {role}',
+  PASSWORD_RESET: 'Password reset successful for {username}',
+  VARIABLE_UPDATED: 'Variable "{variable}" updated successfully to {value}.',
 } as const;
 
 // Legacy exports for backwards compatibility

@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, ReactNode, useEffect } from 'react';
 import { EditPencilIcon, EditCheckIcon, EditXIcon } from '@/components/shared/Icons';
+import { ARIA_LABELS } from '@/config';
 
 interface InlineEditWrapperProps<T> {
     // Unique identifier for the field (for accessibility, etc.)
@@ -93,17 +94,17 @@ export function InlineEditWrapper<T>({
                 </div>
 
                 {/* Render the control buttons */}
-                <button 
-                    onClick={handleConfirm} 
-                    className="p-1 rounded hover:bg-gray-200 text-green-600 transition-colors flex-shrink-0" 
-                    aria-label={`Confirm ${fieldKey}`}
+                <button
+                    onClick={handleConfirm}
+                    className="p-1 rounded hover:bg-gray-200 text-green-600 transition-colors flex-shrink-0"
+                    aria-label={ARIA_LABELS.CONFIRM_FIELD.replace('{field}', fieldKey)}
                 >
                     <EditCheckIcon />
                 </button>
-                <button 
-                    onClick={handleCancel} 
-                    className="p-1 rounded hover:bg-gray-200 text-red-600 transition-colors flex-shrink-0" 
-                    aria-label={`Cancel ${fieldKey}`}
+                <button
+                    onClick={handleCancel}
+                    className="p-1 rounded hover:bg-gray-200 text-red-600 transition-colors flex-shrink-0"
+                    aria-label={ARIA_LABELS.CANCEL_FIELD.replace('{field}', fieldKey)}
                 >
                     <EditXIcon />
                 </button>

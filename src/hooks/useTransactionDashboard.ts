@@ -82,11 +82,6 @@ export function useTransactionDashboard({ view, onLogout }: DashboardOptions): D
         fetchTransactions(1); // Fetch page 1 on mount
     }, [fetchTransactions]);
 
-
-    // --- 3. ALL MEMOIZED UI LOGIC IS GONE ---
-    // (handleClearDate, handleSelectToday, filteredTransactions are REMOVED)
-
-
     // --- 4. Return Hook State and Handlers (Much smaller) ---
     return {
         transactions,

@@ -2,7 +2,7 @@
 import { CheckCircleIcon } from '../../../components/shared/Icons';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import type { TransactionDetailResponse } from '@/types';
-import { UNIDADES_NEGOCIO } from '@/lib/constants'; // <-- ADD THIS IMPORT
+import { BUSINESS_UNITS, VALIDATION_MESSAGES, STATUS_MESSAGES, BUTTON_LABELS } from '@/config';
 
 // --- PROPS INTERFACE (No change) ---
 interface SalesPreviewFooterProps {
@@ -36,8 +36,8 @@ export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterPro
         const finalTransactionState = { ...baseTransaction.transactions, ...liveEdits };
 
         // --- ADD THIS VALIDATION BLOCK ---
-        if (!finalTransactionState.unidadNegocio || !UNIDADES_NEGOCIO.includes(finalTransactionState.unidadNegocio)) {
-            const errorMsg = "Selección obligatoria: Por favor, selecciona una 'Unidad de Negocio' válida.";
+        if (!finalTransactionState.unidadNegocio || !(BUSINESS_UNITS.LIST as readonly string[]).includes(finalTransactionState.unidadNegocio)) {
+            const errorMsg = VALIDATION_MESSAGES.UNIDAD_REQUIRED;
             dispatch({ type: 'SET_API_ERROR', payload: errorMsg });
             alert(errorMsg);
             return; // Stop the submission
@@ -65,7 +65,7 @@ export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterPro
                 ) : (
                     <>
                         <CheckCircleIcon />
-                        <span className="ml-2 text-gray-600">Toda la data es inicialmente extraida del excel</span>
+                        <span className="ml-2 text-gray-600">{STATUS_MESSAGES.DATA_FROM_EXCEL}</span>
                     </>
                 )}
             </div>
@@ -73,13 +73,13 @@ export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterPro
                 onClick={onClose}
                 className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-                Cancelar
+                {BUTTON_LABELS.CANCELAR}
             </button>
             <button
                 onClick={handleConfirmClick}
                 className="px-5 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800"
             >
-                Confirmar
+                {BUTTON_LABELS.CONFIRMAR}
             </button>
         </div>
     );

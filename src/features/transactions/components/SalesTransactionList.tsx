@@ -3,12 +3,18 @@ import StatusBadge from '@/features/transactions/components/StatusBadge';
 import { PaginatedTable, type ColumnDef } from './PaginatedTable';
 import { TableCell, TableRow } from '@/components/ui/table';
 import type { FormattedSalesTransaction } from '../services/sales.service';
+import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 // 1. Define Columns (Unchanged)
 const columns: ColumnDef<FormattedSalesTransaction>[] = [
-    { header: 'ID Transacción', className: 'px-6 py-3' },
-    // ... other columns
-    { header: 'Status', className: 'px-6 py-3' },
+    { header: UI_LABELS.ID_TRANSACCION, className: 'px-6 py-3' },
+    { header: UI_LABELS.CLIENTE, className: 'px-6 py-3' },
+    { header: UI_LABELS.VENDEDOR, className: 'px-6 py-3' },
+    { header: UI_LABELS.MARGEN_PERCENT, className: 'px-6 py-3' },
+    { header: UI_LABELS.PAYBACK_MESES, className: 'px-6 py-3' },
+    { header: UI_LABELS.FECHA, className: 'px-6 py-3' },
+    { header: UI_LABELS.FECHA_APROBACION, className: 'px-6 py-3' },
+    { header: UI_LABELS.STATUS, className: 'px-6 py-3' },
 ];
 
 // 2. Define Props
@@ -47,7 +53,7 @@ export function SalesTransactionList({
             columns={columns}
             data={transactions}
             renderRow={renderRow}
-            emptyStateMessage="No transactions found matching your criteria."
+            emptyStateMessage={EMPTY_STATE_MESSAGES.NO_TRANSACTIONS_FOUND}
         />
     );
 }

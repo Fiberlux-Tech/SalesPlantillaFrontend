@@ -4,18 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { UserSearchInput } from "./UserSearchInput";
 import { useState } from "react";
-import { resetUserPassword } from "../adminService"; // <-- No more getAllUsers
-import type { User } from "../AdminUserManagement"; // <-- Import as a type
+import { resetUserPassword } from "../adminService";
+import type { User } from "../AdminUserManagement";
+import { UI_LABELS, BUTTON_LABELS, VALIDATION_MESSAGES, SUCCESS_MESSAGES } from "@/config";
 
-// 2. Define a simpler props interface
+// Define a simpler props interface
 interface ResetPasswordFormProps {
-  allUsers: User[]; // <-- ADD THIS NEW PROP
+  allUsers: User[];
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
 }
 
 export function ResetPasswordForm({ allUsers, onSuccess, onError }: ResetPasswordFormProps) {
-  // 3. All state now lives inside this component
+  // All state now lives inside this component
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -25,7 +26,7 @@ export function ResetPasswordForm({ allUsers, onSuccess, onError }: ResetPasswor
     confirmPassword: "",
   });
 
-  // 5. All handlers are now internal
+  // All handlers are now internal
   const handleUserNameChange = (value: string) => {
     setForm({ ...form, usernameSearch: value });
     if (value.trim()) {
@@ -51,15 +52,15 @@ export function ResetPasswordForm({ allUsers, onSuccess, onError }: ResetPasswor
     try {
       // Client-side validation
       if (!selectedUser) {
-        onError("Please select a user");
+        onError(VALIDATION_MESSAGES.SELECT_USER_REQUIRED);
         return;
       }
       if (!form.newPassword) {
-        onError("Please enter a new password");
+        onError(VALIDATION_MESSAGES.PASSWORD_REQUIRED);
         return;
       }
       if (form.newPassword !== form.confirmPassword) {
-        onError("Passwords do not match");
+        onError(VALIDATION_MESSAGES.PASSWORDS_DO_NOT_MATCH);
         return;
       }
 
@@ -67,7 +68,7 @@ export function ResetPasswordForm({ allUsers, onSuccess, onError }: ResetPasswor
       const result = await resetUserPassword(selectedUser.id, form.newPassword);
 
       if (result.success) {
-        onSuccess(`Password reset successful for ${selectedUser.username}`);
+        onSuccess(SUCCESS_MESSAGES.PASSWORD_RESET.replace('{username}', selectedUser.username));
         // Reset UI state on success
         setForm({ usernameSearch: "", newPassword: "", confirmPassword: "" });
         setSelectedUser(null);
@@ -83,13 +84,12 @@ export function ResetPasswordForm({ allUsers, onSuccess, onError }: ResetPasswor
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reset User Password</CardTitle>
-        <CardDescription>Select a user and set a new password</CardDescription>
+        <CardTitle>{UI_LABELS.RESET_USER_PASSWORD}</CardTitle>
+        <CardDescription>{UI_LABELS.SELECT_USER_PASSWORD}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex space-x-4 items-end">
           <div className="flex-1">
-            {/* 6. Pass internal state and handlers */}
             <UserSearchInput
               value={form.usernameSearch}
               onChange={handleUserNameChange}
@@ -105,34 +105,34 @@ export function ResetPasswordForm({ allUsers, onSuccess, onError }: ResetPasswor
           </div>
 
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-1">New Password</label>
+            <label className="block text-sm font-medium mb-1">{UI_LABELS.NEW_PASSWORD}</label>
             <Input
               type="password"
-              placeholder="Enter new password"
+              placeholder={UI_LABELS.ENTER_NEW_PASSWORD}
               value={form.newPassword}
               onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
             />
           </div>
 
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-1">Confirm Password</label>
+            <label className="block text-sm font-medium mb-1">{UI_LABELS.CONFIRM_PASSWORD}</label>
             <Input
               type="password"
-              placeholder="Confirm new password"
+              placeholder={UI_LABELS.CONFIRM_NEW_PASSWORD}
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
             />
           </div>
 
           <Button onClick={handleResetPasswordSubmit} disabled={!selectedUser}>
-            Reset Password
+            {BUTTON_LABELS.RESET_PASSWORD}
           </Button>
         </div>
 
         {selectedUser && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md max-w-md">
             <p className="text-sm">
-              <span className="font-medium">Selected:</span> {selectedUser.username} ({selectedUser.email})
+              <span className="font-medium">{UI_LABELS.SELECTED}:</span> {selectedUser.username} ({selectedUser.email})
             </p>
           </div>
         )}

@@ -6,6 +6,7 @@ import {
     DollarSignIcon,
     FileTextIcon,
 } from '@/components/shared/Icons'; // Assumes Icons.tsx
+import { FINANCE_STATS_LABELS } from '@/config';
 
 // 1. Define the props interface for 'stats'
 interface StatsGridProps {
@@ -21,10 +22,10 @@ interface StatsGridProps {
 export function FinanceStatsGrid({ stats }: StatsGridProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatsCard title="Valor Total Aprobado" value={stats.totalApprovedValue} icon={<DollarSignIcon />} iconBgColor="bg-green-100" />
-            <StatsCard title="Margen Promedio" value={stats.averageMargin} icon={<TrendUpIcon />} iconBgColor="bg-blue-100" />
-            <StatsCard title="High-Risk Deals" value={stats.highRiskDeals} icon={<FileTextIcon />} iconBgColor="bg-yellow-100" />
-            <StatsCard title="Deals This Month" value={stats.dealsThisMonth} icon={<ClockIcon />} iconBgColor="bg-purple-100" />
+            <StatsCard title={FINANCE_STATS_LABELS.VALOR_TOTAL_APROBADO} value={stats.totalApprovedValue} icon={<DollarSignIcon />} iconBgColor="bg-green-100" />
+            <StatsCard title={FINANCE_STATS_LABELS.MARGEN_PROMEDIO} value={stats.averageMargin} icon={<TrendUpIcon />} iconBgColor="bg-blue-100" />
+            <StatsCard title={FINANCE_STATS_LABELS.HIGH_RISK_DEALS} value={stats.highRiskDeals} icon={<FileTextIcon />} iconBgColor="bg-yellow-100" />
+            <StatsCard title={FINANCE_STATS_LABELS.DEALS_THIS_MONTH} value={stats.dealsThisMonth} icon={<ClockIcon />} iconBgColor="bg-purple-100" />
         </div>
     );
 }

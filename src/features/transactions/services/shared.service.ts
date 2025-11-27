@@ -5,7 +5,7 @@ import type {
     FixedCost,
     RecurringService
 } from '@/types';
-import { API_CONFIG } from '@/config';
+import { API_CONFIG, ERROR_MESSAGES } from '@/config';
 
 // --- Types ---
 
@@ -37,11 +37,11 @@ export async function calculatePreview(payload: any): Promise<CalculatePreviewRe
         if (result && result.success) {
             return { success: true, data: result.data };
         } else {
-             return { success: false, error: (result as any).error || 'Failed to calculate preview.' };
+             return { success: false, error: (result as any).error || ERROR_MESSAGES.FAILED_CALCULATE_PREVIEW };
         }
 
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to the server for preview calculation.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER_PREVIEW };
     }
 }
 
@@ -56,10 +56,10 @@ export async function getFixedCostsByCodes(codes: string[]): Promise<{ success: 
             const fixedCosts = result.data?.fixed_costs || [];
             return { success: true, data: fixedCosts };
         } else {
-            return { success: false, error: result.error || 'Failed to fetch fixed costs.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_FIXED_COSTS };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Network error during code lookup.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.NETWORK_ERROR_CODE_LOOKUP };
     }
 }
 
@@ -89,9 +89,9 @@ export async function getRecurringServicesByCodes(codes: string[]): Promise<{
             // Return the entire 'data' object
             return { success: true, data: result.data };
         } else {
-            return { success: false, error: result.error || 'Failed to fetch recurring services.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_RECURRING_SERVICES };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Network error during code lookup.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.NETWORK_ERROR_CODE_LOOKUP };
     }
 }

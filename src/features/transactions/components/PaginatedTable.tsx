@@ -8,6 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 // Define a type for our column definitions
 export interface ColumnDef<T> {
@@ -34,7 +35,7 @@ export function PaginatedTable<T>({
     columns,
     data,
     renderRow,
-    emptyStateMessage = "No data available.",
+    emptyStateMessage = EMPTY_STATE_MESSAGES.NO_DATA_AVAILABLE,
     currentPage,
     totalPages,
     onPageChange,
@@ -62,7 +63,7 @@ export function PaginatedTable<T>({
                         {isLoading ? (
                             <TableRow>
                                 <TableCell colSpan={colSpan} className="text-center py-4">
-                                    Loading transactions...
+                                    {UI_LABELS.LOADING_TRANSACTIONS}
                                 </TableCell>
                             </TableRow>
                         ) : data.length === 0 ? (
@@ -86,10 +87,10 @@ export function PaginatedTable<T>({
                     disabled={currentPage === 1 || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
-                    Previo
+                    {UI_LABELS.PREVIO}
                 </button>
                 <span className="text-sm text-gray-700">
-                    Pagina {currentPage} de {totalPages}
+                    {UI_LABELS.PAGINA_DE.replace('{current}', String(currentPage)).replace('{total}', String(totalPages))}
                 </span>
                 <button
                     // --- 3. LOGIC UPDATED ---
@@ -97,7 +98,7 @@ export function PaginatedTable<T>({
                     disabled={currentPage === totalPages || isLoading}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50"
                 >
-                    Siguiente
+                    {UI_LABELS.SIGUIENTE}
                 </button>
             </div>
         </>

@@ -1,6 +1,7 @@
 // src/features/masterdata/masterDataService.ts
 import { api } from '@/lib/api';
-import type { BaseApiResponse } from '@/types'; // 1. Import BaseApiResponse
+import type { BaseApiResponse } from '@/types';
+import { ERROR_MESSAGES, VARIABLE_LABELS } from '@/config';
 
 // --- 2. Define types for this service ---
 // FIX: Define the explicit HistoryItem type based on HistoryTable's expectation
@@ -27,18 +28,18 @@ interface UpdatePayload {
 }
 
 // --- Helper Logic (remains the same, but typed) ---
-const VARIABLE_LABELS: Record<string, string> = {
-    'costoCapital': 'Costo Capital',
-    'tipoCambio': 'Tipo de Cambio',
-    'tasaCartaFianza': 'Tasa Carta Fianza (%)',
+const VARIABLE_LABEL_MAP: Record<string, string> = {
+    'costoCapital': VARIABLE_LABELS.COSTO_CAPITAL,
+    'tipoCambio': VARIABLE_LABELS.TIPO_CAMBIO,
+    'tasaCartaFianza': VARIABLE_LABELS.TASA_CARTA_FIANZA,
 };
 
 const parseEditableConfig = (response: any): EditableVariableConfig[] => {
     const variablesObject = response.editable_variables || {};
     return Object.keys(variablesObject).map(name => ({
-        name: name, 
-        label: VARIABLE_LABELS[name] || name, 
-        category: variablesObject[name].category 
+        name: name,
+        label: VARIABLE_LABEL_MAP[name] || name,
+        category: variablesObject[name].category
     }));
 };
 
@@ -62,10 +63,10 @@ export async function getMasterVariableHistory(): Promise<HistoryResult> {
         if (result.success) {
             return { success: true, data: result.data || [] };
         } else {
-            return { success: false, error: result.error || 'Failed to fetch history.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_HISTORY };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to connect to server.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER };
     }
 }
 
@@ -86,10 +87,10 @@ export async function getEditableConfig(): Promise<ConfigResult> {
             const parsedConfig = parseEditableConfig(response);
             return { success: true, data: parsedConfig };
         } else {
-            return { success: false, error: response.error || 'Failed to fetch editable variables.' };
+            return { success: false, error: response.error || ERROR_MESSAGES.FAILED_FETCH_EDITABLE_VARIABLES };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to fetch editable variable configuration.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_FETCH_VARIABLE_CONFIG };
     }
 }
 
@@ -104,9 +105,9 @@ export async function updateMasterVariable(payload: UpdatePayload): Promise<Base
         if (result.success) {
             return { success: true, data: result.data };
         } else {
-            return { success: false, error: result.error || 'Failed to update variable.' };
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_UPDATE_VARIABLE };
         }
     } catch (error: any) {
-        return { success: false, error: error.message || 'Server error during variable update.' };
+        return { success: false, error: error.message || ERROR_MESSAGES.SERVER_ERROR_VARIABLE_UPDATE };
     }
 }

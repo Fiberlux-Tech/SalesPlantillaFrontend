@@ -1,6 +1,7 @@
 // src/features/transactions/components/TransactionDashboardLayout.tsx
 import React from 'react';
 import { DashboardToolbar } from '@/features/transactions/components/DashboardToolBar';
+import { UI_LABELS } from '@/config';
 
 // Define the props for the layout
 interface TransactionDashboardLayoutProps {
@@ -45,7 +46,7 @@ export function TransactionDashboardLayout({
             {/* 4. Shared API Error Display */}
             {apiError && (
                 <div className="fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50" role="alert">
-                    <strong className="font-bold">Error: </strong>
+                    <strong className="font-bold">{UI_LABELS.ERROR_LABEL}</strong>
                     <span className="block sm:inline">{apiError}</span>
                 </div>
             )}

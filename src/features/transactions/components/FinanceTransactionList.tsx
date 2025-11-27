@@ -3,19 +3,20 @@ import StatusBadge from '@/features/transactions/components/StatusBadge';
 import { PaginatedTable, type ColumnDef } from './PaginatedTable';
 import { TableCell, TableRow } from '@/components/ui/table';
 import type { FormattedFinanceTransaction } from '../services/finance.service';
+import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 // 1. Define Columns (Unchanged)
 const columns: ColumnDef<FormattedFinanceTransaction>[] = [
-    { header: 'ID', className: 'px-6 py-3 text-center' },
-    { header: 'Unidad de Negocio', className: 'px-6 py-3 text-center' },
-    { header: 'Cliente', className: 'px-6 py-3 text-center' },
-    { header: 'Vendedor', className: 'px-6 py-3 text-center' },
-    { header: 'MRC', className: 'px-6 py-3 text-center' },
-    { header: 'Plazo', className: 'px-6 py-3 text-center' },
-    { header: 'Margen %', className: 'px-6 py-3 text-center' },
-    { header: 'Payback (Meses)', className: 'px-6 py-3 text-center' },
-    { header: 'Fecha', className: 'px-6 py-3 text-center' },
-    { header: 'Status', className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.ID, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.UNIDAD_NEGOCIO, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.CLIENTE, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.VENDEDOR, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.MRC, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.PLAZO, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.MARGEN_PERCENT, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.PAYBACK_MESES, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.FECHA, className: 'px-6 py-3 text-center' },
+    { header: UI_LABELS.STATUS, className: 'px-6 py-3 text-center' },
 ];
 
 // 2. Define Props
@@ -63,7 +64,7 @@ export function TransactionList({
             columns={columns}
             data={transactions}
             renderRow={renderRow}
-            emptyStateMessage="No transactions found matching your criteria."
+            emptyStateMessage={EMPTY_STATE_MESSAGES.NO_TRANSACTIONS_FOUND}
         />
     );
 }

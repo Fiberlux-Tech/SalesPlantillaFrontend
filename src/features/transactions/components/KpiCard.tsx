@@ -1,5 +1,6 @@
 // src/components/shared/KpiCard.tsx
 import type { FC, ReactNode } from 'react'; // FIX: Import types explicitly
+import { DISPLAY_VALUES } from '@/config';
 
 // 1. Define the props interface
 interface KpiCardProps {
@@ -12,13 +13,13 @@ interface KpiCardProps {
 
 // 2. Apply the interface using React.FC (Functional Component)
 const KpiCard: FC<KpiCardProps> = ({ // FIX: Use imported type
-    title, 
-    value, 
-    subtext, 
-    currency, 
-    isNegative = false 
+    title,
+    value,
+    subtext,
+    currency,
+    isNegative = false
 }) => {
-    const displayValue = value === null || value === undefined ? 'N/A' : value;
+    const displayValue = value === null || value === undefined ? DISPLAY_VALUES.NOT_AVAILABLE : value;
     
     return (
         <div className="bg-white p-4 rounded-lg border border-gray-200">
