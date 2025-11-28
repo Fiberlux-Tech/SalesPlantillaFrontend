@@ -6,7 +6,9 @@ export const NumberInput: React.FC<{
     label: string;
     step?: string;
 }> = ({ value, onChange, label, step = "0.01" }) => {
-    const [localValue, setLocalValue] = React.useState(value?.toString() || '');
+    const [localValue, setLocalValue] = React.useState(
+        value !== undefined && value !== null ? Number(value).toFixed(2) : ''
+    );
 
     React.useEffect(() => {
         // Sync local state with prop value if they differ numerically
@@ -14,7 +16,8 @@ export const NumberInput: React.FC<{
         const isNumericallyEqual = !isNaN(parsedLocal) && parsedLocal === value;
 
         if (!isNumericallyEqual) {
-            setLocalValue(value?.toString() || '');
+            // Format to 2 decimals when syncing from external prop change (e.g. initial load)
+            setLocalValue(value !== undefined && value !== null ? Number(value).toFixed(2) : '');
         }
     }, [value]);
 
