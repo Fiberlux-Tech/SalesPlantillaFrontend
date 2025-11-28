@@ -28,6 +28,17 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => {
         net_cash_flow = []
     } = timeline;
 
+    // Calculate total investment by aggregating all fixed costs
+    const totalInversion = periods.map((_, periodIndex) => {
+        if (!expenses?.fixed_costs || expenses.fixed_costs.length === 0) {
+            return 0;
+        }
+        return expenses.fixed_costs.reduce((sum, cost) => {
+            const value = cost.timeline_values?.[periodIndex] || 0;
+            return sum + value;
+        }, 0);
+    });
+
     /**
      * Renders a single row in the timeline table.
      */
@@ -91,31 +102,24 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {/* Revenues */}
+                    {/* Ingresos */}
                     {revenues?.nrc && !isRowEmpty(revenues.nrc) &&
-                        renderRow(UI_LABELS.INGRESO_NRC, revenues.nrc, false)}
+                        renderRow('Ingreso (NRC)', revenues.nrc, false)}
 
                     {revenues?.mrc && !isRowEmpty(revenues.mrc) &&
-                        renderRow(UI_LABELS.INGRESO_MRC, revenues.mrc, false)}
+                        renderRow('Ingreso (MRC)', revenues.mrc, false)}
 
-                    {/* Expenses */}
-                    {expenses?.comisiones && !isRowEmpty(expenses.comisiones) &&
-                        renderRow(UI_LABELS.EGRESO_COMISIONES, expenses.comisiones, true)}
-
+                    {/* Costos (formerly Egreso Recurrente) */}
                     {expenses?.egreso && !isRowEmpty(expenses.egreso) &&
-                        renderRow(UI_LABELS.EGRESO_RECURRENTE, expenses.egreso, true)}
+                        renderRow('Costos', expenses.egreso, true)}
 
-                    {/* Fixed Costs (Loop) */}
-                    {expenses?.fixed_costs && expenses.fixed_costs.map((cost) => (
-                        !isRowEmpty(cost.timeline_values) &&
-                            renderRow(
-                                cost.tipo_servicio || cost.categoria || UI_LABELS.COSTO_FIJO_ID.replace('{id}', String(cost.id)),
-                                cost.timeline_values,
-                                true,  // isNegative
-                                false, // isBold
-                                true   // isIndented
-                            )
-                    ))}
+                    {/* Inversion (aggregated fixed costs) */}
+                    {!isRowEmpty(totalInversion) &&
+                        renderRow('Inversión', totalInversion, true)}
+
+                    {/* Otros (formerly Comisiones) */}
+                    {expenses?.comisiones && !isRowEmpty(expenses.comisiones) &&
+                        renderRow('Otros', expenses.comisiones, true)}
 
                     {/* Net Cash Flow (Always show this row) */}
                     {net_cash_flow.length > 0 &&
