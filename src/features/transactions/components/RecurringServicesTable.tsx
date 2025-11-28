@@ -1,10 +1,12 @@
 // src/components/shared/RecurringServicesTable.tsx
-import { EditableCurrencyCell } from '@/features/transactions/components/EditableCurrencyCell';
+import { useState } from 'react';
 import type { RecurringService } from '@/types';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
 import type { ReactNode } from 'react';
-import { CURRENCIES, UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
+import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
+import { TableActionIcons } from '@/components/shared/TableActionIcons';
+import { RecurringServiceDetailModal } from '@/features/transactions/components/RecurringServiceDetailModal';
 
 interface RecurringServicesTableProps {
     EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
@@ -12,24 +14,58 @@ interface RecurringServicesTableProps {
 
 const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableProps) => {
 
-    // 1. Get dispatch and draftState from the context
+    // 1. Get draftState and dispatch from the context
     const {
         canEdit,
         draftState, // Get the draft state
-        dispatch    // Get the dispatch function
+        dispatch,   // Get the dispatch function
     } = useTransactionPreview();
 
     // 2. Get the services from the draftState
     const data = draftState.currentRecurringServices;
 
-    // 3. The onServiceChange handler now uses dispatch
-    const onServiceChange = (index: number, field: keyof RecurringService, value: any) => {
-        // No longer needs baseTransaction, just dispatch the action
+    // 3. Modal state for detail view
+    const [selectedService, setSelectedService] = useState<RecurringService | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+
+    // 4. Handler to open modal in view mode
+    const handleViewDetails = (service: RecurringService) => {
+        setSelectedService(service);
+        setIsEditMode(false);
+        setIsModalOpen(true);
+    };
+
+    // 5. Handler to open modal in edit mode
+    const handleEditService = (service: RecurringService) => {
+        setSelectedService(service);
+        setIsEditMode(true);
+        setIsModalOpen(true);
+    };
+
+    // 6. Handler to close modal
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedService(null);
+    };
+
+    // 7. Handler to save edited service
+    const handleSaveService = (updatedService: RecurringService) => {
         dispatch({
-            type: 'UPDATE_RECURRING_SERVICE',
-            payload: { index, field, value }
+            type: 'REPLACE_RECURRING_SERVICE',
+            payload: updatedService
         });
-    }
+    };
+
+    // 8. Handler to delete service
+    const handleDeleteService = (service: RecurringService) => {
+        if (window.confirm(`¿Estás seguro de eliminar el servicio "${service.tipo_servicio}"?`)) {
+            dispatch({
+                type: 'REMOVE_RECURRING_SERVICE',
+                payload: service.id
+            });
+        }
+    };
 
     if (!data || data.length === 0) {
         if (EmptyStateComponent) {
@@ -39,62 +75,51 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
         return <p className="text-center text-gray-500 py-4">{EMPTY_STATE_MESSAGES.NO_RECURRING_SERVICES}</p>;
     }
 
-    // 4. The entire JSX render tree remains UNCHANGED
+    // 4. The entire JSX render tree
     return (
-        <div className="overflow-x-auto bg-white rounded-lg">
-            <table className="w-full text-sm divide-y divide-gray-200 table-fixed">
+        <>
+            <div className="overflow-x-auto bg-white rounded-lg">
+                <table className="w-full text-sm divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50">
-                    {/* --- THIS SECTION WAS COMMENTED OUT --- */}
                     <tr>
                         <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
                         <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.UBICACION}</th>
-                        <th scope="col" className="w-20 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.Q}</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.P}</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MONEDA}</th>
-                        <th scope="col" className="w-28 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.INGRESO}</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CU1}</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CU2}</th>
-                        <th scope="col" className="w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.PROVEEDOR}</th>
-                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MONEDA}</th>
-                        <th scope="col" className="w-28 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.EGRESO}</th>
+                        <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CANTIDAD}</th>
+                        <th scope="col" className="w-32 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MRR}</th>
+                        <th scope="col" className="w-32 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.COSTO_RECURRENTE}</th>
+                        <th scope="col" className="w-28 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.ACCIONES}</th>
                     </tr>
-                    {/* --- END OF FIX --- */}
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {data.map((item, index) => (
                         <tr key={`recurring-service-${item.id}-${index}`} className="hover:bg-gray-50">
                             <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.tipo_servicio)}</td>
-                            <td className="px-3 py-2 text-gray-800 align-middle truncate"title={item.ubicacion || undefined}>{formatCellData(item.ubicacion)}</td>
+                            <td className="px-3 py-2 text-gray-800 align-middle truncate" title={item.ubicacion || undefined}>{formatCellData(item.ubicacion)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">{formatCellData(item.Q)}</td>
-                            <td className="px-3 py-2 text-gray-800 align-middle text-right whitespace-nowrap">{formatCurrency(item.P)}</td>
-
-                            <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">
-                                <EditableCurrencyCell
-                                    currentValue={item.p_currency ?? CURRENCIES.DEFAULT_RECURRING_P}
-                                    onConfirm={(newValue) => onServiceChange(index, 'p_currency', newValue)}
-                                    canEdit={canEdit}
-                                />
-                            </td>
-
                             <td className="px-3 py-2 text-green-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.ingreso)}</td>
-                            <td className="px-3 py-2 text-gray-800 align-middle text-right whitespace-nowrap">{formatCurrency(item.CU1)}</td>
-                            <td className="px-3 py-2 text-gray-800 align-middle text-right whitespace-nowrap">{formatCurrency(item.CU2)}</td>
-                            <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.proveedor)}</td>
-
-                            <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">
-                                <EditableCurrencyCell
-                                    currentValue={item.cu_currency ?? CURRENCIES.DEFAULT_RECURRING_CU}
-                                    onConfirm={(newValue) => onServiceChange(index, 'cu_currency', newValue)}
-                                    canEdit={canEdit}
+                            <td className="px-3 py-2 text-red-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.egreso)}</td>
+                            <td className="px-3 py-2 align-middle">
+                                <TableActionIcons
+                                    onView={() => handleViewDetails(item)}
+                                    onEdit={canEdit ? () => handleEditService(item) : undefined}
+                                    onDelete={canEdit ? () => handleDeleteService(item) : undefined}
                                 />
                             </td>
-
-                            <td className="px-3 py-2 text-red-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.egreso)}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
+
+        {/* Detail Modal */}
+        <RecurringServiceDetailModal
+            service={selectedService}
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            isEditMode={isEditMode}
+            onSave={handleSaveService}
+        />
+        </>
     );
 };
 

@@ -283,6 +283,14 @@ export const UI_LABELS = {
   CU2: 'CU2',
   PROVEEDOR: 'Proveedor',
 
+  // New labels for redesigned tables
+  MRR: 'MRR (Ingreso)',
+  COSTO_RECURRENTE: 'Costo Recurrente',
+  ACCIONES: 'Acciones',
+  TOTAL_USD: 'Total (USD)',
+  INICIO: 'Inicio (Mes)',
+  DURACION: 'Duración (Meses)',
+
   // Cash Flow
   FLUJO_CAJA: 'Flujo de Caja',
   INGRESO_NRC: 'Ingreso (NRC)',

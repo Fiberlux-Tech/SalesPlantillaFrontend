@@ -24,6 +24,7 @@ export type PreviewAction =
     | { type: 'REMOVE_FIXED_COST'; payload: string } // payload is 'ticket' code
     | { type: 'UPDATE_FIXED_COST'; payload: { index: number; field: keyof FixedCost; value: any } }
     | { type: 'UPDATE_RECURRING_SERVICE'; payload: { index: number; field: keyof RecurringService; value: any } }
+    | { type: 'REPLACE_RECURRING_SERVICE'; payload: RecurringService } // Full object replacement for modal edits
     | { type: 'ADD_RECURRING_SERVICES'; payload: RecurringService[] }
     | { type: 'REMOVE_RECURRING_SERVICE'; payload: number | string }
     | { type: 'RECALCULATION_START' }
@@ -123,6 +124,15 @@ export function transactionPreviewReducer(
             return { ...state, currentRecurringServices: newServices };
             // --- END OF MODIFIED BLOCK ---
         }
+
+        // --- NEW CASE: Replace Recurring Service (Full Object) ---
+        case 'REPLACE_RECURRING_SERVICE':
+            return {
+                ...state,
+                currentRecurringServices: state.currentRecurringServices.map(service =>
+                    service.id === action.payload.id ? action.payload : service
+                ),
+            };
 
         // --- NEW CASE: Add Recurring Services ---
         case 'ADD_RECURRING_SERVICES':

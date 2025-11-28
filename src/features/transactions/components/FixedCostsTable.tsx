@@ -1,11 +1,13 @@
 // src/components/shared/FixedCostsTable.tsx
+import { useState } from 'react';
 import { EditableTableCell } from '@/features/transactions/components/EditableTableCell';
-import { EditableCurrencyCell } from '@/features/transactions/components/EditableCurrencyCell';
 import type { FixedCost } from '@/types';
 import type { ReactNode } from 'react';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { formatCurrency, formatCellData } from '@/lib/formatters';
-import { CURRENCIES, UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
+import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
+import { TableActionIcons } from '@/components/shared/TableActionIcons';
+import { FixedCostDetailModal } from '@/features/transactions/components/FixedCostDetailModal';
 
 interface FixedCostsTableProps {
     EmptyStateComponent?: React.FC<{ canEdit: boolean }> | (() => ReactNode);
@@ -32,6 +34,16 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
         });
     }
 
+    // 4. Handler to delete fixed cost
+    const handleDeleteCost = (cost: FixedCost) => {
+        if (window.confirm(`¿Estás seguro de eliminar el costo "${cost.tipo_servicio}" (Ticket: ${cost.ticket})?`)) {
+            dispatch({
+                type: 'REMOVE_FIXED_COST',
+                payload: cost.ticket
+            });
+        }
+    };
+
     if (!data || data.length === 0) {
         if (EmptyStateComponent) {
             return <EmptyStateComponent canEdit={canEdit} />;
@@ -44,31 +56,20 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
         <div className="overflow-x-auto bg-white rounded-lg">
             <table className="min-w-full text-sm divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50">
-                    {/* --- THIS SECTION WAS COMMENTED OUT --- */}
                     <tr>
-                        <th scope="col" className="w-32 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CATEGORIA}</th>
                         <th scope="col" className="w-40 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
                         <th scope="col" className="w-32 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TICKET}</th>
-                        <th scope="col" className="w-40 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.UBICACION}</th>
-                        <th scope="col" className="w-20 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CANTIDAD}</th>
-                        <th scope="col" className="w-28 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.COSTO_UNITARIO}</th>
-                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.INICIO_MES}</th>
-                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.DURACION_MESES}</th>
-                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MONEDA}</th>
-                        <th scope="col" className="w-28 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TOTAL}</th>
+                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.INICIO}</th>
+                        <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.DURACION}</th>
+                        <th scope="col" className="w-32 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TOTAL_USD}</th>
+                        <th scope="col" className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.ACCIONES}</th>
                     </tr>
-                    {/* --- END OF FIX --- */}
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {data.map((item, index) => (
                         <tr key={`fixed-cost-${item.id}-${index}`} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.categoria)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.tipo_servicio)}</td>
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.ticket)}</td>
-                            <td className="px-4 py-2 truncate text-gray-800" title={item.ubicacion || undefined}> {formatCellData(item.ubicacion)}</td>
-                            <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">{formatCellData(item.cantidad)}</td>
-                            <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-right">{formatCurrency(item.costoUnitario)}</td>
-
                             <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">
                                 <EditableTableCell
                                     currentValue={item.periodo_inicio ?? 0}
@@ -85,15 +86,14 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                                     min={1}
                                 />
                             </td>
-                            <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">
-                                <EditableCurrencyCell
-                                    currentValue={item.costo_currency ?? CURRENCIES.DEFAULT_FIXED_COST}
-                                    onConfirm={(newValue) => onCostChange(index, 'costo_currency', newValue)}
-                                    canEdit={canEdit}
+                            <td className="px-4 py-2 whitespace-nowrap text-red-600 font-medium text-right">{formatCurrency(item.total)}</td>
+                            <td className="px-4 py-2 align-middle">
+                                <TableActionIcons
+                                    onView={() => {/* TODO: Implement view functionality */}}
+                                    onEdit={() => {/* TODO: Implement edit functionality */}}
+                                    onDelete={canEdit ? () => handleDeleteCost(item) : undefined}
                                 />
                             </td>
-
-                            <td className="px-4 py-2 whitespace-nowrap text-red-600 font-medium text-right">{formatCurrency(item.total)}</td>
                         </tr>
                     ))}
                 </tbody>

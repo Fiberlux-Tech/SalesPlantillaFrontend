@@ -77,43 +77,50 @@ const NumberInput: React.FC<{
 );
 
 // Custom Rendering Component for Currency Input fields (MRC/NRC)
-const CurrencyInput: React.FC<{ 
-    localValue: string | number | null; 
+const CurrencyInput: React.FC<{
+    localValue: string | number | null;
     setLocalValue: React.Dispatch<React.SetStateAction<any>>;
     localCurrency: string | null;
     setLocalCurrency: React.Dispatch<React.SetStateAction<string | null>>;
-    onConfirm: () => void; 
-}> = ({ localValue, setLocalValue, localCurrency, setLocalCurrency, onConfirm }) => (
-    <>
-        {/* Input for Value */}
-        <Input 
-            type="number" 
-            value={localValue ?? ''} 
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalValue(e.target.value)}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && onConfirm()}
-            className="h-9 w-24 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white" 
-            min="0" 
-            step="0.01" 
-            autoFocus
-        />
-        
-        {/* Select for Currency */}
-        <div className="w-20">
-            <Select 
-                value={localCurrency || ''} 
-                onValueChange={(value) => setLocalCurrency(value)}
-            >
-                <SelectTrigger className="text-sm h-9 bg-white">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={CURRENCIES.PEN}>{CURRENCIES.PEN}</SelectItem>
-                    <SelectItem value={CURRENCIES.USD}>{CURRENCIES.USD}</SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
-    </>
-);
+    onConfirm: () => void;
+}> = ({ localValue, setLocalValue, localCurrency, setLocalCurrency, onConfirm }) => {
+    // Format the value to 2 decimal places for display in the input
+    const formattedValue = localValue !== null && localValue !== ''
+        ? Number(localValue).toFixed(2)
+        : '';
+
+    return (
+        <>
+            {/* Input for Value */}
+            <Input
+                type="number"
+                value={formattedValue}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalValue(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && onConfirm()}
+                className="h-9 w-24 text-sm p-2 border-input ring-ring focus-visible:ring-1 bg-white"
+                min="0"
+                step="0.01"
+                autoFocus
+            />
+
+            {/* Select for Currency */}
+            <div className="w-20">
+                <Select
+                    value={localCurrency || ''}
+                    onValueChange={(value) => setLocalCurrency(value)}
+                >
+                    <SelectTrigger className="text-sm h-9 bg-white">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={CURRENCIES.PEN}>{CURRENCIES.PEN}</SelectItem>
+                        <SelectItem value={CURRENCIES.USD}>{CURRENCIES.USD}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </>
+    );
+};
 
 // Custom Rendering Component for Boolean (SI/NO) fields
 const BooleanSelectInput: React.FC<{

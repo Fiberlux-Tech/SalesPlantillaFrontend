@@ -21,13 +21,18 @@ export function GigaLanCommissionInputs({ inputs, onInputChange }: GigaLanCommis
         return null;
     }
 
+    // Format the value to 2 decimal places for display
+    const formattedValue = inputs.gigalan_old_mrc !== null && inputs.gigalan_old_mrc !== undefined
+        ? Number(inputs.gigalan_old_mrc).toFixed(2)
+        : '';
+
     return (
         <div>
             <label className="block text-xs font-medium text-gray-700 uppercase mb-1">{UI_LABELS.MRC_PREVIO}</label>
             <Input
                 type="number"
                 placeholder={PLACEHOLDERS.ENTER_AMOUNT}
-                value={inputs.gigalan_old_mrc ?? ""}
+                value={formattedValue}
                 // 3. Type the event handler with validation
                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     const value = parseFloat(e.target.value);
@@ -40,6 +45,7 @@ export function GigaLanCommissionInputs({ inputs, onInputChange }: GigaLanCommis
                 }}
                 className="text-sm"
                 min="0"
+                step="0.01"
             />
         </div>
     );
