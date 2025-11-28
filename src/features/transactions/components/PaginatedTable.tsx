@@ -67,7 +67,7 @@ export function PaginatedTable<T>({
                                 </TableCell>
                             </TableRow>
                         ) : data.length === 0 ? (
-                             <TableRow>
+                            <TableRow>
                                 <TableCell colSpan={colSpan} className="text-center py-4">
                                     {emptyStateMessage}
                                 </TableCell>

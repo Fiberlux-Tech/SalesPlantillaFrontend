@@ -39,7 +39,7 @@ interface UploadExcelResult {
 export async function getSalesTransactions(page: number): Promise<GetSalesTransactionsResult> {
     try {
         const result = await api.get<SalesTransactionListResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTIONS_LIST}?page=${page}&per_page=${PAGINATION.PER_PAGE}`);
-        
+
         if (result.success) {
             const formattedTransactions: FormattedSalesTransaction[] = result.data.transactions.map((tx: Transaction) => ({
                 id: tx.id,
@@ -67,7 +67,7 @@ export async function getSalesTransactions(page: number): Promise<GetSalesTransa
 export async function uploadExcelForPreview(file: File): Promise<UploadExcelResult> {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     try {
         const result = await api.postForm<TransactionDetailResponse>(API_CONFIG.ENDPOINTS.PROCESS_EXCEL, formData);
 

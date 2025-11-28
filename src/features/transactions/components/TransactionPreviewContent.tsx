@@ -83,6 +83,12 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
             });
     }, [currentRecurringServices]);
 
+    // Determine if we should show Transaction Overview and KPIs
+    // Show when: Excel file loaded OR at least one recurring service added
+    const showOverviewAndKpis = useMemo(() => {
+        return !!baseTransaction.fileName || (currentRecurringServices || []).length > 0;
+    }, [baseTransaction.fileName, currentRecurringServices]);
+
 
     // (CustomFixedCostTotalsNode remains the same)
     const CustomFixedCostTotalsNode = () => {
@@ -223,18 +229,22 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
 
     return (
         <>
-            {/* (Banners, Overview, and KPIs remain the same) ... */}
-            {!isFinanceView && !isPending && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.TRANSACTION_STATUS.replace('{status}', tx.ApprovalStatus)}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.MODIFICATION_NOT_ALLOWED}</p> </div> </div>)}
-            {!isFinanceView && isPending && (<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">{STATUS_MESSAGES.REVIEW_DATA_CAREFULLY}</p> <p className="text-sm text-yellow-700">{STATUS_MESSAGES.REVIEW_DATA_MESSAGE}</p> </div> </div>)}
-            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.PENDING && (<div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">{STATUS_MESSAGES.FINANCE_EDIT_MODE}</p> <p className="text-sm text-blue-700">{STATUS_MESSAGES.FINANCE_EDIT_INFO}</p> </div> </div>)}
-            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED && (<div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">{STATUS_MESSAGES.APPROVED_TITLE}</p> <p className="text-sm text-green-700">{STATUS_MESSAGES.APPROVED_MESSAGE}</p> </div> </div>)}
-            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.REJECTED_TITLE}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.REJECTED_MESSAGE}</p> </div> </div>)}
+            {/* Conditionally render status banners, Overview, and KPIs */}
+            {showOverviewAndKpis && (
+                <>
+                    {!isFinanceView && !isPending && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.TRANSACTION_STATUS.replace('{status}', tx.ApprovalStatus)}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.MODIFICATION_NOT_ALLOWED}</p> </div> </div>)}
+                    {!isFinanceView && isPending && (<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">{STATUS_MESSAGES.REVIEW_DATA_CAREFULLY}</p> <p className="text-sm text-yellow-700">{STATUS_MESSAGES.REVIEW_DATA_MESSAGE}</p> </div> </div>)}
+                    {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.PENDING && (<div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">{STATUS_MESSAGES.FINANCE_EDIT_MODE}</p> <p className="text-sm text-blue-700">{STATUS_MESSAGES.FINANCE_EDIT_INFO}</p> </div> </div>)}
+                    {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED && (<div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">{STATUS_MESSAGES.APPROVED_TITLE}</p> <p className="text-sm text-green-700">{STATUS_MESSAGES.APPROVED_MESSAGE}</p> </div> </div>)}
+                    {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.REJECTED_TITLE}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.REJECTED_MESSAGE}</p> </div> </div>)}
 
-            <TransactionOverviewInputs
-                isFinanceView={isFinanceView}
-            />
+                    <TransactionOverviewInputs
+                        isFinanceView={isFinanceView}
+                    />
 
-            <KpiMetricsGrid />
+                    <KpiMetricsGrid />
+                </>
+            )}
 
             <div className="mb-6">
                 <h3 className="font-semibold text-gray-800 mb-3 text-lg">{UI_LABELS.DETALLE_SERVICIOS}</h3>

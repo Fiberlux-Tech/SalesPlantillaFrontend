@@ -150,10 +150,10 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 
     // --- 6. VIEW-SPECIFIC HANDLERS ---
 
-// Sales Handlers
+    // Sales Handlers
     useEffect(() => {
         if (view === 'SALES' && setSalesActions) {
-                setSalesActions({
+            setSalesActions({
                 uploadLabel: UI_LABELS.CREATE_TEMPLATE,
                 onUpload: () => {
                     setUploadedData(null); // Clear any previous data
@@ -176,7 +176,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             return; // No file selected
         }
         const file = event.target.files[0];
-        
+
         setApiError(null);
         const result = await uploadExcelForPreview(file);
         if (result.success && result.data) {
@@ -337,8 +337,8 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                         : UI_LABELS.FILTER_BY_CLIENT
                 }
                 statsGrid={
-                    view === 'SALES' 
-                        ? <SalesStatsGrid stats={salesStats} /> 
+                    view === 'SALES'
+                        ? <SalesStatsGrid stats={salesStats} />
                         : <FinanceStatsGrid stats={financeStats} />
                 }
                 transactionList={
@@ -401,7 +401,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                 title={uploadedData ? UI_LABELS.PREVIEW_LABEL.replace('{fileName}', uploadedData.fileName || '') : UI_LABELS.NUEVA_PLANTILLA}
                                 onClose={handleCloseSalesModal}
                                 // Status is dynamic
-                                status={(uploadedData || createEmptyTransactionData()).transactions.ApprovalStatus} 
+                                status={(uploadedData || createEmptyTransactionData()).transactions.ApprovalStatus}
                                 // --- 3. UPDATE THE BUTTON'S onClick ---
                                 headerActions={
                                     <button
@@ -437,7 +437,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                         title={UI_LABELS.TRANSACTION_ID_LABEL.replace('{id}', String(selectedTransaction.transactions.transactionID || selectedTransaction.transactions.id))}
                         onClose={handleCloseFinanceModal}
                         // Pass status for the new modal header structure (Point 2)
-                        status={selectedTransaction.transactions.ApprovalStatus} 
+                        status={selectedTransaction.transactions.ApprovalStatus}
                         footer={
                             <FinancePreviewFooter
                                 onApprove={handleUpdateStatus}

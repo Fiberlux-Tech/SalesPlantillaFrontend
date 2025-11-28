@@ -54,7 +54,7 @@ export function PermissionManagementModule() {
 
       if (result.success) {
         const updatedUsers = users.map((u) =>
-            u.id === userId ? { ...u, role: newRole.toUpperCase() as UserRole } : u
+          u.id === userId ? { ...u, role: newRole.toUpperCase() as UserRole } : u
         )
         setUsers(updatedUsers)
         alert(SUCCESS_MESSAGES.ROLE_UPDATED.replace('{role}', newRole.toUpperCase()))
