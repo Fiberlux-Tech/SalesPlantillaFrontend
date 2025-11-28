@@ -5,18 +5,52 @@ export const NumberInput: React.FC<{
     onChange: (value: number) => void;
     label: string;
     step?: string;
-}> = ({ value, onChange, label, step = "0.01" }) => (
-    <div>
-        <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
-        <input
-            type="number"
-            value={value}
-            onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-            className="w-full text-2xl font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            step={step}
-        />
-    </div>
-);
+}> = ({ value, onChange, label, step = "0.01" }) => {
+    const [localValue, setLocalValue] = React.useState(value?.toString() || '');
+
+    React.useEffect(() => {
+        // Sync local state with prop value if they differ numerically
+        const parsedLocal = parseFloat(localValue);
+        const isNumericallyEqual = !isNaN(parsedLocal) && parsedLocal === value;
+
+        if (!isNumericallyEqual) {
+            setLocalValue(value?.toString() || '');
+        }
+    }, [value]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value;
+
+        // Regex to allow: empty string, digits, digits + dot, digits + dot + 1 or 2 digits
+        const regex = /^\d*\.?\d{0,2}$/;
+
+        if (newValue === '' || regex.test(newValue)) {
+            setLocalValue(newValue);
+            onChange(parseFloat(newValue) || 0);
+        }
+    };
+
+    const handleBlur = () => {
+        const parsed = parseFloat(localValue);
+        if (!isNaN(parsed)) {
+            setLocalValue(parsed.toFixed(2));
+        }
+    };
+
+    return (
+        <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
+            <input
+                type="number"
+                value={localValue}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className="w-full text-2xl font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                step={step}
+            />
+        </div>
+    );
+};
 
 export const TextInput: React.FC<{
     value: string;
