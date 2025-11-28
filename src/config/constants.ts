@@ -110,6 +110,12 @@ export const API_CONFIG = {
     ADMIN_USERS: '/api/admin/users',
     ADMIN_USER_ROLE: '/api/admin/users/:id/role',
     ADMIN_USER_RESET_PASSWORD: '/api/admin/users/:id/reset-password',
+
+    // KPI endpoints
+    KPI_PENDING_MRC: '/api/kpi/pending-mrc',
+    KPI_PENDING_COUNT: '/api/kpi/pending-count',
+    KPI_PENDING_COMISIONES: '/api/kpi/pending-comisiones',
+    KPI_AVERAGE_GROSS_MARGIN: '/api/kpi/average-gross-margin',
   },
 
   // CSRF Configuration
@@ -439,6 +445,17 @@ export const FINANCE_STATS_LABELS = {
   MARGEN_PROMEDIO: 'Margen Promedio',
   HIGH_RISK_DEALS: 'High-Risk Deals',
   DEALS_THIS_MONTH: 'Deals This Month',
+} as const;
+
+/**
+ * Sales Stats Labels
+ * Labels for sales statistics cards
+ */
+export const SALES_STATS_LABELS = {
+  PENDING_APPROVALS: 'Aprobaciones Pendiente',
+  PENDING_MRC: 'MRC Pendiente',
+  PENDING_COMISIONES: 'Comisiones Pendientes',
+  AVG_GROSS_MARGIN: 'Margen Bruto Promedio',
 } as const;
 
 /**

@@ -11,6 +11,7 @@ import type { Transaction, TransactionDetailResponse, FixedCost, RecurringServic
 import { TransactionDashboardLayout } from './components/TransactionDashboardLayout';
 import { TransactionPreviewContent } from './components/TransactionPreviewContent';
 import { UI_LABELS, ERROR_MESSAGES } from '@/config';
+import { getAllKpis, type KpiData } from './services/kpi.service';
 
 // --- Sales-Specific Imports ---
 import { SalesStatsGrid } from './components/SalesStatsGrid';
@@ -125,11 +126,29 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
 
-    // --- 4. COMMON HANDLERS (for filters) ---
+    // --- KPI STATE ---
+    const [kpiData, setKpiData] = useState<KpiData | null>(null);
+    const [isLoadingKpis, setIsLoadingKpis] = useState<boolean>(true);
+
+    // --- 4. FETCH KPIs ON MOUNT ---
+    useEffect(() => {
+        const fetchKpis = async () => {
+            setIsLoadingKpis(true);
+            const result = await getAllKpis();
+            if (result.success && result.data) {
+                setKpiData(result.data);
+            }
+            setIsLoadingKpis(false);
+        };
+
+        fetchKpis();
+    }, []);
+
+    // --- 5. COMMON HANDLERS (for filters) ---
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
     const handleSelectToday = () => { setSelectedDate(new Date()); setIsDatePickerOpen(false); };
 
-    // --- 5. VIEW-SPECIFIC HANDLERS ---
+    // --- 6. VIEW-SPECIFIC HANDLERS ---
 
 // Sales Handlers
     useEffect(() => {
@@ -239,46 +258,47 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         setSelectedTransaction(null);
     };
 
-    // --- 6. COMMON & CONDITIONAL MEMOIZED LOGIC ---
+    // --- 7. COMMON & CONDITIONAL MEMOIZED LOGIC ---
 
-    // Sales Stats
+    // Sales Stats - Using KPI data from API
     const salesStats = useMemo(() => {
-        const pendingApprovals = transactions.filter(t => t.status === 'PENDING').length;
-        const totalValue = 0; // Placeholder logic
-        const avgIRR = 24.5;  // Placeholder logic
-        const avgPayback = 20; // Placeholder logic
-        return {
-            pendingApprovals,
-            totalValue: `${(totalValue / 1000000).toFixed(2)}M`,
-            avgIRR: `${avgIRR}%`,
-            avgPayback: `${avgPayback} mo`,
-        };
-    }, [transactions]);
+        if (!kpiData) {
+            // Return default values while loading
+            return {
+                pendingApprovals: 0,
+                pendingMrc: 0,
+                pendingComisiones: 0,
+                avgGrossMargin: 0,
+            };
+        }
 
-    // Finance Stats
+        return {
+            pendingApprovals: kpiData.pendingCount,
+            pendingMrc: kpiData.pendingMrc,
+            pendingComisiones: kpiData.pendingComisiones,
+            avgGrossMargin: kpiData.averageGrossMargin,
+        };
+    }, [kpiData]);
+
+    // Finance Stats - Using KPI data from API
     const financeStats = useMemo(() => {
-        const transactionList = transactions as FormattedFinanceTx[];
-        const totalApprovedValue = transactionList
-            .filter(t => t.status === 'APPROVED')
-            .reduce((acc, t) => acc + (t.MRC || 0), 0);
-        const averageMargin = transactionList.length > 0
-            ? transactionList.reduce((acc, t) => acc + t.grossMarginRatio, 0) / transactionList.length
-            : 0;
-        const highRiskDeals = transactionList.filter(t => t.payback > 36).length;
-        const dealsThisMonth = transactionList.filter(t => {
-            const submissionDate = new Date(t.submissionDate);
-            const today = new Date();
-            return submissionDate.getMonth() === today.getMonth() &&
-                        submissionDate.getFullYear() === today.getFullYear();
-        }).length;
+        if (!kpiData) {
+            // Return default values while loading
+            return {
+                pendingMrc: 0,
+                pendingCount: 0,
+                pendingComisiones: 0,
+                avgGrossMargin: 0,
+            };
+        }
 
         return {
-            totalApprovedValue: `${(totalApprovedValue / 1000000).toFixed(2)}M`,
-            averageMargin: `${(averageMargin * 100).toFixed(2)}%`,
-            highRiskDeals,
-            dealsThisMonth,
+            pendingMrc: kpiData.pendingMrc,
+            pendingCount: kpiData.pendingCount,
+            pendingComisiones: kpiData.pendingComisiones,
+            avgGrossMargin: kpiData.averageGrossMargin,
         };
-    }, [transactions]);
+    }, [kpiData]);
 
     // Generalized Filter Logic
     const filteredTransactions = useMemo(() => {
@@ -306,7 +326,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     }, [transactions, filter, selectedDate, view]); // Added 'view' to dependency array
 
 
-    // --- 7. CONDITIONAL RENDER ---
+    // --- 8. CONDITIONAL RENDER ---
     return (
         <>
             <TransactionDashboardLayout
