@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { UserListTable } from "./components/UserListTable"
 import { ResetPasswordForm } from "./components/ResetPasswordForm"
 import { getAllUsers, updateUserRole } from "./adminService";
-import { USER_ROLES, UI_LABELS, SUCCESS_MESSAGES, ERROR_MESSAGES, type UserRole } from "@/config";
+import { UI_LABELS, SUCCESS_MESSAGES, ERROR_MESSAGES, type UserRole } from "@/config";
 
 export interface User {
   id: number

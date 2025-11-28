@@ -6,7 +6,7 @@ import type { FormattedSalesTransaction } from '../services/sales.service';
 import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 // 1. Define Columns (Unchanged)
-const columns: ColumnDef<FormattedSalesTransaction>[] = [
+const columns: ColumnDef[] = [
     { header: UI_LABELS.ID_TRANSACCION, className: 'px-6 py-3' },
     { header: UI_LABELS.CLIENTE, className: 'px-6 py-3' },
     { header: UI_LABELS.VENDEDOR, className: 'px-6 py-3' },

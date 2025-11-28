@@ -6,7 +6,7 @@ import type {
     BaseApiResponse,
     Transaction,
 } from '@/types';
-import { API_CONFIG, PAGINATION, DISPLAY_VALUES, TRANSACTION_STATUS, ERROR_MESSAGES, type TransactionStatus } from '@/config';
+import { API_CONFIG, PAGINATION, DISPLAY_VALUES, ERROR_MESSAGES, type TransactionStatus } from '@/config';
 
 // --- Types ---
 

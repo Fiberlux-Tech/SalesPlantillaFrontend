@@ -6,7 +6,7 @@ import type { FormattedFinanceTransaction } from '../services/finance.service';
 import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 // 1. Define Columns (Unchanged)
-const columns: ColumnDef<FormattedFinanceTransaction>[] = [
+const columns: ColumnDef[] = [
     { header: UI_LABELS.ID, className: 'px-6 py-3 text-center' },
     { header: UI_LABELS.UNIDAD_NEGOCIO, className: 'px-6 py-3 text-center' },
     { header: UI_LABELS.CLIENTE, className: 'px-6 py-3 text-center' },

@@ -11,7 +11,7 @@ import {
 import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
 // Define a type for our column definitions
-export interface ColumnDef<T> {
+export interface ColumnDef {
     header: string;
     className?: string;
 }
@@ -19,7 +19,7 @@ export interface ColumnDef<T> {
 // Define the props for our generic table
 interface PaginatedTableProps<T> {
     isLoading: boolean;
-    columns: ColumnDef<T>[];
+    columns: ColumnDef[];
     data: T[];
     renderRow: (item: T) => React.ReactNode;
     emptyStateMessage?: string;

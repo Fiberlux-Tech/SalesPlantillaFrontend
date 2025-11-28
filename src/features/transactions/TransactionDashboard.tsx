@@ -128,7 +128,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 
     // --- KPI STATE ---
     const [kpiData, setKpiData] = useState<KpiData | null>(null);
-    const [isLoadingKpis, setIsLoadingKpis] = useState<boolean>(true);
+    const [, setIsLoadingKpis] = useState<boolean>(true);
 
     // --- 4. FETCH KPIs ON MOUNT ---
     useEffect(() => {
