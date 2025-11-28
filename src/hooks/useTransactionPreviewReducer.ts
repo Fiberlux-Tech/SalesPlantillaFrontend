@@ -23,6 +23,7 @@ export type PreviewAction =
     | { type: 'ADD_FIXED_COSTS'; payload: FixedCost[] }
     | { type: 'REMOVE_FIXED_COST'; payload: string } // payload is 'ticket' code
     | { type: 'UPDATE_FIXED_COST'; payload: { index: number; field: keyof FixedCost; value: any } }
+    | { type: 'REPLACE_FIXED_COST'; payload: FixedCost } // Full object replacement for modal edits
     | { type: 'UPDATE_RECURRING_SERVICE'; payload: { index: number; field: keyof RecurringService; value: any } }
     | { type: 'REPLACE_RECURRING_SERVICE'; payload: RecurringService } // Full object replacement for modal edits
     | { type: 'ADD_RECURRING_SERVICES'; payload: RecurringService[] }
@@ -64,7 +65,7 @@ export function transactionPreviewReducer(
                     [action.payload.key]: action.payload.value,
                 },
             };
-            
+
         case 'UPDATE_MULTIPLE_TRANSACTION_FIELDS':
             return {
                 ...state,
@@ -92,40 +93,39 @@ export function transactionPreviewReducer(
             };
 
         case 'UPDATE_FIXED_COST': {
-            // --- MODIFIED BLOCK (Immutable Update) ---
             const newCosts = state.currentFixedCosts.map((cost, index) => {
-                // If this is not the item we're updating, return it as-is
                 if (index !== action.payload.index) {
                     return cost;
                 }
-                // This is the item to update. Return a *new* object.
                 return {
                     ...cost,
                     [action.payload.field]: action.payload.value,
                 };
             });
             return { ...state, currentFixedCosts: newCosts };
-            // --- END OF MODIFIED BLOCK ---
         }
 
+        case 'REPLACE_FIXED_COST':
+            return {
+                ...state,
+                currentFixedCosts: state.currentFixedCosts.map(cost =>
+                    cost.ticket === action.payload.ticket ? action.payload : cost
+                ),
+            };
+
         case 'UPDATE_RECURRING_SERVICE': {
-            // --- MODIFIED BLOCK (Immutable Update) ---
             const newServices = state.currentRecurringServices.map((service, index) => {
-                // If this is not the item we're updating, return it as-is
                 if (index !== action.payload.index) {
                     return service;
                 }
-                // This is the item to update. Return a *new* object.
                 return {
                     ...service,
                     [action.payload.field]: action.payload.value,
                 };
             });
             return { ...state, currentRecurringServices: newServices };
-            // --- END OF MODIFIED BLOCK ---
         }
 
-        // --- NEW CASE: Replace Recurring Service (Full Object) ---
         case 'REPLACE_RECURRING_SERVICE':
             return {
                 ...state,
@@ -134,7 +134,6 @@ export function transactionPreviewReducer(
                 ),
             };
 
-        // --- NEW CASE: Add Recurring Services ---
         case 'ADD_RECURRING_SERVICES':
             return {
                 ...state,
@@ -143,13 +142,11 @@ export function transactionPreviewReducer(
                     ...action.payload,
                 ],
             };
-        
-        // --- NEW CASE: Remove Recurring Service by ID/Code (Group Removal) ---
+
         case 'REMOVE_RECURRING_SERVICE':
             return {
                 ...state,
                 currentRecurringServices: state.currentRecurringServices.filter(
-                    // Filter by the ID, which is the quotation code string for group removal
                     (service) => service.id !== action.payload
                 ),
             };
@@ -176,7 +173,7 @@ export function transactionPreviewReducer(
                 liveKpis: null,
                 apiError: action.payload,
             };
-        
+
         case 'SET_API_ERROR':
             return {
                 ...state,
