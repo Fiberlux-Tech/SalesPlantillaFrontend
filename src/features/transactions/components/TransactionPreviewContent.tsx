@@ -84,9 +84,11 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     }, [currentRecurringServices]);
 
     // Determine if we should show Transaction Overview and KPIs
-    // Show when: Excel file loaded OR at least one recurring service added
+    // Show when: Excel file loaded (and not just the default "Nueva Plantilla") OR at least one recurring service added
     const showOverviewAndKpis = useMemo(() => {
-        return !!baseTransaction.fileName || (currentRecurringServices || []).length > 0;
+        const isDefaultFile = baseTransaction.fileName === UI_LABELS.NUEVA_PLANTILLA;
+        const hasServices = (currentRecurringServices || []).length > 0;
+        return (!isDefaultFile && !!baseTransaction.fileName) || hasServices;
     }, [baseTransaction.fileName, currentRecurringServices]);
 
 
