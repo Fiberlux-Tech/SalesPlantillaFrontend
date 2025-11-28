@@ -6,7 +6,7 @@ import { UI_LABELS } from '@/config';
 // Define props interface
 interface CostBreakdownRowProps {
     title: string;
-    items: number;
+    items?: number | null;
     total: number | null;
     isOpen: boolean;
     onToggle: () => void;
@@ -28,9 +28,13 @@ const CostBreakdownRow = ({
         <div onClick={onToggle} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 cursor-pointer">
             <div className="flex items-center">
                 {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                <div className="ml-3">
+                <div className="ml-3 flex items-center gap-2">
                     <p className="font-semibold text-gray-800">{title}</p>
-                    <p className="text-xs text-gray-500">{items} {UI_LABELS.ITEMS}</p>
+                    {items !== null && items !== undefined && (
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                            {items} items
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -39,7 +43,7 @@ const CostBreakdownRow = ({
                 {customTotalsNode ? (
                     customTotalsNode // This is used for Recurring Services (Income/Egreso)
                 ) : (
-                     <div className="text-right"> {/* Default alignment for total */}
+                    <div className="text-right"> {/* Default alignment for total */}
                         <p className="font-semibold text-red-600">
                             {total !== null
                                 ? `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`

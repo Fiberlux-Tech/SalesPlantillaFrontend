@@ -82,8 +82,8 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                 return true;
             });
     }, [currentRecurringServices]);
-    
-    
+
+
     // (CustomFixedCostTotalsNode remains the same)
     const CustomFixedCostTotalsNode = () => {
         const showCodeManagerUI = !isFinanceView || canEdit;
@@ -161,7 +161,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         // The 'data' param now matches the API: { recurring_services: [...] }
                         onRecurringServiceAdd={(data: RecurringServiceLookupResponse) => {
                             const newServices = data.recurring_services;
-                            
+
                             if (!newServices || newServices.length === 0) {
                                 alert(VALIDATION_MESSAGES.NO_SERVICE_RETURNED);
                                 return;
@@ -224,11 +224,11 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     return (
         <>
             {/* (Banners, Overview, and KPIs remain the same) ... */}
-            {!isFinanceView && !isPending && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.TRANSACTION_STATUS.replace('{status}', tx.ApprovalStatus)}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.MODIFICATION_NOT_ALLOWED}</p> </div> </div> )}
-            {!isFinanceView && isPending && ( <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">{STATUS_MESSAGES.REVIEW_DATA_CAREFULLY}</p> <p className="text-sm text-yellow-700">{STATUS_MESSAGES.REVIEW_DATA_MESSAGE}</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.PENDING && ( <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">{STATUS_MESSAGES.FINANCE_EDIT_MODE}</p> <p className="text-sm text-blue-700">{STATUS_MESSAGES.FINANCE_EDIT_INFO}</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED && ( <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">{STATUS_MESSAGES.APPROVED_TITLE}</p> <p className="text-sm text-green-700">{STATUS_MESSAGES.APPROVED_MESSAGE}</p> </div> </div> )}
-            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED && ( <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.REJECTED_TITLE}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.REJECTED_MESSAGE}</p> </div> </div> )}
+            {!isFinanceView && !isPending && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.TRANSACTION_STATUS.replace('{status}', tx.ApprovalStatus)}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.MODIFICATION_NOT_ALLOWED}</p> </div> </div>)}
+            {!isFinanceView && isPending && (<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">{STATUS_MESSAGES.REVIEW_DATA_CAREFULLY}</p> <p className="text-sm text-yellow-700">{STATUS_MESSAGES.REVIEW_DATA_MESSAGE}</p> </div> </div>)}
+            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.PENDING && (<div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">{STATUS_MESSAGES.FINANCE_EDIT_MODE}</p> <p className="text-sm text-blue-700">{STATUS_MESSAGES.FINANCE_EDIT_INFO}</p> </div> </div>)}
+            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED && (<div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">{STATUS_MESSAGES.APPROVED_TITLE}</p> <p className="text-sm text-green-700">{STATUS_MESSAGES.APPROVED_MESSAGE}</p> </div> </div>)}
+            {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.REJECTED_TITLE}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.REJECTED_MESSAGE}</p> </div> </div>)}
 
             <TransactionOverviewInputs
                 isFinanceView={isFinanceView}
@@ -242,7 +242,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     <CostBreakdownRow
                         title={UI_LABELS.SERVICIOS_RECURRENTES}
                         items={(currentRecurringServices || []).length}
-                        total={null} 
+                        total={null}
                         isOpen={openSections['recurringCosts']}
                         onToggle={() => toggleSection('recurringCosts')}
                         customTotalsNode={<CustomRecurringServiceTotalsNode />}
@@ -266,7 +266,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                     </CostBreakdownRow>
                     <CostBreakdownRow
                         title={UI_LABELS.FLUJO_CAJA}
-                        items={timeline?.periods?.length || 0}
+                        items={null}
                         total={null}
                         isOpen={openSections['cashFlow']}
                         onToggle={() => toggleSection('cashFlow')}
