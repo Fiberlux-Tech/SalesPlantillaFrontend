@@ -34,6 +34,15 @@ interface UploadExcelResult {
     error?: string;
 }
 
+type GetTransactionDetailsResult = {
+    success: true;
+    data: TransactionDetailResponse['data'];
+} | {
+    success: false;
+    error: string;
+    data?: undefined;
+}
+
 // --- Functions ---
 
 export async function getSalesTransactions(page: number): Promise<GetSalesTransactionsResult> {
@@ -93,5 +102,18 @@ export async function submitFinalTransaction(finalPayload: any): Promise<BaseApi
         }
     } catch (error: any) {
         return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER_SUBMISSION };
+    }
+}
+
+export async function getSalesTransactionDetails(transactionId: number): Promise<GetTransactionDetailsResult> {
+    try {
+        const result = await api.get<TransactionDetailResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTION_DETAIL}/${transactionId}`);
+        if (result.success) {
+            return { success: true, data: result.data };
+        } else {
+            return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_TRANSACTION_DETAILS };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER };
     }
 }

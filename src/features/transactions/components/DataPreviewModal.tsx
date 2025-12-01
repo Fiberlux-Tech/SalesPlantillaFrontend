@@ -1,6 +1,6 @@
 // src/components/shared/DataPreviewModal.tsx
 import React from 'react';
-import { CloseIcon } from '@/components/shared/Icons'; 
+import { CloseIcon } from '@/components/shared/Icons';
 // Import Card components for modularity
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 // Import StatusBadge for the new header requirement
@@ -35,7 +35,7 @@ function DataPreviewModal({
     return (
         // Modal Backdrop/Primitive: Handles positioning, background, z-index
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            
+
             {/* Modal Content: Use Card as the container */}
             <Card className="max-w-6xl w-full flex flex-col overflow-hidden">
                 

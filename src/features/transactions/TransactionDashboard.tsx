@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
 import { TransactionDashboardLayout } from './components/TransactionDashboardLayout';
 import { TransactionPreviewContent } from './components/TransactionPreviewContent';
-import { UI_LABELS, ERROR_MESSAGES } from '@/config';
+import { UI_LABELS, ERROR_MESSAGES, BUTTON_LABELS } from '@/config';
 import { getAllKpis, type KpiData } from './services/kpi.service';
 
 // --- Sales-Specific Imports ---
@@ -20,6 +20,7 @@ import { SalesPreviewFooter } from './footers/SalesPreviewFooter';
 import {
     uploadExcelForPreview,
     submitFinalTransaction,
+    getSalesTransactionDetails,
     type FormattedSalesTransaction
 } from './services/sales.service';
 
@@ -122,6 +123,10 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
 
+    // Sales View-Only Modal State (for viewing existing transactions)
+    const [selectedSalesTransaction, setSelectedSalesTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
+    const [isSalesViewModalOpen, setIsSalesViewModalOpen] = useState<boolean>(false);
+
     // Finance Modal State
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
@@ -209,6 +214,23 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const handleCloseSalesModal = () => {
         setIsPreviewModalOpen(false);
         setUploadedData(null);
+    };
+
+    const handleSalesRowClick = async (transaction: FormattedSalesTransaction) => {
+        setApiError(null);
+        setSelectedSalesTransaction(null);
+        const result = await getSalesTransactionDetails(transaction.id);
+        if (result.success) {
+            setSelectedSalesTransaction(result.data);
+            setIsSalesViewModalOpen(true);
+        } else {
+            setApiError(result.error || ERROR_MESSAGES.UNKNOWN_ERROR);
+        }
+    };
+
+    const handleCloseSalesViewModal = () => {
+        setIsSalesViewModalOpen(false);
+        setSelectedSalesTransaction(null);
     };
 
     // Finance Handlers
@@ -349,6 +371,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                             currentPage={currentPage}
                             totalPages={totalPages}
                             onPageChange={setCurrentPage}
+                            onRowClick={handleSalesRowClick}
                         />
                     ) : (
                         <FinanceTransactionList
@@ -391,8 +414,6 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                         <TransactionPreviewProvider
                             // IMPORTANT: Use the uploaded data OR the new empty template
                             baseTransaction={uploadedData || createEmptyTransactionData()}
-                            // Add a key to force re-render when uploadedData changes from null to something
-                            key={(uploadedData?.fileName || 'empty') + (uploadedData?.transactions.id || '0')}
                             view="SALES"
                         >
                             <DataPreviewModal
@@ -417,6 +438,33 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                         onConfirm={handleConfirmSubmission}
                                         onClose={handleCloseSalesModal}
                                     />
+                                }
+                            >
+                                <TransactionPreviewContent isFinanceView={false} />
+                            </DataPreviewModal>
+                        </TransactionPreviewProvider>
+                    )}
+
+                    {/* View-Only Modal for existing transactions */}
+                    {isSalesViewModalOpen && selectedSalesTransaction && (
+                        <TransactionPreviewProvider
+                            baseTransaction={selectedSalesTransaction}
+                            view="SALES"
+                        >
+                            <DataPreviewModal
+                                isOpen={isSalesViewModalOpen}
+                                title={UI_LABELS.TRANSACTION_ID_LABEL.replace('{id}', String(selectedSalesTransaction.transactions.transactionID || selectedSalesTransaction.transactions.id))}
+                                onClose={handleCloseSalesViewModal}
+                                status={selectedSalesTransaction.transactions.ApprovalStatus}
+                                footer={
+                                    <div className="w-full flex justify-end items-center p-5 border-t bg-white">
+                                        <button
+                                            onClick={handleCloseSalesViewModal}
+                                            className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                        >
+                                            {BUTTON_LABELS.CANCELAR}
+                                        </button>
+                                    </div>
                                 }
                             >
                                 <TransactionPreviewContent isFinanceView={false} />

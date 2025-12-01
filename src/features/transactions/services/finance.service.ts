@@ -98,33 +98,41 @@ export async function getTransactionDetails(transactionId: number): Promise<GetT
 }
 
 export async function updateTransactionStatus(
-    transactionId: number, 
-    action: 'approve' | 'reject', 
-    modifiedData: Partial<Transaction> = {}, 
-    fixedCosts: FixedCost[] | null = null, 
+    transactionId: number,
+    action: 'approve' | 'reject',
+    modifiedData: Partial<Transaction> = {},
+    fixedCosts: FixedCost[] | null = null,
     recurringServices: RecurringService[] | null = null
 ): Promise<BaseApiResponse> {
-    
+
     const endpoint = action === 'approve' ? API_CONFIG.ENDPOINTS.APPROVE_TRANSACTION : API_CONFIG.ENDPOINTS.REJECT_TRANSACTION;
-    
+
     const payload: {
-        transactions: Partial<Transaction>;
+        transactions?: Partial<Transaction>;
         fixed_costs?: FixedCost[] | null;
         recurring_services?: RecurringService[] | null;
-    } = {
-        transactions: modifiedData
-    };
-    
-    if (fixedCosts) {
-        payload.fixed_costs = fixedCosts;
+        rejection_note?: string;
+    } = {};
+
+    // For approve, send transactions and costs
+    if (action === 'approve') {
+        payload.transactions = modifiedData;
+        if (fixedCosts) {
+            payload.fixed_costs = fixedCosts;
+        }
+        if (recurringServices) {
+            payload.recurring_services = recurringServices;
+        }
+    } else {
+        // For reject, send rejection_note if present
+        if (modifiedData.rejection_note) {
+            payload.rejection_note = modifiedData.rejection_note;
+        }
     }
-    if (recurringServices) {
-        payload.recurring_services = recurringServices;
-    }
-    
+
     try {
         const result = await api.post<BaseApiResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTION_DETAIL}/${endpoint}/${transactionId}`, payload);
-        
+
         if (result.success) {
             return { success: true };
         } else {

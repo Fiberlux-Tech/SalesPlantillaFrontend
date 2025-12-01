@@ -23,18 +23,23 @@ interface SalesTransactionListProps {
     transactions: FormattedSalesTransaction[];
     currentPage: number;
     totalPages: number;
-    // --- 1. PROP TYPE CHANGED ---
     onPageChange: (newPage: number) => void;
+    onRowClick?: (transaction: FormattedSalesTransaction) => void;
 }
 
 export function SalesTransactionList({
     transactions,
+    onRowClick,
     ...props // Pass through isLoading, currentPage, totalPages, onPageChange
 }: SalesTransactionListProps) {
 
-    // 3. Define the specific row render function (Unchanged)
+    // 3. Define the specific row render function with click handler
     const renderRow = (tx: FormattedSalesTransaction) => (
-        <TableRow key={tx.id} className="bg-white border-b hover:bg-gray-50">
+        <TableRow
+            key={tx.id}
+            className="bg-white border-b hover:bg-gray-50 cursor-pointer"
+            onClick={() => onRowClick?.(tx)}
+        >
             <TableCell className="px-6 py-4 font-medium text-gray-900">{tx.id}</TableCell>
             <TableCell className="px-6 py-4 font-bold text-gray-900">{tx.client}</TableCell>
             <TableCell className="px-6 py-4">{tx.salesman}</TableCell>

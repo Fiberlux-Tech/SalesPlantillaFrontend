@@ -61,6 +61,9 @@ export interface Transaction {
   aplicaCartaFianza?: boolean;
   tasaCartaFianza?: number;
   costoCartaFianza?: number;
+
+  // Rejection note
+  rejection_note?: string;
 }
 
 export interface FixedCost {

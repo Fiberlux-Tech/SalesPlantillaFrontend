@@ -505,6 +505,9 @@ export const VALIDATION_MESSAGES = {
 
   // Fixed Cost Code Manager Validation
   CODIGO_NO_VALIDO: 'Código no válido.',
+
+  // Rejection Note Validation
+  REJECTION_NOTE_MAX_LENGTH: 500,
 } as const;
 
 /**
