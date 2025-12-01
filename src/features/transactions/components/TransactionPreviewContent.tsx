@@ -4,6 +4,7 @@ import CostBreakdownRow from '@/features/transactions/components/CostBreakdownRo
 import {
     WarningIcon,
     CheckCircleIcon,
+    PlusIcon,
 } from '@/components/shared/Icons';
 import FixedCostsTable from '@/features/transactions/components/FixedCostsTable';
 import RecurringServicesTable from './RecurringServicesTable';
@@ -17,7 +18,7 @@ import {
 import { TransactionOverviewInputs } from './TransactionOverviewInputs';
 import { KpiMetricsGrid } from './KpiMetricsGrid';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
-import { TRANSACTION_STATUS, VALIDATION_MESSAGES, STATUS_MESSAGES, UI_LABELS, BUTTON_LABELS } from '@/config';
+import { TRANSACTION_STATUS, VALIDATION_MESSAGES, STATUS_MESSAGES, UI_LABELS } from '@/config';
 
 // --- 1. Definir los tipos de data que esperamos ---
 import type { RecurringService } from '@/types';
@@ -111,9 +112,10 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                 </div>
                 <button
                     onClick={(e) => { e.stopPropagation(); setIsCodeManagerOpen(true); }}
-                    className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-md transition-colors"
                 >
-                    {BUTTON_LABELS.CARGAR}
+                    <PlusIcon className="w-3.5 h-3.5" />
+                    <span>Agregar</span>
                 </button>
                 {isCodeManagerOpen && (
                     <FixedCostCodeManager
@@ -157,9 +159,10 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                 {totalsNode}
                 <button
                     onClick={(e) => { e.stopPropagation(); setIsRecurringCodeManagerOpen(true); }}
-                    className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-md transition-colors"
                 >
-                    {BUTTON_LABELS.CARGAR}
+                    <PlusIcon className="w-3.5 h-3.5" />
+                    <span>Agregar</span>
                 </button>
 
                 {isRecurringCodeManagerOpen && (
@@ -233,54 +236,54 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
         <>
             {/* Animated Container for Overview and KPIs */}
             <div
-                className={`transition-all duration-700 ease-in-out ${showOverviewAndKpis
-                        ? "max-h-[2000px] opacity-100 mb-6 overflow-visible"
-                        : "max-h-0 opacity-0 mb-0 overflow-hidden"
+                className={`grid transition-all duration-700 ease-in-out ${showOverviewAndKpis
+                    ? "grid-rows-[1fr] opacity-100 mb-6"
+                    : "grid-rows-[0fr] opacity-0 mb-0"
                     }`}
             >
-                {!isFinanceView && isPending && (<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">{STATUS_MESSAGES.REVIEW_DATA_CAREFULLY}</p> <p className="text-sm text-yellow-700">{STATUS_MESSAGES.REVIEW_DATA_MESSAGE}</p> </div> </div>)}
-                {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.PENDING && (<div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">{STATUS_MESSAGES.FINANCE_EDIT_MODE}</p> <p className="text-sm text-blue-700">{STATUS_MESSAGES.FINANCE_EDIT_INFO}</p> </div> </div>)}
-                {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED && (<div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">{STATUS_MESSAGES.APPROVED_TITLE}</p> <p className="text-sm text-green-700">{STATUS_MESSAGES.APPROVED_MESSAGE}</p> </div> </div>)}
-                {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.REJECTED_TITLE}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.REJECTED_MESSAGE}</p> </div> </div>)}
-                {!isFinanceView && (tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED || tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED) && (
-                    <div className={`border-l-4 p-4 rounded-md mb-6 flex items-start ${
-                        tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
+                <div className="overflow-hidden">
+                    {!isFinanceView && !isPending && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.TRANSACTION_STATUS.replace('{status}', tx.ApprovalStatus)}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.MODIFICATION_NOT_ALLOWED}</p> </div> </div>)}
+                    {!isFinanceView && isPending && (<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5" /> <div className="ml-3"> <p className="font-semibold text-yellow-800">{STATUS_MESSAGES.REVIEW_DATA_CAREFULLY}</p> <p className="text-sm text-yellow-700">{STATUS_MESSAGES.REVIEW_DATA_MESSAGE}</p> </div> </div>)}
+                    {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.PENDING && (<div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-blue-800" /> <div className="ml-3"> <p className="font-semibold text-blue-800">{STATUS_MESSAGES.FINANCE_EDIT_MODE}</p> <p className="text-sm text-blue-700">{STATUS_MESSAGES.FINANCE_EDIT_INFO}</p> </div> </div>)}
+                    {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED && (<div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md mb-6 flex items-start"> <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" /> <div className="ml-3"> <p className="font-semibold text-green-800">{STATUS_MESSAGES.APPROVED_TITLE}</p> <p className="text-sm text-green-700">{STATUS_MESSAGES.APPROVED_MESSAGE}</p> </div> </div>)}
+                    {isFinanceView && tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED && (<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 flex items-start"> <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" /> <div className="ml-3"> <p className="font-semibold text-red-800">{STATUS_MESSAGES.REJECTED_TITLE}</p> <p className="text-sm text-red-700">{STATUS_MESSAGES.REJECTED_MESSAGE}</p> </div> </div>)}
+                    {!isFinanceView && (tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED || tx.ApprovalStatus === TRANSACTION_STATUS.APPROVED) && (
+                        <div className={`border-l-4 p-4 rounded-md mb-6 flex items-start ${tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
                             ? 'bg-red-50 border-red-400'
                             : 'bg-green-50 border-green-400'
-                    }`}>
-                        {tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED ? (
-                            <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" />
-                        ) : (
-                            <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" />
-                        )}
-                        <div className="ml-3">
-                            <p className={`font-semibold ${
-                                tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
+                            }`}>
+                            {tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED ? (
+                                <WarningIcon className="flex-shrink-0 mt-0.5 text-red-800" />
+                            ) : (
+                                <CheckCircleIcon className="flex-shrink-0 mt-0.5 text-green-800" />
+                            )}
+                            <div className="ml-3">
+                                <p className={`font-semibold ${tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
                                     ? 'text-red-800'
                                     : 'text-green-800'
-                            }`}>
-                                {tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
-                                    ? STATUS_MESSAGES.REJECTED_TITLE
-                                    : STATUS_MESSAGES.APPROVED_TITLE}
-                            </p>
-                            <p className={`text-sm ${
-                                tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
+                                    }`}>
+                                    {tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
+                                        ? STATUS_MESSAGES.REJECTED_TITLE
+                                        : STATUS_MESSAGES.APPROVED_TITLE}
+                                </p>
+                                <p className={`text-sm ${tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
                                     ? 'text-red-700'
                                     : 'text-green-700'
-                            }`}>
-                                {tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
-                                    ? (tx.rejection_note || STATUS_MESSAGES.REJECTED_MESSAGE)
-                                    : STATUS_MESSAGES.APPROVED_MESSAGE}
-                            </p>
+                                    }`}>
+                                    {tx.ApprovalStatus === TRANSACTION_STATUS.REJECTED
+                                        ? (tx.rejection_note || STATUS_MESSAGES.REJECTED_MESSAGE)
+                                        : STATUS_MESSAGES.APPROVED_MESSAGE}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <TransactionOverviewInputs
-                    isFinanceView={isFinanceView}
-                />
+                    <TransactionOverviewInputs
+                        isFinanceView={isFinanceView}
+                    />
 
-                <KpiMetricsGrid />
+                    <KpiMetricsGrid />
+                </div>
             </div>
 
             <div className="mb-6">

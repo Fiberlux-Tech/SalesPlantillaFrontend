@@ -3,6 +3,8 @@ TO - DO's
 
 2. The Fixed Costs seciton should display total in PEN and USD next to each other
 
+3. ✅ Agregar animacion para modulo de preview.
+
 4. ✅ Add a note when finance approves/rejects, displayed on the top of the transaction for sales to read. (COMPLETED)
 
 5. ✅ Sales can open the preview modal, but only on read mode once its approved or rejected.
