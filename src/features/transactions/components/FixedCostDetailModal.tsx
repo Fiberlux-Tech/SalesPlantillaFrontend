@@ -27,13 +27,14 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
     if (cost && isEditMode) {
       setEditedValues({
         cantidad: cost.cantidad,
-        costoUnitario: cost.costoUnitario,
-        costo_currency: cost.costo_currency,
+        costoUnitario_original: cost.costoUnitario_original,
+        costoUnitario_currency: cost.costoUnitario_currency,
+        costoUnitario_pen: cost.costoUnitario_pen,
         ubicacion: cost.ubicacion,
         periodo_inicio: cost.periodo_inicio,
         duracion_meses: cost.duracion_meses,
       });
-      setCalculatedTotal(cost.total || 0);
+      setCalculatedTotal(cost.total_pen || 0);
     }
   }, [cost, isEditMode]);
 
@@ -43,14 +44,14 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
 
     const timer = setTimeout(() => {
       const cantidad = editedValues.cantidad ?? cost.cantidad ?? 0;
-      const costoUnitario = editedValues.costoUnitario ?? cost.costoUnitario ?? 0;
+      const costoUnitarioPen = editedValues.costoUnitario_pen ?? cost.costoUnitario_pen ?? 0;
 
-      // Simple calculation: Costo Unitario × Cantidad
-      // Note: The actual total might depend on duration if it's a monthly cost, 
+      // Simple calculation: Costo Unitario (in PEN) × Cantidad
+      // Note: The actual total might depend on duration if it's a monthly cost,
       // but for "Inversion" (Fixed Cost) usually it's a one-time or total project cost.
-      // However, the original code had `total` in the type. 
+      // However, the original code had `total` in the type.
       // Let's assume Total = Cantidad * Costo Unitario for the display.
-      setCalculatedTotal(cantidad * costoUnitario);
+      setCalculatedTotal(cantidad * costoUnitarioPen);
     }, 300);
 
     return () => clearTimeout(timer);
@@ -73,7 +74,7 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
     const updatedCost: FixedCost = {
       ...cost,
       ...editedValues,
-      total: calculatedTotal,
+      total_pen: calculatedTotal,
     };
 
     onSave(updatedCost);
@@ -143,14 +144,14 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
                   <div className="flex items-center">
                     <input
                       type="number"
-                      value={getCurrentValue('costoUnitario') as number}
-                      onChange={(e) => handleFieldChange('costoUnitario', parseFloat(e.target.value) || 0)}
+                      value={getCurrentValue('costoUnitario_original') as number}
+                      onChange={(e) => handleFieldChange('costoUnitario_original', parseFloat(e.target.value) || 0)}
                       className="w-full text-2xl font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       step="0.01"
                     />
                     <CurrencySelect
-                      value={getCurrentValue('costo_currency') as "PEN" | "USD"}
-                      onChange={(value) => handleFieldChange('costo_currency', value)}
+                      value={getCurrentValue('costoUnitario_currency') as "PEN" | "USD"}
+                      onChange={(value) => handleFieldChange('costoUnitario_currency', value)}
                     />
                   </div>
                 </div>
@@ -158,9 +159,9 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-gray-500 mb-1">Costo Unitario</p>
                   <p className="text-lg font-semibold text-gray-900">
-                    {formatCurrency(cost.costoUnitario) || '-'}
-                    {cost.costoUnitario !== null && cost.costoUnitario !== undefined && cost.costoUnitario !== 0 && (
-                      <span className="text-base font-medium text-gray-600 ml-1">{cost.costo_currency || 'USD'}</span>
+                    {formatCurrency(cost.costoUnitario_original) || '-'}
+                    {cost.costoUnitario_original !== null && cost.costoUnitario_original !== undefined && cost.costoUnitario_original !== 0 && (
+                      <span className="text-base font-medium text-gray-600 ml-1">{cost.costoUnitario_currency || 'USD'}</span>
                     )}
                   </p>
                 </div>
@@ -188,12 +189,10 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
 
             {/* Simple Total Cost Calculation */}
             <div className="pt-4 border-t border-gray-200">
-              <p className="text-sm font-medium text-gray-500 mb-1">Total Cost (Costo Unit. × Cantidad)</p>
+              <p className="text-sm font-medium text-gray-500 mb-1">Total Cost (Costo Unit. × Cantidad) - in PEN</p>
               <p className="text-2xl font-bold text-red-700">
-                {formatCurrency(isEditMode ? calculatedTotal : cost.total || (cost.costoUnitario * cost.cantidad))}
-                <span className="text-lg font-medium ml-1">
-                  {isEditMode ? (getCurrentValue('costo_currency') as string) : (cost.costo_currency || 'USD')}
-                </span>
+                {formatCurrency(isEditMode ? calculatedTotal : cost.total_pen || (cost.costoUnitario_pen * cost.cantidad))}
+                <span className="text-lg font-medium ml-1">PEN</span>
               </p>
             </div>
           </div>

@@ -29,10 +29,12 @@ export interface Transaction {
   ApprovalStatus: "PENDING" | "APPROVED" | "REJECTED";
   
   // Financials
-  MRC: number;
-  NRC: number;
-  mrc_currency: "PEN" | "USD";
-  nrc_currency: "PEN" | "USD";
+  MRC_original: number;
+  MRC_currency: "PEN" | "USD";
+  MRC_pen: number;
+  NRC_original: number;
+  NRC_currency: "PEN" | "USD";
+  NRC_pen: number;
   plazoContrato: number;
   tipoCambio: number;
   costoCapitalAnual: number;
@@ -73,11 +75,12 @@ export interface FixedCost {
   ticket: string;
   ubicacion: string;
   cantidad: number;
-  costoUnitario: number;
-  costo_currency: "PEN" | "USD";
+  costoUnitario_original: number;
+  costoUnitario_currency: "PEN" | "USD";
+  costoUnitario_pen: number;
   periodo_inicio: number;
   duracion_meses: number;
-  total: number;
+  total_pen: number;
 }
 
 export interface RecurringService {
@@ -85,14 +88,17 @@ export interface RecurringService {
   tipo_servicio: string;
   ubicacion: string;
   Q: number;
-  P: number;
-  p_currency: "PEN" | "USD";
-  ingreso: number;
-  CU1: number;
-  CU2: number;
+  P_original: number;
+  P_currency: "PEN" | "USD";
+  P_pen: number;
+  ingreso_pen: number;
+  CU1_original: number;
+  CU2_original: number;
+  CU_currency: "PEN" | "USD";
+  CU1_pen: number;
+  CU2_pen: number;
   proveedor: string;
-  cu_currency: "PEN" | "USD";
-  egreso: number;
+  egreso_pen: number;
 }
 
 export interface CashFlowTimeline {

@@ -181,10 +181,10 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
     const confirmedRegion = liveEdits?.gigalan_region ?? tx.gigalan_region;
     const confirmedSaleType = liveEdits?.gigalan_sale_type ?? tx.gigalan_sale_type;
 
-    const confirmedMrcValue = liveEdits?.MRC ?? kpiData.MRC ?? tx.MRC;
-    const confirmedMrcCurrency = liveEdits?.mrc_currency ?? kpiData.mrc_currency ?? tx.mrc_currency ?? CURRENCIES.DEFAULT;
-    const confirmedNrcValue = liveEdits?.NRC ?? kpiData.NRC ?? tx.NRC;
-    const confirmedNrcCurrency = liveEdits?.nrc_currency ?? kpiData.nrc_currency ?? tx.nrc_currency ?? CURRENCIES.DEFAULT;
+    const confirmedMrcValue = liveEdits?.MRC_original ?? kpiData.MRC_original ?? tx.MRC_original;
+    const confirmedMrcCurrency = liveEdits?.MRC_currency ?? kpiData.MRC_currency ?? tx.MRC_currency ?? CURRENCIES.DEFAULT;
+    const confirmedNrcValue = liveEdits?.NRC_original ?? kpiData.NRC_original ?? tx.NRC_original;
+    const confirmedNrcCurrency = liveEdits?.NRC_currency ?? kpiData.NRC_currency ?? tx.NRC_currency ?? CURRENCIES.DEFAULT;
     const confirmedAplicaCartaFianza = liveEdits?.aplicaCartaFianza ?? tx.aplicaCartaFianza;
 
     const confirmedCompanyID = liveEdits?.companyID ?? tx.companyID;
@@ -239,34 +239,34 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
 
     // 1. FIX: Make the second parameter optional to match InlineEditWrapper's definition
     const handleConfirmMrc = (finalValue: number | string | null, finalCurrency?: string | null) => {
-        const newValue = parseFloat(finalValue as string); 
-        const finalCurrencySafe = finalCurrency || confirmedMrcCurrency; 
+        const newValue = parseFloat(finalValue as string);
+        const finalCurrencySafe = finalCurrency || confirmedMrcCurrency;
 
         if (!isNaN(newValue) && newValue >= 0) {
             // FIX: Use single, ATOMIC dispatch for MRC/Currency pair
-            dispatch({ 
-                type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS', 
+            dispatch({
+                type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS',
                 payload: {
-                    MRC: newValue,
-                    mrc_currency: finalCurrencySafe
+                    MRC_original: newValue,
+                    MRC_currency: finalCurrencySafe
                 }
             });
         } else {
             alert(VALIDATION_MESSAGES.MRC_INVALID);
         }
     };
-    
+
     const handleConfirmNrc = (finalValue: number | string | null, finalCurrency?: string | null) => {
         const newValue = parseFloat(finalValue as string);
-        const finalCurrencySafe = finalCurrency || confirmedNrcCurrency; 
+        const finalCurrencySafe = finalCurrency || confirmedNrcCurrency;
 
         if (!isNaN(newValue) && newValue >= 0) {
             // FIX: Use single, ATOMIC dispatch for NRC/Currency pair
-            dispatch({ 
-                type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS', 
+            dispatch({
+                type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS',
                 payload: {
-                    NRC: newValue,
-                    nrc_currency: finalCurrencySafe
+                    NRC_original: newValue,
+                    NRC_currency: finalCurrencySafe
                 }
             });
         } else {

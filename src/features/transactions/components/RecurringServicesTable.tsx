@@ -96,8 +96,8 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                             <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.tipo_servicio)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle truncate" title={item.ubicacion || undefined}>{formatCellData(item.ubicacion)}</td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">{formatCellData(item.Q)}</td>
-                            <td className="px-3 py-2 text-green-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.ingreso)}</td>
-                            <td className="px-3 py-2 text-red-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.egreso)}</td>
+                            <td className="px-3 py-2 text-green-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.ingreso_pen)}</td>
+                            <td className="px-3 py-2 text-red-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.egreso_pen)}</td>
                             <td className="px-3 py-2 align-middle">
                                 <TableActionIcons
                                     onView={() => handleViewDetails(item)}

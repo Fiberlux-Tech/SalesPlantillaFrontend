@@ -28,15 +28,18 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
     if (service && isEditMode) {
       setEditedValues({
         Q: service.Q,
-        P: service.P,
-        p_currency: service.p_currency,
-        CU1: service.CU1,
-        CU2: service.CU2,
-        cu_currency: service.cu_currency,
+        P_original: service.P_original,
+        P_currency: service.P_currency,
+        P_pen: service.P_pen,
+        CU1_original: service.CU1_original,
+        CU2_original: service.CU2_original,
+        CU_currency: service.CU_currency,
+        CU1_pen: service.CU1_pen,
+        CU2_pen: service.CU2_pen,
         proveedor: service.proveedor,
       });
-      setCalculatedIngreso(service.ingreso);
-      setCalculatedEgreso(service.egreso);
+      setCalculatedIngreso(service.ingreso_pen);
+      setCalculatedEgreso(service.egreso_pen);
     }
   }, [service, isEditMode]);
 
@@ -46,12 +49,12 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
 
     const timer = setTimeout(() => {
       const Q = editedValues.Q ?? service.Q ?? 0;
-      const P = editedValues.P ?? service.P ?? 0;
-      const CU1 = editedValues.CU1 ?? service.CU1 ?? 0;
-      const CU2 = editedValues.CU2 ?? service.CU2 ?? 0;
+      const P_pen = editedValues.P_pen ?? service.P_pen ?? 0;
+      const CU1_pen = editedValues.CU1_pen ?? service.CU1_pen ?? 0;
+      const CU2_pen = editedValues.CU2_pen ?? service.CU2_pen ?? 0;
 
-      setCalculatedIngreso(Q * P);
-      setCalculatedEgreso(Q * (CU1 + CU2));
+      setCalculatedIngreso(Q * P_pen);
+      setCalculatedEgreso(Q * (CU1_pen + CU2_pen));
     }, 300);
 
     return () => clearTimeout(timer);
@@ -75,8 +78,8 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
     const updatedService: RecurringService = {
       ...service,
       ...editedValues,
-      ingreso: calculatedIngreso,
-      egreso: calculatedEgreso,
+      ingreso_pen: calculatedIngreso,
+      egreso_pen: calculatedEgreso,
     };
 
     onSave(updatedService);
@@ -113,37 +116,19 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* Ingreso Mensual */}
             <div className="bg-blue-50 rounded-lg p-4">
-              <p className="text-sm font-medium text-blue-600 uppercase tracking-wider mb-1">INGRESO MENSUAL</p>
+              <p className="text-sm font-medium text-blue-600 uppercase tracking-wider mb-1">INGRESO MENSUAL (PEN)</p>
               <p className="text-3xl font-bold text-blue-700">
-                {formatCurrency(isEditMode ? calculatedIngreso : service.ingreso)}{' '}
-                <span className="text-xl font-medium">
-                  {isEditMode ? (
-                    <CurrencySelect
-                      value={getCurrentValue('p_currency') as "PEN" | "USD"}
-                      onChange={(value) => handleFieldChange('p_currency', value)}
-                    />
-                  ) : (
-                    service.p_currency || 'PEN'
-                  )}
-                </span>
+                {formatCurrency(isEditMode ? calculatedIngreso : service.ingreso_pen)}{' '}
+                <span className="text-xl font-medium">PEN</span>
               </p>
             </div>
 
             {/* Costo Mensual */}
             <div className="bg-red-50 rounded-lg p-4">
-              <p className="text-sm font-medium text-red-600 uppercase tracking-wider mb-1">COSTO MENSUAL</p>
+              <p className="text-sm font-medium text-red-600 uppercase tracking-wider mb-1">COSTO MENSUAL (PEN)</p>
               <p className="text-3xl font-bold text-red-700">
-                {formatCurrency(isEditMode ? calculatedEgreso : service.egreso)}{' '}
-                <span className="text-xl font-medium">
-                  {isEditMode ? (
-                    <CurrencySelect
-                      value={getCurrentValue('cu_currency') as "PEN" | "USD"}
-                      onChange={(value) => handleFieldChange('cu_currency', value)}
-                    />
-                  ) : (
-                    service.cu_currency || 'USD'
-                  )}
-                </span>
+                {formatCurrency(isEditMode ? calculatedEgreso : service.egreso_pen)}{' '}
+                <span className="text-xl font-medium">PEN</span>
               </p>
             </div>
           </div>
@@ -166,61 +151,80 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
               )}
 
               {/* Precio Unitario */}
-              {isEditMode ? (
-                <NumberInput
-                  value={getCurrentValue('P') as number}
-                  onChange={(value) => handleFieldChange('P', value)}
-                  label="Precio Unitario"
-                />
-              ) : (
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Precio Unitario</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {formatCurrency(service.P) || '-'}
-                    {service.P !== null && service.P !== undefined && service.P !== 0 && (
-                      <span className="text-base font-medium text-gray-600 ml-1">{service.p_currency || 'PEN'}</span>
-                    )}
-                  </p>
-                </div>
-              )}
+              <div className="col-span-2">
+                {isEditMode ? (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-1">Precio Unitario</p>
+                    <div className="flex items-center gap-2">
+                      <NumberInput
+                        value={getCurrentValue('P_original') as number}
+                        onChange={(value) => handleFieldChange('P_original', value)}
+                        label=""
+                      />
+                      <CurrencySelect
+                        value={getCurrentValue('P_currency') as "PEN" | "USD"}
+                        onChange={(value) => handleFieldChange('P_currency', value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-1">Precio Unitario</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {formatCurrency(service.P_original) || '-'}
+                      {service.P_original !== null && service.P_original !== undefined && service.P_original !== 0 && (
+                        <span className="text-base font-medium text-gray-600 ml-1">{service.P_currency || 'PEN'}</span>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-              {/* Costo Unitario (CU1) */}
-              {isEditMode ? (
-                <NumberInput
-                  value={getCurrentValue('CU1') as number}
-                  onChange={(value) => handleFieldChange('CU1', value)}
-                  label="Costo Unitario"
-                />
-              ) : (
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Costo Unitario</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {formatCurrency(service.CU1) || '-'}
-                    {service.CU1 !== null && service.CU1 !== undefined && service.CU1 !== 0 && (
-                      <span className="text-base font-medium text-gray-600 ml-1">{service.cu_currency || 'USD'}</span>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              {/* Costo Unit. (Transporte) (CU2) */}
-              {isEditMode ? (
-                <NumberInput
-                  value={getCurrentValue('CU2') as number}
-                  onChange={(value) => handleFieldChange('CU2', value)}
-                  label="Costo Unit. (Transporte)"
-                />
-              ) : (
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Costo Unit. (Transporte)</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {formatCurrency(service.CU2) || '-'}
-                    {service.CU2 !== null && service.CU2 !== undefined && service.CU2 !== 0 && (
-                      <span className="text-base font-medium text-gray-600 ml-1">{service.cu_currency || 'USD'}</span>
-                    )}
-                  </p>
-                </div>
-              )}
+              {/* Costo Unitario (CU1) and Costo Unit. Transporte (CU2) */}
+              <div className="col-span-2">
+                {isEditMode ? (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-1">Costos Unitarios</p>
+                    <div className="flex items-center gap-2">
+                      <NumberInput
+                        value={getCurrentValue('CU1_original') as number}
+                        onChange={(value) => handleFieldChange('CU1_original', value)}
+                        label="CU1"
+                      />
+                      <NumberInput
+                        value={getCurrentValue('CU2_original') as number}
+                        onChange={(value) => handleFieldChange('CU2_original', value)}
+                        label="CU2"
+                      />
+                      <CurrencySelect
+                        value={getCurrentValue('CU_currency') as "PEN" | "USD"}
+                        onChange={(value) => handleFieldChange('CU_currency', value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Costo Unitario</p>
+                      <p className="text-2xl font-semibold text-gray-900">
+                        {formatCurrency(service.CU1_original) || '-'}
+                        {service.CU1_original !== null && service.CU1_original !== undefined && service.CU1_original !== 0 && (
+                          <span className="text-base font-medium text-gray-600 ml-1">{service.CU_currency || 'USD'}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Costo Unit. (Transporte)</p>
+                      <p className="text-2xl font-semibold text-gray-900">
+                        {formatCurrency(service.CU2_original) || '-'}
+                        {service.CU2_original !== null && service.CU2_original !== undefined && service.CU2_original !== 0 && (
+                          <span className="text-base font-medium text-gray-600 ml-1">{service.CU_currency || 'USD'}</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Proveedor */}
               {isEditMode ? (

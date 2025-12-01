@@ -64,9 +64,9 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
-    const totalFixedCosts = useMemo(() => (currentFixedCosts || []).reduce((acc, item) => acc + (item.total || 0), 0), [currentFixedCosts]);
-    const totalRecurringCosts = useMemo(() => (currentRecurringServices || []).reduce((acc, item) => acc + (item.egreso || 0), 0), [currentRecurringServices]);
-    const totalRecurringIncome = useMemo(() => (currentRecurringServices || []).reduce((acc, item) => acc + (item.ingreso || 0), 0), [currentRecurringServices]);
+    const totalFixedCosts = useMemo(() => (currentFixedCosts || []).reduce((acc, item) => acc + (item.total_pen || 0), 0), [currentFixedCosts]);
+    const totalRecurringCosts = useMemo(() => (currentRecurringServices || []).reduce((acc, item) => acc + (item.egreso_pen || 0), 0), [currentRecurringServices]);
+    const totalRecurringIncome = useMemo(() => (currentRecurringServices || []).reduce((acc, item) => acc + (item.ingreso_pen || 0), 0), [currentRecurringServices]);
     const loadedFixedCostCodes = useMemo(() => {
         return (currentFixedCosts || [])
             .map(c => c.ticket)

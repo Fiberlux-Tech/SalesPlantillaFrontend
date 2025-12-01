@@ -115,7 +115,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                                         min={1}
                                     />
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap text-red-600 font-medium text-right">{formatCurrency(item.total)}</td>
+                                <td className="px-4 py-2 whitespace-nowrap text-red-600 font-medium text-right">{formatCurrency(item.total_pen)}</td>
                                 <td className="px-4 py-2 align-middle">
                                     <TableActionIcons
                                         onView={() => handleViewDetails(item)}

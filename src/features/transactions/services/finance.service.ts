@@ -17,7 +17,7 @@ export interface FormattedFinanceTransaction {
     unidadNegocio: string;
     clientName: string;
     salesman: string;
-    MRC: number;
+    MRC_pen: number;
     plazoContrato: number;
     grossMarginRatio: number;
     payback: number;
@@ -62,7 +62,7 @@ export async function getFinanceTransactions(page: number): Promise<GetFinanceTr
                 unidadNegocio: tx.unidadNegocio,
                 clientName: tx.clientName,
                 salesman: tx.salesman,
-                MRC: tx.MRC,
+                MRC_pen: tx.MRC_pen,
                 plazoContrato: tx.plazoContrato,
                 grossMarginRatio: tx.grossMarginRatio,
                 payback: tx.payback,
