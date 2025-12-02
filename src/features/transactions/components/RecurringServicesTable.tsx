@@ -82,7 +82,7 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                 <table className="w-full text-sm divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50">
                     <tr>
-                        <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
+                        <th scope="col" className="w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
                         <th scope="col" className="w-40 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.UBICACION}</th>
                         <th scope="col" className="w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.CANTIDAD}</th>
                         <th scope="col" className="w-32 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.MRR}</th>
@@ -93,8 +93,16 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                 <tbody className="bg-white divide-y divide-gray-200">
                     {data.map((item, index) => (
                         <tr key={`recurring-service-${item.id}-${index}`} className="hover:bg-gray-50">
-                            <td className="px-3 py-2 text-gray-800 align-middle whitespace-nowrap">{formatCellData(item.tipo_servicio)}</td>
-                            <td className="px-3 py-2 text-gray-800 align-middle truncate" title={item.ubicacion || undefined}>{formatCellData(item.ubicacion)}</td>
+                            <td className="px-3 py-2 text-gray-800 align-middle">
+                                <div className="truncate" title={item.tipo_servicio || undefined}>
+                                    {formatCellData(item.tipo_servicio)}
+                                </div>
+                            </td>
+                            <td className="px-3 py-2 text-gray-800 align-middle">
+                                <div className="truncate" title={item.ubicacion || undefined}>
+                                    {formatCellData(item.ubicacion)}
+                                </div>
+                            </td>
                             <td className="px-3 py-2 text-gray-800 align-middle text-center whitespace-nowrap">{formatCellData(item.Q)}</td>
                             <td className="px-3 py-2 text-green-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.ingreso_pen)}</td>
                             <td className="px-3 py-2 text-red-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.egreso_pen)}</td>

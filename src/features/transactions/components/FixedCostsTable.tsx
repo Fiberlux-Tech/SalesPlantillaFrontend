@@ -86,10 +86,10 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                 <table className="min-w-full text-sm divide-y divide-gray-200 table-fixed">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th scope="col" className="w-40 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
-                            <th scope="col" className="w-32 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TICKET}</th>
+                            <th scope="col" className="w-48 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TIPO_SERVICIO}</th>
+                            <th scope="col" className="w-24 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TICKET}</th>
                             <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.INICIO}</th>
-                            <th scope="col" className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.DURACION}</th>
+                            <th scope="col" className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.DURACION}</th>
                             <th scope="col" className="w-32 px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.TOTAL_USD}</th>
                             <th scope="col" className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.ACCIONES}</th>
                         </tr>
@@ -97,8 +97,16 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {data.map((item, index) => (
                             <tr key={`fixed-cost-${item.id}-${index}`} className="hover:bg-gray-50">
-                                <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.tipo_servicio)}</td>
-                                <td className="px-4 py-2 whitespace-nowrap text-gray-800">{formatCellData(item.ticket)}</td>
+                                <td className="px-4 py-2 text-gray-800">
+                                    <div className="truncate" title={item.tipo_servicio || undefined}>
+                                        {formatCellData(item.tipo_servicio)}
+                                    </div>
+                                </td>
+                                <td className="px-4 py-2 text-gray-800">
+                                    <div className="truncate" title={item.ticket || undefined}>
+                                        {formatCellData(item.ticket)}
+                                    </div>
+                                </td>
                                 <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-center">
                                     <EditableTableCell
                                         currentValue={item.periodo_inicio ?? 0}
