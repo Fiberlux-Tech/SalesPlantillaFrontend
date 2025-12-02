@@ -85,12 +85,13 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     }, [currentRecurringServices]);
 
     // Determine if we should show Transaction Overview and KPIs
-    // Show when: Excel file loaded (and not just the default "Nueva Plantilla") OR at least one recurring service added
+    // Show expanded if transaction has any status (PENDING, APPROVED, REJECTED)
+    // Show collapsed only when creating a new transaction (no status yet)
     const showOverviewAndKpis = useMemo(() => {
-        const isDefaultFile = baseTransaction.fileName === UI_LABELS.NUEVA_PLANTILLA;
-        const hasServices = (currentRecurringServices || []).length > 0;
-        return (!isDefaultFile && !!baseTransaction.fileName) || hasServices;
-    }, [baseTransaction.fileName, currentRecurringServices]);
+        const tx = baseTransaction.transactions;
+        const hasStatus = tx.ApprovalStatus && tx.ApprovalStatus.length > 0;
+        return hasStatus;
+    }, [baseTransaction.transactions.ApprovalStatus]);
 
 
     // (CustomFixedCostTotalsNode remains the same)
