@@ -278,6 +278,24 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         }
     };
 
+    /**
+     * Handler for submitting a BORRADOR transaction to PENDING
+     */
+    const handleSubmitTransaction = async (transactionId: number) => {
+        setApiError(null);
+
+        const result = await submitTransaction(transactionId);
+
+        if (result.success) {
+            // Close modal and refresh list
+            setIsPreviewModalOpen(false);
+            setUploadedData(null);
+            fetchTransactions(currentPage);
+        } else {
+            alert(`${UI_LABELS.ERROR_PREFIX}${result.error}`);
+        }
+    };
+
     const handleCloseFinanceModal = () => {
         setIsDetailModalOpen(false);
         setSelectedTransaction(null);
