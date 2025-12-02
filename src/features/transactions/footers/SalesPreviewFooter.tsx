@@ -44,16 +44,14 @@ export function SalesPreviewFooter({ transaction, onConfirm, onClose, onSubmit }
             return;
         }
 
-        // Check if transaction is in BORRADOR status
-        const isBorrador = finalTransactionState.ApprovalStatus === 'BORRADOR';
-        
-        if (isBorrador) {
-            // For BORRADOR: Call the submit endpoint to transition to PENDING
-            if (transaction?.transactions?.id) {
-                onSubmit(transaction.transactions.id);
-            }
+        // Check if transaction is in BORRADOR status and has an ID
+        const isExistingBorrador = finalTransactionState.ApprovalStatus === 'BORRADOR' && transaction?.transactions?.id;
+
+        if (isExistingBorrador) {
+            // For existing BORRADOR: Call the submit endpoint to transition to PENDING
+            onSubmit(transaction.transactions.id);
         } else {
-            // For PENDING/other statuses: Use existing confirm logic
+            // For new transactions (which are BORRADOR by default) or other statuses: Use the standard confirm logic
             const finalPayload = {
                 ...baseTransaction,
                 fixed_costs: currentFixedCosts,

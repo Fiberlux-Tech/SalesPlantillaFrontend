@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Transaction, TransactionDetailResponse, FixedCost, RecurringService } from '@/types';
 import { TransactionDashboardLayout } from './components/TransactionDashboardLayout';
 import { TransactionPreviewContent } from './components/TransactionPreviewContent';
-import { UI_LABELS, ERROR_MESSAGES, BUTTON_LABELS } from '@/config';
+import { UI_LABELS, ERROR_MESSAGES, BUTTON_LABELS, TRANSACTION_STATUS } from '@/config';
 import { getAllKpis, type KpiData } from './services/kpi.service';
 
 // --- Sales-Specific Imports ---
@@ -202,7 +202,15 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 
     const handleConfirmSubmission = async (finalData: TransactionDetailResponse['data']) => {
         setApiError(null);
-        const finalPayload = { ...finalData, transactions: { ...finalData.transactions } };
+        
+        // Ensure the status is PENDING before submission
+        const finalPayload = { 
+            ...finalData, 
+            transactions: { 
+                ...finalData.transactions,
+                ApprovalStatus: TRANSACTION_STATUS.PENDING // <-- Set status to PENDING
+            } 
+        };
         delete (finalPayload as any).timeline;
 
         const result = await submitFinalTransaction(finalPayload);
