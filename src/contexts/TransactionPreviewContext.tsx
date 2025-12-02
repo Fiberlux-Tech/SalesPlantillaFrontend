@@ -65,7 +65,7 @@ export function TransactionPreviewProvider({
     
     // 3. canEdit logic remains the same
     const canEdit = useMemo(
-        () => baseTransaction.transactions.ApprovalStatus === 'PENDING',
+        () => ['PENDING', 'BORRADOR'].includes(baseTransaction.transactions.ApprovalStatus),
         [baseTransaction]
     );
 
@@ -88,7 +88,7 @@ export function TransactionPreviewProvider({
         // Create AbortController for this request
         const abortController = new AbortController();
 
-        // --- MODIFICATION: Set up a 500ms timer ---
+        // --- MODIFICATION: Set up a 1500ms timer ---
         const handler = setTimeout(() => {
             // Define the async function *inside* the timer callback
             const recalculate = async () => {
@@ -157,7 +157,7 @@ export function TransactionPreviewProvider({
 
             // Call the async function
             recalculate();
-        }, 500); // <-- Wait 500ms after the last dependency change
+        }, 1500); // <-- Wait 1500ms after the last dependency change
 
         // --- MODIFICATION: Cleanup function ---
         return () => {
