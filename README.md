@@ -9,7 +9,7 @@ TO - DO's
 
 5. ✅ Sales can open the preview modal, but only on read mode once its approved or rejected.
 
-6. El modulo no detecta que hay info si no esta llena la tabla de serviciosRecurrentes
+6. ✅ El modulo no detecta que hay info si no esta llena la tabla de serviciosRecurrentes
 
 7. KPIs en sales view y finance veiw deberian ser live.
 

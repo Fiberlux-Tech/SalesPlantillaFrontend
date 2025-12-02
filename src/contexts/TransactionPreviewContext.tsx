@@ -69,6 +69,27 @@ export function TransactionPreviewProvider({
         [baseTransaction]
     );
 
+    // FIX: Reset state when baseTransaction changes (e.g., after Excel upload)
+    useEffect(() => {
+        // Skip on initial mount (reducer already initialized)
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
+
+        // Check if baseTransaction actually has new data
+        const hasData = baseTransaction.fixed_costs?.length > 0 || baseTransaction.recurring_services?.length > 0;
+        const currentHasData = draftState.currentFixedCosts.length > 0 || draftState.currentRecurringServices.length > 0;
+
+        // Only reset if baseTransaction has data but current state doesn't
+        // OR if the data changed significantly
+        if (hasData && (!currentHasData ||
+            baseTransaction.fixed_costs?.length !== draftState.currentFixedCosts.length ||
+            baseTransaction.recurring_services?.length !== draftState.currentRecurringServices.length)) {
+            dispatch({ type: 'RESET_STATE', payload: baseTransaction });
+        }
+    }, [baseTransaction, draftState.currentFixedCosts.length, draftState.currentRecurringServices.length, dispatch]);
+
     // 4. This useEffect now handles ALL recalculations automatically (WITH DEBOUNCING)
     useEffect(() => {
         // --- 3. ADD THIS BLOCK ---

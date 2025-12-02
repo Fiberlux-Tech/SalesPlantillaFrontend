@@ -187,6 +187,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
 
         setApiError(null);
         const result = await uploadExcelForPreview(file);
+
         if (result.success && result.data) {
             setUploadedData(result.data); // Set the new data
         } else {

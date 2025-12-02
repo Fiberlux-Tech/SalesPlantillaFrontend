@@ -31,7 +31,8 @@ export type PreviewAction =
     | { type: 'RECALCULATION_START' }
     | { type: 'RECALCULATION_SUCCESS'; payload: KpiCalculationResponse['data'] }
     | { type: 'RECALCULATION_ERROR'; payload: string }
-    | { type: 'SET_API_ERROR'; payload: string | null };
+    | { type: 'SET_API_ERROR'; payload: string | null }
+    | { type: 'RESET_STATE'; payload: TransactionDetailResponse['data'] };
 
 // 3. Create the initializer function
 export function getInitialState(
@@ -41,6 +42,7 @@ export function getInitialState(
         ...baseTransaction.transactions,
         timeline: baseTransaction.transactions.timeline || baseTransaction.timeline,
     };
+
     return {
         liveEdits: {},
         currentFixedCosts: baseTransaction.fixed_costs || [],
@@ -179,6 +181,13 @@ export function transactionPreviewReducer(
                 ...state,
                 apiError: action.payload,
             };
+
+        case 'RESET_STATE':
+            console.log('🔄 RESETTING STATE with new baseTransaction:', {
+                newFixedCostsCount: action.payload.fixed_costs?.length,
+                newRecurringServicesCount: action.payload.recurring_services?.length
+            });
+            return getInitialState(action.payload);
 
         default:
             return state;
