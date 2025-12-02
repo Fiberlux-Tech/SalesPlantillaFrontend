@@ -6,11 +6,13 @@ import { BUSINESS_UNITS, VALIDATION_MESSAGES, STATUS_MESSAGES, BUTTON_LABELS } f
 
 // --- PROPS INTERFACE (No change) ---
 interface SalesPreviewFooterProps {
+    transaction: TransactionDetailResponse['data'];
     onConfirm: (finalData: TransactionDetailResponse['data']) => void;
     onClose: () => void;
+    onSubmit: (transactionId: number) => void;
 }
 
-export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterProps) {
+export function SalesPreviewFooter({ transaction, onConfirm, onClose, onSubmit }: SalesPreviewFooterProps) {
 
     // --- 1. GET DATA FROM CONTEXT (Refactored) ---
     // Get dispatch and draftState
@@ -29,31 +31,37 @@ export function SalesPreviewFooter({ onConfirm, onClose }: SalesPreviewFooterPro
     } = draftState;
 
     const handleConfirmClick = () => {
-        // 3. Use dispatch to set the error state
         dispatch({ type: 'SET_API_ERROR', payload: null });
 
         // Combine base transaction with any live edits to get the final state
         const finalTransactionState = { ...baseTransaction.transactions, ...liveEdits };
 
-        // --- ADD THIS VALIDATION BLOCK ---
+        // Validation
         if (!finalTransactionState.unidadNegocio || !(BUSINESS_UNITS.LIST as readonly string[]).includes(finalTransactionState.unidadNegocio)) {
             const errorMsg = VALIDATION_MESSAGES.UNIDAD_REQUIRED;
             dispatch({ type: 'SET_API_ERROR', payload: errorMsg });
             alert(errorMsg);
-            return; // Stop the submission
+            return;
         }
-        // --- END OF VALIDATION BLOCK ---
 
-        // Build the final payload from context state
-        const finalPayload = {
-            ...baseTransaction,
-            fixed_costs: currentFixedCosts,
-            recurring_services: currentRecurringServices,
-            transactions: finalTransactionState, // Use the already merged object
-        };
-
-        // Pass the complete, live payload up to the dashboard handler
-        onConfirm(finalPayload);
+        // Check if transaction is in BORRADOR status
+        const isBorrador = finalTransactionState.ApprovalStatus === 'BORRADOR';
+        
+        if (isBorrador) {
+            // For BORRADOR: Call the submit endpoint to transition to PENDING
+            if (transaction?.transactions?.id) {
+                onSubmit(transaction.transactions.id);
+            }
+        } else {
+            // For PENDING/other statuses: Use existing confirm logic
+            const finalPayload = {
+                ...baseTransaction,
+                fixed_costs: currentFixedCosts,
+                recurring_services: currentRecurringServices,
+                transactions: finalTransactionState,
+            };
+            onConfirm(finalPayload);
+        }
     };
 
     return (

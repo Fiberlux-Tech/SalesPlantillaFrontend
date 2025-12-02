@@ -26,8 +26,8 @@ export interface Transaction {
   salesman: string;
   submissionDate: string;
   approvalDate?: string;
-  ApprovalStatus: "PENDING" | "APPROVED" | "REJECTED";
-  
+  ApprovalStatus: "BORRADOR" | "PENDING" | "APPROVED" | "REJECTED";
+
   // Financials
   MRC_original: number;
   MRC_currency: "PEN" | "USD";
@@ -150,20 +150,20 @@ export interface TransactionDetailResponse {
 
 // For KPI calculation
 export interface KpiCalculationResponse {
-    success: boolean;
-    data: {
-        // This includes all the KPI fields from Transaction
-        // plus the timeline
-        [key: string]: any; // Simplified for brevity
-        timeline: CashFlowTimeline;
-    };
-    error?: string;
+  success: boolean;
+  data: {
+    // This includes all the KPI fields from Transaction
+    // plus the timeline
+    [key: string]: any; // Simplified for brevity
+    timeline: CashFlowTimeline;
+  };
+  error?: string;
 }
 
 // For service success/error messages
 export interface BaseApiResponse {
-    success: boolean;
-    error?: string;
-    message?: string;
-    data?: any; // For flexible responses
+  success: boolean;
+  error?: string;
+  message?: string;
+  data?: any; // For flexible responses
 }

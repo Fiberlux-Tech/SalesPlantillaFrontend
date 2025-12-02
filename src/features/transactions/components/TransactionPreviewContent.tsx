@@ -88,10 +88,24 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     // Show expanded if transaction has any status (PENDING, APPROVED, REJECTED)
     // Show collapsed only when creating a new transaction (no status yet)
     const showOverviewAndKpis = useMemo(() => {
-        const tx = baseTransaction.transactions;
-        const hasStatus = tx.ApprovalStatus && tx.ApprovalStatus.length > 0;
-        return hasStatus;
-    }, [baseTransaction.transactions.ApprovalStatus]);
+        const status = baseTransaction.transactions.ApprovalStatus;
+        
+        // For BORRADOR: Show collapsed until data is loaded
+        if (status === 'BORRADOR') {
+            const hasFileName = baseTransaction.fileName && baseTransaction.fileName !== UI_LABELS.NUEVA_PLANTILLA;
+            const hasServices = (currentRecurringServices || []).length > 0;
+            const hasFixedCosts = (currentFixedCosts || []).length > 0;
+            return hasFileName || hasServices || hasFixedCosts;
+        }
+        
+        // For PENDING, APPROVED, REJECTED: Always show expanded
+        return true;
+    }, [
+        baseTransaction.transactions.ApprovalStatus,
+        baseTransaction.fileName,
+        currentRecurringServices,
+        currentFixedCosts
+    ]);
 
 
     // (CustomFixedCostTotalsNode remains the same)

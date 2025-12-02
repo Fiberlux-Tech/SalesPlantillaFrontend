@@ -32,6 +32,7 @@ import {
     getTransactionDetails,
     updateTransactionStatus,
     calculateCommission,
+    submitTransaction,
     type FormattedFinanceTransaction as FormattedFinanceTx
 } from './services/finance.service';
 
@@ -84,7 +85,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             clientName: '',
             salesman: user.username || '',
             submissionDate: new Date().toISOString(),
-            ApprovalStatus: 'PENDING',
+            ApprovalStatus: 'BORRADOR' as any,  // Start as draft
             MRC_original: 0,
             MRC_currency: 'PEN',
             MRC_pen: 0,
@@ -437,8 +438,10 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                 }
                                 footer={
                                     <SalesPreviewFooter
+                                        transaction={uploadedData || createEmptyTransactionData()}
                                         onConfirm={handleConfirmSubmission}
                                         onClose={handleCloseSalesModal}
+                                        onSubmit={handleSubmitTransaction}
                                     />
                                 }
                             >

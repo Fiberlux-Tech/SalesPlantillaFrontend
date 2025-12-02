@@ -22,13 +22,14 @@ export type Currency = typeof CURRENCIES.PEN | typeof CURRENCIES.USD;
  * Defines all possible transaction approval statuses
  */
 export const TRANSACTION_STATUS = {
+  BORRADOR: 'BORRADOR' as const,
   PENDING: 'PENDING' as const,
   APPROVED: 'APPROVED' as const,
   REJECTED: 'REJECTED' as const,
-  LIST: ['PENDING', 'APPROVED', 'REJECTED'] as const,
+  LIST: ['BORRADOR', 'PENDING', 'APPROVED', 'REJECTED'] as const,
 } as const;
 
-export type TransactionStatus = typeof TRANSACTION_STATUS.PENDING | typeof TRANSACTION_STATUS.APPROVED | typeof TRANSACTION_STATUS.REJECTED;
+export type TransactionStatus = typeof TRANSACTION_STATUS.BORRADOR | typeof TRANSACTION_STATUS.PENDING | typeof TRANSACTION_STATUS.APPROVED | typeof TRANSACTION_STATUS.REJECTED;
 
 /**
  * Business Unit Configuration
@@ -538,6 +539,7 @@ export const ERROR_MESSAGES = {
   FAILED_CONNECT_SERVER_UPLOAD: 'Failed to connect to the server for upload.',
   FAILED_SUBMIT_TRANSACTION: 'An unknown error occurred during submission.',
   FAILED_CONNECT_SERVER_SUBMISSION: 'Failed to connect to the server for submission.',
+  FAILED_SUBMIT_BORRADOR: 'Failed to submit transaction for approval.',
   FAILED_CALCULATE_PREVIEW: 'Failed to calculate preview.',
   FAILED_CONNECT_SERVER_PREVIEW: 'Failed to connect to the server for preview calculation.',
   FAILED_FETCH_FIXED_COSTS: 'Failed to fetch fixed costs.',
