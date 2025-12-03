@@ -2,31 +2,33 @@
 import type { ReactNode } from 'react';
 import type { CashFlowTimeline } from '@/types';
 import { formatCurrency } from '@/lib/formatters';
-import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
+import { UI_LABELS } from '@/config';
 
 // Define the props interface
 interface CashFlowTimelineTableProps {
     timeline: CashFlowTimeline | null | undefined;
 }
 
-const isRowEmpty = (values: number[] | null | undefined): boolean => {
-    if (!values || values.length === 0) {
-        return true;
-    }
-    return !values.some(val => val); // true if *no* value is truthy (not 0)
-};
-
 const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => {
-    if (!timeline || !timeline.periods) {
-        return <p className="text-center text-gray-500 py-4">{EMPTY_STATE_MESSAGES.NO_CASH_FLOW}</p>;
-    }
+    // Always show the table, even with no data - default to 12 periods if none exist
+    const periods = timeline?.periods && timeline.periods.length > 0
+        ? timeline.periods
+        : Array.from({ length: 12 }, (_, i) => i + 1);
 
     const {
-        periods = [],
         revenues,
         expenses,
         net_cash_flow = []
-    } = timeline;
+    } = timeline || {};
+
+    // Helper function to get values or default to zeros
+    const getValuesOrZeros = (values: number[] | null | undefined): number[] => {
+        if (!values || values.length === 0) {
+            return Array(periods.length).fill(0);
+        }
+        // Ensure array matches periods length
+        return periods.map((_, idx) => values[idx] ?? 0);
+    };
 
     // Calculate total investment by aggregating all fixed costs
     const totalInversion = periods.map((_, periodIndex) => {
@@ -102,28 +104,21 @@ const CashFlowTimelineTable = ({ timeline }: CashFlowTimelineTableProps) => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {/* Ingresos */}
-                    {revenues?.nrc && !isRowEmpty(revenues.nrc) &&
-                        renderRow('Ingreso (NRC)', revenues.nrc, false)}
+                    {/* Ingresos - Always render with zeros if no data */}
+                    {renderRow('Ingreso (NRC)', getValuesOrZeros(revenues?.nrc), false)}
+                    {renderRow('Ingreso (MRC)', getValuesOrZeros(revenues?.mrc), false)}
 
-                    {revenues?.mrc && !isRowEmpty(revenues.mrc) &&
-                        renderRow('Ingreso (MRC)', revenues.mrc, false)}
+                    {/* Costos (formerly Egreso Recurrente) - Always render */}
+                    {renderRow('Costos', getValuesOrZeros(expenses?.egreso), true)}
 
-                    {/* Costos (formerly Egreso Recurrente) */}
-                    {expenses?.egreso && !isRowEmpty(expenses.egreso) &&
-                        renderRow('Costos', expenses.egreso, true)}
+                    {/* Inversion (aggregated fixed costs) - Always render */}
+                    {renderRow('Inversión', totalInversion, true)}
 
-                    {/* Inversion (aggregated fixed costs) */}
-                    {!isRowEmpty(totalInversion) &&
-                        renderRow('Inversión', totalInversion, true)}
+                    {/* Otros (formerly Comisiones) - Always render */}
+                    {renderRow('Otros', getValuesOrZeros(expenses?.comisiones), true)}
 
-                    {/* Otros (formerly Comisiones) */}
-                    {expenses?.comisiones && !isRowEmpty(expenses.comisiones) &&
-                        renderRow('Otros', expenses.comisiones, true)}
-
-                    {/* Net Cash Flow (Always show this row) */}
-                    {net_cash_flow.length > 0 &&
-                        renderRow(UI_LABELS.NET_CASH_FLOW, net_cash_flow, false, true)}
+                    {/* Net Cash Flow - Always render */}
+                    {renderRow(UI_LABELS.NET_CASH_FLOW, getValuesOrZeros(net_cash_flow), false, true)}
                 </tbody>
             </table>
         </div>

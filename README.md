@@ -21,4 +21,4 @@ TO - DO's
 
 11. Unidad de negocio/ ruc/dni/ nombre de cliente/meses salen de la cotizacion
 
-12. The BORRADOR status sucks!!! should have never made this, it should be just a frontend type not a backend.
+12. ✅ The BORRADOR status sucks!!! should have never made this, it should be just a frontend type not a backend.

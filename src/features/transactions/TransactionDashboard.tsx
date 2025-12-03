@@ -1,5 +1,5 @@
 // src/features/transactions/TransactionDashboard.tsx
-import { useState, useMemo, useEffect, useRef, RefObject } from 'react';
+import { useState, useMemo, useEffect, useRef, RefObject, useCallback } from 'react';
 import { UploadIcon } from '@/components/shared/Icons';
 
 // --- Shared Imports ---
@@ -133,23 +133,25 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
 
-    // --- KPI STATE ---
+    // --- KPI STATE (MODIFIED) ---
     const [kpiData, setKpiData] = useState<KpiData | null>(null);
-    const [, setIsLoadingKpis] = useState<boolean>(true);
+    const [isLoadingKpis, setIsLoadingKpis] = useState<boolean>(true);
+    const [kpiRefreshToggle, setKpiRefreshToggle] = useState(false); // <-- NEW: State to force refresh
 
-    // --- 4. FETCH KPIs ON MOUNT ---
+    // --- 4. FETCH KPIs LOGIC (MODIFIED) ---
+    const fetchKpis = useCallback(async () => {
+        setIsLoadingKpis(true);
+        const result = await getAllKpis();
+        if (result.success && result.data) {
+            setKpiData(result.data);
+        }
+        setIsLoadingKpis(false);
+    }, []); // <-- Dependency array is empty to keep fetchKpis stable
+
+    // Run on mount AND when toggle state changes
     useEffect(() => {
-        const fetchKpis = async () => {
-            setIsLoadingKpis(true);
-            const result = await getAllKpis();
-            if (result.success && result.data) {
-                setKpiData(result.data);
-            }
-            setIsLoadingKpis(false);
-        };
-
         fetchKpis();
-    }, []);
+    }, [fetchKpis, kpiRefreshToggle]); // <-- Dependency now includes the toggle
 
     // --- 5. COMMON HANDLERS (for filters) ---
     const handleClearDate = () => { setSelectedDate(null); setIsDatePickerOpen(false); };
@@ -215,6 +217,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         const result = await submitFinalTransaction(finalPayload);
         if (result.success) {
             fetchTransactions(1);
+            setKpiRefreshToggle(prev => !prev); // <-- ADDED: Trigger KPI refresh
             setIsPreviewModalOpen(false);
             setUploadedData(null);
         } else {
@@ -270,6 +273,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             setIsDetailModalOpen(false);
             setSelectedTransaction(null);
             fetchTransactions(currentPage);
+            setKpiRefreshToggle(prev => !prev); // <-- ADDED: Trigger KPI refresh
         } else {
             alert(`${UI_LABELS.ERROR_PREFIX}${result.error}`);
         }
@@ -281,6 +285,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         if (result.success) {
             setSelectedTransaction(result.data); // Re-set data to show commission changes
             fetchTransactions(currentPage); // Re-fetch list to update status/values
+            setKpiRefreshToggle(prev => !prev); // <-- ADDED: Trigger KPI refresh
         } else {
             alert(`${UI_LABELS.ERROR_PREFIX}${result.error}`);
         }

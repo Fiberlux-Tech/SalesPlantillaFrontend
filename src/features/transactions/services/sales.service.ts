@@ -13,9 +13,10 @@ import { API_CONFIG, PAGINATION, DISPLAY_VALUES, ERROR_MESSAGES, type Transactio
 export interface FormattedSalesTransaction {
     id: number;
     client: string;
-    salesman: string;
+    MRC_pen: number;
     grossMarginRatio: number;
     payback: number;
+    comisiones: number;
     submissionDate: string;
     approvalDate: string;
     status: TransactionStatus;
@@ -53,9 +54,10 @@ export async function getSalesTransactions(page: number): Promise<GetSalesTransa
             const formattedTransactions: FormattedSalesTransaction[] = result.data.transactions.map((tx: Transaction) => ({
                 id: tx.id,
                 client: tx.clientName,
-                salesman: tx.salesman,
+                MRC_pen: tx.MRC_pen,
                 grossMarginRatio: tx.grossMarginRatio,
                 payback: tx.payback,
+                comisiones: tx.comisiones,
                 submissionDate: new Date(tx.submissionDate).toISOString().split('T')[0],
                 approvalDate: tx.approvalDate ? new Date(tx.approvalDate).toISOString().split('T')[0] : DISPLAY_VALUES.NOT_AVAILABLE,
                 status: tx.ApprovalStatus,
