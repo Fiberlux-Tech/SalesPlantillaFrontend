@@ -23,6 +23,7 @@ interface ITransactionPreviewContext {
     canEdit: boolean;
     draftState: PreviewState;
     dispatch: React.Dispatch<PreviewAction>;
+    isNewTemplateMode: boolean;
 }
 
 const TransactionPreviewContext =
@@ -32,12 +33,14 @@ interface ProviderProps {
     children: React.ReactNode;
     baseTransaction: TransactionDetailResponse['data'];
     view: 'SALES' | 'FINANCE';
+    isNewTemplateMode?: boolean;
 }
 
 export function TransactionPreviewProvider({
     children,
     baseTransaction,
     view,
+    isNewTemplateMode = false,
 }: ProviderProps) {
     // 2. Use the reducer to manage all draft state
     const [draftState, dispatch] = useReducer(
@@ -63,9 +66,9 @@ export function TransactionPreviewProvider({
         draftState.currentRecurringServices,
     ]);
     
-    // 3. canEdit logic remains the same
+    // 3. canEdit logic - only PENDING transactions can be edited
     const canEdit = useMemo(
-        () => ['PENDING', 'BORRADOR'].includes(baseTransaction.transactions.ApprovalStatus),
+        () => baseTransaction.transactions.ApprovalStatus === 'PENDING',
         [baseTransaction]
     );
 
@@ -199,6 +202,7 @@ export function TransactionPreviewProvider({
         canEdit,
         draftState,
         dispatch,
+        isNewTemplateMode,
     };
 
     return (

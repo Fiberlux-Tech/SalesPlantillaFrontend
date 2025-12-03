@@ -26,7 +26,7 @@ export interface Transaction {
   salesman: string;
   submissionDate: string;
   approvalDate?: string;
-  ApprovalStatus: "BORRADOR" | "PENDING" | "APPROVED" | "REJECTED";
+  ApprovalStatus: "PENDING" | "APPROVED" | "REJECTED";
 
   // Financials
   MRC_original: number;

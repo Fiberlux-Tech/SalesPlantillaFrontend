@@ -32,7 +32,6 @@ import {
     getTransactionDetails,
     updateTransactionStatus,
     calculateCommission,
-    submitTransaction,
     type FormattedFinanceTransaction as FormattedFinanceTx
 } from './services/finance.service';
 
@@ -85,7 +84,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             clientName: '',
             salesman: user.username || '',
             submissionDate: new Date().toISOString(),
-            ApprovalStatus: 'BORRADOR' as any,  // Start as draft
+            ApprovalStatus: 'PENDING' as any,  // Start as PENDING
             MRC_original: 0,
             MRC_currency: 'PEN',
             MRC_pen: 0,
@@ -287,23 +286,6 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         }
     };
 
-    /**
-     * Handler for submitting a BORRADOR transaction to PENDING
-     */
-    const handleSubmitTransaction = async (transactionId: number) => {
-        setApiError(null);
-
-        const result = await submitTransaction(transactionId);
-
-        if (result.success) {
-            // Close modal and refresh list
-            setIsPreviewModalOpen(false);
-            setUploadedData(null);
-            fetchTransactions(currentPage);
-        } else {
-            alert(`${UI_LABELS.ERROR_PREFIX}${result.error}`);
-        }
-    };
 
     const handleCloseFinanceModal = () => {
         setIsDetailModalOpen(false);
@@ -445,6 +427,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                             // IMPORTANT: Use the uploaded data OR the new empty template
                             baseTransaction={uploadedData || createEmptyTransactionData()}
                             view="SALES"
+                            isNewTemplateMode={!uploadedData}
                         >
                             <DataPreviewModal
                                 isOpen={isPreviewModalOpen}
@@ -468,7 +451,6 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                         transaction={uploadedData || createEmptyTransactionData()}
                                         onConfirm={handleConfirmSubmission}
                                         onClose={handleCloseSalesModal}
-                                        onSubmit={handleSubmitTransaction}
                                     />
                                 }
                             >
@@ -482,6 +464,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                         <TransactionPreviewProvider
                             baseTransaction={selectedSalesTransaction}
                             view="SALES"
+                            isNewTemplateMode={false}
                         >
                             <DataPreviewModal
                                 isOpen={isSalesViewModalOpen}
@@ -511,6 +494,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                 <TransactionPreviewProvider
                     baseTransaction={selectedTransaction}
                     view="FINANCE"
+                    isNewTemplateMode={false}
                 >
                     <DataPreviewModal
                         isOpen={isDetailModalOpen}

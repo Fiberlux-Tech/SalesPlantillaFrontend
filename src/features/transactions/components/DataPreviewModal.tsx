@@ -41,9 +41,9 @@ function DataPreviewModal({
                 
                 {/* Header: Use CardHeader and CardTitle */}
                 <CardHeader className="flex-row items-center justify-between p-5 border-b">
-                    <CardTitle className="text-xl text-gray-800 p-0 m-0 flex items-center space-x-3">
-                        <span>{title}</span>
-                        <StatusBadge status={status} /> 
+                    <CardTitle className="text-xl text-gray-800 p-0 m-0 flex items-center space-x-3 min-w-0 flex-1">
+                        <span className="truncate">{title}</span>
+                        <StatusBadge status={status} />
                     </CardTitle>
 
                     {/* --- ADD THIS WRAPPER --- */}

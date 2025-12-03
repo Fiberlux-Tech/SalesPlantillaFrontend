@@ -4,15 +4,14 @@ import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import type { TransactionDetailResponse } from '@/types';
 import { BUSINESS_UNITS, VALIDATION_MESSAGES, STATUS_MESSAGES, BUTTON_LABELS } from '@/config';
 
-// --- PROPS INTERFACE (No change) ---
+// --- PROPS INTERFACE (Updated - removed onSubmit) ---
 interface SalesPreviewFooterProps {
     transaction: TransactionDetailResponse['data'];
     onConfirm: (finalData: TransactionDetailResponse['data']) => void;
     onClose: () => void;
-    onSubmit: (transactionId: number) => void;
 }
 
-export function SalesPreviewFooter({ transaction, onConfirm, onClose, onSubmit }: SalesPreviewFooterProps) {
+export function SalesPreviewFooter({ transaction, onConfirm, onClose }: SalesPreviewFooterProps) {
 
     // --- 1. GET DATA FROM CONTEXT (Refactored) ---
     // Get dispatch and draftState
@@ -44,22 +43,14 @@ export function SalesPreviewFooter({ transaction, onConfirm, onClose, onSubmit }
             return;
         }
 
-        // Check if transaction is in BORRADOR status and has an ID
-        const isExistingBorrador = finalTransactionState.ApprovalStatus === 'BORRADOR' && transaction?.transactions?.id;
-
-        if (isExistingBorrador) {
-            // For existing BORRADOR: Call the submit endpoint to transition to PENDING
-            onSubmit(transaction.transactions.id);
-        } else {
-            // For new transactions (which are BORRADOR by default) or other statuses: Use the standard confirm logic
-            const finalPayload = {
-                ...baseTransaction,
-                fixed_costs: currentFixedCosts,
-                recurring_services: currentRecurringServices,
-                transactions: finalTransactionState,
-            };
-            onConfirm(finalPayload);
-        }
+        // All transactions use the standard confirm logic (save transaction)
+        const finalPayload = {
+            ...baseTransaction,
+            fixed_costs: currentFixedCosts,
+            recurring_services: currentRecurringServices,
+            transactions: finalTransactionState,
+        };
+        onConfirm(finalPayload);
     };
 
     return (

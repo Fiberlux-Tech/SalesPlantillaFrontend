@@ -44,7 +44,8 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
         baseTransaction,
         draftState,
         dispatch,
-        canEdit
+        canEdit,
+        isNewTemplateMode
     } = useTransactionPreview();
     const {
         liveKpis,
@@ -85,23 +86,27 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
     }, [currentRecurringServices]);
 
     // Determine if we should show Transaction Overview and KPIs
-    // Show expanded if transaction has any status (PENDING, APPROVED, REJECTED)
-    // Show collapsed only when creating a new transaction (no status yet)
+    // Logic based on isNewTemplateMode flag instead of status
     const showOverviewAndKpis = useMemo(() => {
-        const status = baseTransaction.transactions.ApprovalStatus;
-        
-        // For BORRADOR: Show collapsed until data is loaded
-        if (status === 'BORRADOR') {
-            const hasFileName = baseTransaction.fileName && baseTransaction.fileName !== UI_LABELS.NUEVA_PLANTILLA;
+        // Finance view: always expanded
+        if (isFinanceView) return true;
+
+        // Sales view AND new template mode: collapsed until data loaded
+        if (isNewTemplateMode) {
+            const hasFileName = baseTransaction.fileName &&
+                              baseTransaction.fileName !== UI_LABELS.NUEVA_PLANTILLA;
             const hasServices = (currentRecurringServices || []).length > 0;
             const hasFixedCosts = (currentFixedCosts || []).length > 0;
+
+            // Show sections only if data has been loaded
             return hasFileName || hasServices || hasFixedCosts;
         }
-        
-        // For PENDING, APPROVED, REJECTED: Always show expanded
+
+        // Sales view with existing transaction: always expanded
         return true;
     }, [
-        baseTransaction.transactions.ApprovalStatus,
+        isFinanceView,
+        isNewTemplateMode,
         baseTransaction.fileName,
         currentRecurringServices,
         currentFixedCosts

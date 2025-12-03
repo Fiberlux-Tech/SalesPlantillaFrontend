@@ -160,32 +160,3 @@ export async function calculateCommission(transactionId: number): Promise<Calcul
     }
 }
 
-/**
- * Submit a transaction from BORRADOR to PENDING status
- * @param transactionId - The transaction ID to submit
- * @returns Promise with success/error result
- */
-export async function submitTransaction(
-    transactionId: number
-): Promise<BaseApiResponse> {
-    try {
-        const result = await api.post<BaseApiResponse>(
-            `/submit/`,
-            {}  // Empty payload - backend only needs the transaction ID from URL
-        );
-
-        if (result.success) {
-            return { success: true };
-        } else {
-            return {
-                success: false,
-                error: result.error || ERROR_MESSAGES.FAILED_SUBMIT_BORRADOR
-            };
-        }
-    } catch (error: any) {
-        return {
-            success: false,
-            error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER
-        };
-    }
-}
