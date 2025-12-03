@@ -40,17 +40,19 @@ function DataPreviewModal({
             <Card className="max-w-6xl w-full flex flex-col overflow-hidden">
                 
                 {/* Header: Use CardHeader and CardTitle */}
-                <CardHeader className="flex-row items-center justify-between p-5 border-b">
-                    <CardTitle className="text-xl text-gray-800 p-0 m-0 flex items-center space-x-3 min-w-0 flex-1">
-                        <span className="truncate">{title}</span>
-                        <StatusBadge status={status} />
+                <CardHeader className="flex-row items-center justify-between p-5 border-b gap-3">
+                    <CardTitle className="text-xl text-gray-800 p-0 m-0 flex items-center gap-3 min-w-0 flex-1">
+                        <span className="truncate max-w-[50%]">{title}</span>
+                        <div className="flex-shrink-0">
+                            <StatusBadge status={status} />
+                        </div>
                     </CardTitle>
 
-                    {/* --- ADD THIS WRAPPER --- */}
-                    <div className="flex items-center space-x-3">
+                    {/* --- Right side actions --- */}
+                    <div className="flex items-center gap-3 flex-shrink-0">
                         {headerActions} {/* <-- RENDER THE NEW BUTTON SLOT HERE */}
-                        <button 
-                            onClick={onClose} 
+                        <button
+                            onClick={onClose}
                             className="text-gray-400 hover:text-gray-600 transition-colors"
                             aria-label="Close modal"
                         >
