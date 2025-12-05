@@ -284,7 +284,7 @@ export const UI_LABELS = {
   PROVEEDOR: 'Proveedor',
 
   // New labels for redesigned tables
-  MRR: 'MRR (Ingreso)',
+  MRR: 'MRC (Ingreso)',
   COSTO_RECURRENTE: 'Costo Recurrente',
   ACCIONES: 'Acciones',
   TOTAL_USD: 'Total (USD)',
