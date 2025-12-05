@@ -100,4 +100,6 @@ export const api = {
     post: <T>(url: string, data: any) => request<T>(url, { method: API_CONFIG.HTTP.METHOD_POST, body: data }),
 
     postForm: <T>(url: string, formData: FormData) => request<T>(url, { method: API_CONFIG.HTTP.METHOD_POST, body: formData }),
+
+    put: <T>(url: string, data: any) => request<T>(url, { method: 'PUT', body: data }),
 };

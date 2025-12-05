@@ -23,4 +23,24 @@ TO - DO's
 
 12. ✅ The BORRADOR status sucks!!! should have never made this, it should be just a frontend type not a backend.
 
-13. Reordenar la tabla de ventas.
+13. ✅ Reordenar la tabla de ventas.
+
+14. Modal de detalle de cada transaction esta roto, hay que arreglar el cambio de moneda y cualquier edit, que funcione en live y cambie todos los indicadores. 
+
+15. La carta fianza es anual, si el contgrato tiene mas de 12 meses, hay que incluirlo.
+
+16. Separar la linea de Otros en Carta Fianza y Comisiones.
+
+17. Añadir opcion de descargar para finanzas.
+
+18. Agregar flag para mes de comision.
+
+19. Cuando edito la talba de costo fijo, modifica todo
+
+20. KPIs tienen que ser en valor presente (discutir con Franco)
+
+21. ✅ Arreglar el borrado de cada linea individual en las tablas costos fijos y recurrentes
+
+22. ✅ Aparece una linea en costos recurrentes
+
+23. Agregar filtros en vista finanzas, que KPIs se actualicen a ese filtro. (Unid. Negocio, fecha, vendedor)

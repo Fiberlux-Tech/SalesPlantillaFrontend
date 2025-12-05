@@ -24,9 +24,9 @@ export type PreviewAction =
     | { type: 'REMOVE_FIXED_COST'; payload: number } // payload is index (for trash icon in table)
     | { type: 'REMOVE_FIXED_COST_BY_CODE'; payload: string } // payload is 'ticket' code (for code manager)
     | { type: 'UPDATE_FIXED_COST'; payload: { index: number; field: keyof FixedCost; value: any } }
-    | { type: 'REPLACE_FIXED_COST'; payload: FixedCost } // Full object replacement for modal edits
+    | { type: 'REPLACE_FIXED_COST'; payload: { index: number; updatedCost: FixedCost } } // Index-based replacement for modal edits
     | { type: 'UPDATE_RECURRING_SERVICE'; payload: { index: number; field: keyof RecurringService; value: any } }
-    | { type: 'REPLACE_RECURRING_SERVICE'; payload: RecurringService } // Full object replacement for modal edits
+    | { type: 'REPLACE_RECURRING_SERVICE'; payload: { index: number; updatedService: RecurringService } } // Index-based replacement for modal edits
     | { type: 'ADD_RECURRING_SERVICES'; payload: RecurringService[] }
     | { type: 'REMOVE_RECURRING_SERVICE'; payload: number } // payload is index (for trash icon in table)
     | { type: 'REMOVE_RECURRING_SERVICE_BY_CODE'; payload: string } // payload is code (for code manager)
@@ -120,10 +120,11 @@ export function transactionPreviewReducer(
         }
 
         case 'REPLACE_FIXED_COST':
+            // Index-based replacement (modal save)
             return {
                 ...state,
-                currentFixedCosts: state.currentFixedCosts.map(cost =>
-                    cost.ticket === action.payload.ticket ? action.payload : cost
+                currentFixedCosts: state.currentFixedCosts.map((cost, index) =>
+                    index === action.payload.index ? action.payload.updatedCost : cost
                 ),
             };
 
@@ -141,10 +142,11 @@ export function transactionPreviewReducer(
         }
 
         case 'REPLACE_RECURRING_SERVICE':
+            // Index-based replacement (modal save)
             return {
                 ...state,
-                currentRecurringServices: state.currentRecurringServices.map(service =>
-                    String(service.id) === String(action.payload.id) ? action.payload : service
+                currentRecurringServices: state.currentRecurringServices.map((service, index) =>
+                    index === action.payload.index ? action.payload.updatedService : service
                 ),
             };
 

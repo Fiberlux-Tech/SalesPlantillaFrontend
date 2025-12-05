@@ -5,17 +5,19 @@ import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
 import { TRANSACTION_STATUS, CONFIRMATION_MESSAGES, BUTTON_LABELS } from '@/config';
 import { RejectionNoteModal } from '@/features/transactions/components/RejectionNoteModal';
 
-// --- PROPS INTERFACE (No change) ---
+// --- PROPS INTERFACE ---
 interface FinancePreviewFooterProps {
     onApprove: (transactionId: number, status: 'approve' | 'reject', modifiedData: Partial<Transaction>, fixedCosts: FixedCost[] | null, recurringServices: RecurringService[] | null) => void;
     onReject: (transactionId: number, status: 'approve' | 'reject', modifiedData: Partial<Transaction>, fixedCosts: FixedCost[] | null, recurringServices: RecurringService[] | null) => void;
     onCalculateCommission: (transactionId: number) => void;
+    onSave: (transactionId: number, modifiedData: Partial<Transaction>, fixedCosts: FixedCost[] | null, recurringServices: RecurringService[] | null) => void;
 }
 
 export function FinancePreviewFooter({
     onApprove,
     onReject,
-    onCalculateCommission
+    onCalculateCommission,
+    onSave
 }: FinancePreviewFooterProps) {
 
     // --- 1. GET DATA FROM CONTEXT (Refactored) ---
@@ -69,10 +71,25 @@ export function FinancePreviewFooter({
         }
     };
 
+    const handleSaveClick = () => {
+        if (window.confirm('¿Guardar los cambios realizados?')) {
+            const modifiedFields = { ...tx, ...liveEdits };
+            onSave(tx.id, modifiedFields, currentFixedCosts, currentRecurringServices);
+        }
+    };
+
     return (
         <>
             <div className="w-full flex justify-between items-center p-5 border-t bg-white space-x-3">
                  <div className="flex-grow"></div>
+                 <button
+                    onClick={handleSaveClick}
+                    className="px-5 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
+                    disabled={!canModify}
+                >
+                    Guardar Cambios
+                </button>
+
                  <button
                     onClick={handleCalculateCommissionClick}
                     className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"

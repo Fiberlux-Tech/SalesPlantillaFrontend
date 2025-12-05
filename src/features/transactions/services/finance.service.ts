@@ -114,20 +114,18 @@ export async function updateTransactionStatus(
         rejection_note?: string;
     } = {};
 
-    // For approve, send transactions and costs
-    if (action === 'approve') {
-        payload.transactions = modifiedData;
-        if (fixedCosts) {
-            payload.fixed_costs = fixedCosts;
-        }
-        if (recurringServices) {
-            payload.recurring_services = recurringServices;
-        }
-    } else {
-        // For reject, send rejection_note if present
-        if (modifiedData.rejection_note) {
-            payload.rejection_note = modifiedData.rejection_note;
-        }
+    // For both approve and reject, send full data (backend saves edits before status change)
+    payload.transactions = modifiedData;
+    if (fixedCosts) {
+        payload.fixed_costs = fixedCosts;
+    }
+    if (recurringServices) {
+        payload.recurring_services = recurringServices;
+    }
+
+    // For reject, ensure rejection_note is included
+    if (action === 'reject' && modifiedData.rejection_note) {
+        payload.rejection_note = modifiedData.rejection_note;
     }
 
     try {

@@ -20,6 +20,7 @@ import { SalesPreviewFooter } from './footers/SalesPreviewFooter';
 import {
     uploadExcelForPreview,
     submitFinalTransaction,
+    updateTransaction,
     getSalesTransactionDetails,
     type FormattedSalesTransaction
 } from './services/sales.service';
@@ -291,6 +292,41 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         }
     };
 
+    const handleSaveTransaction = async (
+        transactionId: number,
+        modifiedData: Partial<Transaction>,
+        fixedCosts: FixedCost[] | null,
+        recurringServices: RecurringService[] | null
+    ) => {
+        setApiError(null);
+        const payload = {
+            fixed_costs: fixedCosts,
+            recurring_services: recurringServices,
+            transactions: modifiedData
+        };
+        const result = await updateTransaction(transactionId, payload);
+        if (result.success) {
+            alert('Cambios guardados exitosamente');
+            setIsDetailModalOpen(false);
+            setSelectedTransaction(null);
+            fetchTransactions(currentPage);
+            setKpiRefreshToggle(prev => !prev);
+        } else {
+            alert(`${UI_LABELS.ERROR_PREFIX}${result.error}`);
+        }
+    };
+
+    // Wrapper for Sales view to match SalesPreviewFooter signature
+    const handleSalesUpdate = async (finalData: TransactionDetailResponse['data']) => {
+        const transactionId = finalData.transactions.id;
+        await handleSaveTransaction(
+            transactionId,
+            finalData.transactions,
+            finalData.fixed_costs,
+            finalData.recurring_services
+        );
+        handleCloseSalesViewModal();
+    };
 
     const handleCloseFinanceModal = () => {
         setIsDetailModalOpen(false);
@@ -464,7 +500,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                         </TransactionPreviewProvider>
                     )}
 
-                    {/* View-Only Modal for existing transactions */}
+                    {/* Modal for existing transactions - Editable if PENDING */}
                     {isSalesViewModalOpen && selectedSalesTransaction && (
                         <TransactionPreviewProvider
                             baseTransaction={selectedSalesTransaction}
@@ -477,14 +513,22 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                 onClose={handleCloseSalesViewModal}
                                 status={selectedSalesTransaction.transactions.ApprovalStatus}
                                 footer={
-                                    <div className="w-full flex justify-end items-center p-5 border-t bg-white">
-                                        <button
-                                            onClick={handleCloseSalesViewModal}
-                                            className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                                        >
-                                            {BUTTON_LABELS.CANCELAR}
-                                        </button>
-                                    </div>
+                                    selectedSalesTransaction.transactions.ApprovalStatus === TRANSACTION_STATUS.PENDING ? (
+                                        <SalesPreviewFooter
+                                            transaction={selectedSalesTransaction}
+                                            onConfirm={handleSalesUpdate}
+                                            onClose={handleCloseSalesViewModal}
+                                        />
+                                    ) : (
+                                        <div className="w-full flex justify-end items-center p-5 border-t bg-white">
+                                            <button
+                                                onClick={handleCloseSalesViewModal}
+                                                className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                            >
+                                                {BUTTON_LABELS.CANCELAR}
+                                            </button>
+                                        </div>
+                                    )
                                 }
                             >
                                 <TransactionPreviewContent isFinanceView={false} />
@@ -512,6 +556,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                 onApprove={handleUpdateStatus}
                                 onReject={handleUpdateStatus}
                                 onCalculateCommission={handleCalculateCommission}
+                                onSave={handleSaveTransaction}
                             />
                         }
                     >

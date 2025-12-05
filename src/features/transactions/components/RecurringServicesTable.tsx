@@ -26,19 +26,22 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
 
     // 3. Modal state for detail view
     const [selectedService, setSelectedService] = useState<RecurringService | null>(null);
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
 
     // 4. Handler to open modal in view mode
-    const handleViewDetails = (service: RecurringService) => {
+    const handleViewDetails = (index: number, service: RecurringService) => {
         setSelectedService(service);
+        setSelectedIndex(index);
         setIsEditMode(false);
         setIsModalOpen(true);
     };
 
     // 5. Handler to open modal in edit mode
-    const handleEditService = (service: RecurringService) => {
+    const handleEditService = (index: number, service: RecurringService) => {
         setSelectedService(service);
+        setSelectedIndex(index);
         setIsEditMode(true);
         setIsModalOpen(true);
     };
@@ -47,13 +50,14 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedService(null);
+        setSelectedIndex(-1);
     };
 
     // 7. Handler to save edited service
     const handleSaveService = (updatedService: RecurringService) => {
         dispatch({
             type: 'REPLACE_RECURRING_SERVICE',
-            payload: updatedService
+            payload: { index: selectedIndex, updatedService }
         });
     };
 
@@ -108,8 +112,8 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                             <td className="px-3 py-2 text-red-600 font-medium align-middle text-right whitespace-nowrap">{formatCurrency(item.egreso_pen)}</td>
                             <td className="px-3 py-2 align-middle">
                                 <TableActionIcons
-                                    onView={() => handleViewDetails(item)}
-                                    onEdit={canEdit ? () => handleEditService(item) : undefined}
+                                    onView={() => handleViewDetails(index, item)}
+                                    onEdit={canEdit ? () => handleEditService(index, item) : undefined}
                                     onDelete={canEdit ? () => handleDeleteService(index, item) : undefined}
                                 />
                             </td>

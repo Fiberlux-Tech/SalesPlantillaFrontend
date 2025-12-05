@@ -107,11 +107,35 @@ export async function submitFinalTransaction(finalPayload: any): Promise<BaseApi
     }
 }
 
+export async function updateTransaction(transactionId: number, updatePayload: any): Promise<BaseApiResponse> {
+    try {
+        const result = await api.put<BaseApiResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTION_DETAIL}/${transactionId}`, updatePayload);
+
+        if (result.success) {
+            return { success: true };
+        } else {
+            return { success: false, error: result.error || 'Failed to update transaction' };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to connect to server' };
+    }
+}
+
 export async function getSalesTransactionDetails(transactionId: number): Promise<GetTransactionDetailsResult> {
     try {
         const result = await api.get<TransactionDetailResponse>(`${API_CONFIG.ENDPOINTS.TRANSACTION_DETAIL}/${transactionId}`);
         if (result.success) {
-            return { success: true, data: result.data };
+            // Inject the numeric ID we used for the request since backend doesn't return it
+            return {
+                success: true,
+                data: {
+                    ...result.data,
+                    transactions: {
+                        ...result.data.transactions,
+                        id: transactionId
+                    }
+                }
+            };
         } else {
             return { success: false, error: result.error || ERROR_MESSAGES.FAILED_FETCH_TRANSACTION_DETAILS };
         }

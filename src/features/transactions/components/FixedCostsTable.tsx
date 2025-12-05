@@ -27,18 +27,21 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
 
     // 3. Modal state
     const [selectedCost, setSelectedCost] = useState<FixedCost | null>(null);
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
 
     // 4. Handlers for Modal
-    const handleViewDetails = (cost: FixedCost) => {
+    const handleViewDetails = (index: number, cost: FixedCost) => {
         setSelectedCost(cost);
+        setSelectedIndex(index);
         setIsEditMode(false);
         setIsModalOpen(true);
     };
 
-    const handleEditCost = (cost: FixedCost) => {
+    const handleEditCost = (index: number, cost: FixedCost) => {
         setSelectedCost(cost);
+        setSelectedIndex(index);
         setIsEditMode(true);
         setIsModalOpen(true);
     };
@@ -46,12 +49,13 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedCost(null);
+        setSelectedIndex(-1);
     };
 
     const handleSaveCost = (updatedCost: FixedCost) => {
         dispatch({
             type: 'REPLACE_FIXED_COST',
-            payload: updatedCost
+            payload: { index: selectedIndex, updatedCost }
         });
     };
 
@@ -126,8 +130,8 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                                 <td className="px-3 py-2 whitespace-nowrap text-red-600 font-medium align-middle text-right">{formatCurrency(item.total_pen)}</td>
                                 <td className="px-3 py-2 align-middle">
                                     <TableActionIcons
-                                        onView={() => handleViewDetails(item)}
-                                        onEdit={canEdit ? () => handleEditCost(item) : undefined}
+                                        onView={() => handleViewDetails(index, item)}
+                                        onEdit={canEdit ? () => handleEditCost(index, item) : undefined}
                                         onDelete={canEdit ? () => handleDeleteCost(index, item) : undefined}
                                     />
                                 </td>
