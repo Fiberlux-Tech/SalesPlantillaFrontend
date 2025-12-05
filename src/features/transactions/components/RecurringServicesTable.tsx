@@ -57,12 +57,12 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
         });
     };
 
-    // 8. Handler to delete service
-    const handleDeleteService = (service: RecurringService) => {
+    // 8. Handler to delete service (index-based for trash icon)
+    const handleDeleteService = (index: number, service: RecurringService) => {
         if (window.confirm(`¿Estás seguro de eliminar el servicio "${service.tipo_servicio}"?`)) {
             dispatch({
                 type: 'REMOVE_RECURRING_SERVICE',
-                payload: service.id
+                payload: index
             });
         }
     };
@@ -110,7 +110,7 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                                 <TableActionIcons
                                     onView={() => handleViewDetails(item)}
                                     onEdit={canEdit ? () => handleEditService(item) : undefined}
-                                    onDelete={canEdit ? () => handleDeleteService(item) : undefined}
+                                    onDelete={canEdit ? () => handleDeleteService(index, item) : undefined}
                                 />
                             </td>
                         </tr>

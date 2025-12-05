@@ -21,13 +21,15 @@ export type PreviewAction =
     | { type: 'UPDATE_TRANSACTION_FIELD'; payload: { key: string; value: any | null } }
     | { type: 'UPDATE_MULTIPLE_TRANSACTION_FIELDS'; payload: Record<string, any> }
     | { type: 'ADD_FIXED_COSTS'; payload: FixedCost[] }
-    | { type: 'REMOVE_FIXED_COST'; payload: string } // payload is 'ticket' code
+    | { type: 'REMOVE_FIXED_COST'; payload: number } // payload is index (for trash icon in table)
+    | { type: 'REMOVE_FIXED_COST_BY_CODE'; payload: string } // payload is 'ticket' code (for code manager)
     | { type: 'UPDATE_FIXED_COST'; payload: { index: number; field: keyof FixedCost; value: any } }
     | { type: 'REPLACE_FIXED_COST'; payload: FixedCost } // Full object replacement for modal edits
     | { type: 'UPDATE_RECURRING_SERVICE'; payload: { index: number; field: keyof RecurringService; value: any } }
     | { type: 'REPLACE_RECURRING_SERVICE'; payload: RecurringService } // Full object replacement for modal edits
     | { type: 'ADD_RECURRING_SERVICES'; payload: RecurringService[] }
-    | { type: 'REMOVE_RECURRING_SERVICE'; payload: number | string }
+    | { type: 'REMOVE_RECURRING_SERVICE'; payload: number } // payload is index (for trash icon in table)
+    | { type: 'REMOVE_RECURRING_SERVICE_BY_CODE'; payload: string } // payload is code (for code manager)
     | { type: 'RECALCULATION_START' }
     | { type: 'RECALCULATION_SUCCESS'; payload: KpiCalculationResponse['data'] }
     | { type: 'RECALCULATION_ERROR'; payload: string }
@@ -87,6 +89,16 @@ export function transactionPreviewReducer(
             };
 
         case 'REMOVE_FIXED_COST':
+            // Index-based removal (trash icon in table)
+            return {
+                ...state,
+                currentFixedCosts: state.currentFixedCosts.filter(
+                    (_, index) => index !== action.payload
+                ),
+            };
+
+        case 'REMOVE_FIXED_COST_BY_CODE':
+            // Code-based batch removal (code manager)
             return {
                 ...state,
                 currentFixedCosts: state.currentFixedCosts.filter(
@@ -132,7 +144,7 @@ export function transactionPreviewReducer(
             return {
                 ...state,
                 currentRecurringServices: state.currentRecurringServices.map(service =>
-                    service.id === action.payload.id ? action.payload : service
+                    String(service.id) === String(action.payload.id) ? action.payload : service
                 ),
             };
 
@@ -146,10 +158,20 @@ export function transactionPreviewReducer(
             };
 
         case 'REMOVE_RECURRING_SERVICE':
+            // Index-based removal (trash icon in table)
             return {
                 ...state,
                 currentRecurringServices: state.currentRecurringServices.filter(
-                    (service) => service.id !== action.payload
+                    (_, index) => index !== action.payload
+                ),
+            };
+
+        case 'REMOVE_RECURRING_SERVICE_BY_CODE':
+            // Code-based batch removal (code manager)
+            return {
+                ...state,
+                currentRecurringServices: state.currentRecurringServices.filter(
+                    (service) => String(service.id) !== String(action.payload)
                 ),
             };
 

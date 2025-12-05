@@ -63,12 +63,12 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
         });
     }
 
-    // 6. Handler to delete fixed cost
-    const handleDeleteCost = (cost: FixedCost) => {
+    // 6. Handler to delete fixed cost (index-based for trash icon)
+    const handleDeleteCost = (index: number, cost: FixedCost) => {
         if (window.confirm(`¿Estás seguro de eliminar el costo "${cost.tipo_servicio}" (Ticket: ${cost.ticket})?`)) {
             dispatch({
                 type: 'REMOVE_FIXED_COST',
-                payload: cost.ticket
+                payload: index
             });
         }
     };
@@ -128,7 +128,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                                     <TableActionIcons
                                         onView={() => handleViewDetails(item)}
                                         onEdit={canEdit ? () => handleEditCost(item) : undefined}
-                                        onDelete={canEdit ? () => handleDeleteCost(item) : undefined}
+                                        onDelete={canEdit ? () => handleDeleteCost(index, item) : undefined}
                                     />
                                 </td>
                             </tr>

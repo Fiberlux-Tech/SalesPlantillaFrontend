@@ -145,7 +145,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         }}
                         onToggle={() => setIsCodeManagerOpen(false)}
                         onCodeRemove={(code) => {
-                            dispatch({ type: 'REMOVE_FIXED_COST', payload: code });
+                            dispatch({ type: 'REMOVE_FIXED_COST_BY_CODE', payload: code });
                         }}
                     />
                 )}
@@ -243,7 +243,7 @@ export function TransactionPreviewContent({ isFinanceView = false }: { isFinance
                         }}
                         onToggle={() => setIsRecurringCodeManagerOpen(false)}
                         onCodeRemove={(code) => {
-                            dispatch({ type: 'REMOVE_RECURRING_SERVICE', payload: code });
+                            dispatch({ type: 'REMOVE_RECURRING_SERVICE_BY_CODE', payload: code });
                         }}
                     />
                 )}

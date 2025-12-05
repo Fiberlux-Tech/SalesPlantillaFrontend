@@ -5,9 +5,8 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import type { FormattedFinanceTransaction } from '../services/finance.service';
 import { UI_LABELS, EMPTY_STATE_MESSAGES } from '@/config';
 
-// 1. Define Columns (Unchanged)
+// 1. Define Columns (UPDATED - Removed ID column)
 const columns: ColumnDef[] = [
-    { header: UI_LABELS.ID, className: 'px-6 py-3 text-center' },
     { header: UI_LABELS.UNIDAD_NEGOCIO, className: 'px-6 py-3 text-center' },
     { header: UI_LABELS.CLIENTE, className: 'px-6 py-3 text-center' },
     { header: UI_LABELS.VENDEDOR, className: 'px-6 py-3 text-center' },
@@ -37,14 +36,13 @@ export function TransactionList({
     ...props // Pass through isLoading, currentPage, totalPages, onPageChange
 }: TransactionListProps) {
 
-    // 3. Define the specific row render function (Unchanged)
+    // 3. Define the specific row render function (UPDATED - Removed ID cell)
     const renderRow = (tx: FormattedFinanceTransaction) => (
         <TableRow
             key={tx.id}
             className="bg-white border-b hover:bg-gray-50 cursor-pointer"
             onClick={() => onRowClick(tx)}
         >
-            <TableCell className="px-6 py-4 font-medium text-gray-900 text-center">{tx.id}</TableCell>
             <TableCell className="px-6 py-4 text-center">{tx.unidadNegocio}</TableCell>
             <TableCell className="px-6 py-4 font-bold text-gray-900 text-center">{tx.clientName}</TableCell>
             <TableCell className="px-6 py-4 text-center">{tx.salesman}</TableCell>
