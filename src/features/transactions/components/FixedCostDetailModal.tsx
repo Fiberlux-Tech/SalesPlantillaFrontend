@@ -116,7 +116,7 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         {/* Header Section */}
         <div className="bg-gray-50/50 p-5 rounded-t-2xl">
           <div className="flex items-start justify-between">
@@ -165,61 +165,64 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
 
           {/* Detail Grid Section */}
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
-            <div className="grid grid-cols-2 gap-y-5 gap-x-6">
-              {/* Cantidad */}
-              <div>
-                <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
-                {isEditMode ? (
-                  <input
-                    type="number"
-                    value={getCurrentValue('cantidad') as number}
-                    onChange={(e) => handleFieldChange('cantidad', parseFloat(e.target.value) || 0)}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    step="1"
-                  />
-                ) : (
-                  <p className="text-sm font-bold text-gray-800">{cost.cantidad || '-'}</p>
-                )}
-              </div>
-
-              {/* Costo Unitario */}
-              <div>
-                <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
-                {isEditMode ? (
-                  <div className="flex gap-2">
+            <div className="flex flex-col gap-y-5">
+              {/* Cantidad and Costo Unitario Row */}
+              <div className="flex gap-4">
+                {/* Cantidad - narrower */}
+                <div className="w-24">
+                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
+                  {isEditMode ? (
                     <input
                       type="number"
-                      value={getCurrentValue('costoUnitario_original') as number}
-                      onChange={(e) => handleFieldChange('costoUnitario_original', parseFloat(e.target.value) || 0)}
-                      className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                      step="0.01"
+                      value={getCurrentValue('cantidad') as number}
+                      onChange={(e) => handleFieldChange('cantidad', parseFloat(e.target.value) || 0)}
+                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      step="1"
                     />
-                    <select
-                      value={getCurrentValue('costoUnitario_currency') as string}
-                      onChange={(e) => handleFieldChange('costoUnitario_currency', e.target.value)}
-                      className="bg-white border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    >
-                      <option value="PEN">PEN</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  </div>
-                ) : (
-                  <p className="text-sm font-bold text-gray-800">
-                    {formatCurrency(cost.costoUnitario_original) || '-'}
-                    {cost.costoUnitario_original !== null && cost.costoUnitario_original !== undefined && cost.costoUnitario_original !== 0 && (
-                      <span className="text-xs font-medium text-gray-600 ml-1">{cost.costoUnitario_currency || 'USD'}</span>
-                    )}
-                  </p>
-                )}
+                  ) : (
+                    <p className="text-sm font-bold text-gray-800">{cost.cantidad || '-'}</p>
+                  )}
+                </div>
+
+                {/* Costo Unitario - takes remaining space */}
+                <div className="flex-1">
+                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
+                  {isEditMode ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={getCurrentValue('costoUnitario_original') as number}
+                        onChange={(e) => handleFieldChange('costoUnitario_original', parseFloat(e.target.value) || 0)}
+                        className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        step="0.01"
+                      />
+                      <select
+                        value={getCurrentValue('costoUnitario_currency') as string}
+                        onChange={(e) => handleFieldChange('costoUnitario_currency', e.target.value)}
+                        className="bg-white border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      >
+                        <option value="PEN">PEN</option>
+                        <option value="USD">USD</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <p className="text-sm font-bold text-gray-800">
+                      {formatCurrency(cost.costoUnitario_original) || '-'}
+                      {cost.costoUnitario_original !== null && cost.costoUnitario_original !== undefined && cost.costoUnitario_original !== 0 && (
+                        <span className="text-xs font-medium text-gray-600 ml-1">{cost.costoUnitario_currency || 'USD'}</span>
+                      )}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Separator */}
-              {isEditMode && <div className="col-span-2 border-t border-gray-200/60"></div>}
+              {isEditMode && <div className="border-t border-gray-200/60"></div>}
 
               {/* Periodo Inicio & Duración (Edit Mode Only) */}
               {isEditMode && (
-                <>
-                  <div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
                     <p className="text-[11px] font-medium text-gray-400 mb-1.5">Inicio (Mes)</p>
                     <input
                       type="number"
@@ -229,7 +232,7 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
                       step="1"
                     />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-[11px] font-medium text-gray-400 mb-1.5">Duración (Meses)</p>
                     <input
                       type="number"
@@ -239,7 +242,7 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
                       step="1"
                     />
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>
