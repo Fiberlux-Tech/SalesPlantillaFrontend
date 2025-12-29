@@ -152,9 +152,10 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
 
     const {
         baseTransaction,
-        draftState, 
-        dispatch,     
-        canEdit
+        draftState,
+        dispatch,
+        canEdit,
+        isFieldReadOnly
     } = useTransactionPreview();
 
     const {
@@ -330,7 +331,7 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
                     <InlineEditWrapper<string | null>
                         fieldKey={UI_LABELS.UNIDAD_NEGOCIO}
                         currentValue={confirmedUnidad}
-                        canEdit={canEdit}
+                        canEdit={canEdit && !isFieldReadOnly('unidadNegocio')}
                         renderDisplay={(value) => value || "Selecciona obligatorio"}
                         renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
                             <SelectInput
@@ -356,7 +357,7 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
                     <InlineEditWrapper<number | null>
                         fieldKey={UI_LABELS.PLAZO_CONTRATO}
                         currentValue={confirmedPlazo}
-                        canEdit={canEdit}
+                        canEdit={canEdit && !isFieldReadOnly('plazoContrato')}
                         initialValueTransformer={(value) => value ?? 0}
                         renderDisplay={(value) => `${value ?? '-'} ${UI_LABELS.MESES}`}
                         renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
@@ -377,7 +378,7 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
                         fieldKey={UI_LABELS.MRC_RECURRENTE}
                         currentValue={confirmedMrcValue}
                         currentCurrency={confirmedMrcCurrency}
-                        canEdit={canEdit}
+                        canEdit={canEdit && !isFieldReadOnly('MRC_original')}
                         initialValueTransformer={(value) => value ?? 0}
                         initialCurrencyTransformer={(c) => c ?? CURRENCIES.DEFAULT}
                         renderDisplay={formatCurrencyDisplay}
@@ -401,7 +402,7 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
                         fieldKey={UI_LABELS.NRC_PAGO_UNICO}
                         currentValue={confirmedNrcValue}
                         currentCurrency={confirmedNrcCurrency}
-                        canEdit={canEdit}
+                        canEdit={canEdit && !isFieldReadOnly('NRC_original')}
                         initialValueTransformer={(value) => value ?? 0}
                         initialCurrencyTransformer={(c) => c ?? CURRENCIES.DEFAULT}
                         renderDisplay={formatCurrencyDisplay}
@@ -436,7 +437,7 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
                     <InlineEditWrapper<boolean | null>
                         fieldKey={UI_LABELS.APLICA_CARTA_FIANZA}
                         currentValue={confirmedAplicaCartaFianza || false}
-                        canEdit={canEdit}
+                        canEdit={canEdit && !isFieldReadOnly('aplicaCartaFianza')}
                         initialValueTransformer={(value) => value === true}
                         renderDisplay={(value) => (value === true ? BOOLEAN_LABELS.TRUE : BOOLEAN_LABELS.FALSE)}
                         renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
@@ -459,7 +460,7 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
                             <InlineEditWrapper<string | null>
                                 fieldKey={UI_LABELS.REGION}
                                 currentValue={confirmedRegion}
-                                canEdit={canEdit}
+                                canEdit={canEdit && !isFieldReadOnly('gigalan_region')}
                                 renderDisplay={(value) => value || "Selecciona obligatorio"}
                                 renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
                                     <SelectInput
@@ -479,7 +480,7 @@ export function TransactionOverviewInputs({ isFinanceView: _isFinanceView }: Tra
                             <InlineEditWrapper<string | null>
                                 fieldKey={UI_LABELS.TIPO_VENTA}
                                 currentValue={confirmedSaleType}
-                                canEdit={canEdit}
+                                canEdit={canEdit && !isFieldReadOnly('gigalan_sale_type')}
                                 renderDisplay={(value) => value || "Selecciona obligatorio"}
                                 renderEdit={(localValue, setLocalValue, _, __, onConfirm) => (
                                     <SelectInput

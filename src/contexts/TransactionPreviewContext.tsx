@@ -6,6 +6,7 @@ import React, {
     useMemo,
     useEffect,
     useRef,
+    useCallback,
 } from 'react';
 import { calculatePreview } from '@/features/transactions/services/shared.service';
 import type { TransactionDetailResponse } from '@/types';
@@ -21,6 +22,7 @@ interface ITransactionPreviewContext {
     view: 'SALES' | 'FINANCE';
     baseTransaction: TransactionDetailResponse['data'];
     canEdit: boolean;
+    isFieldReadOnly: (fieldName: string) => boolean;
     draftState: PreviewState;
     dispatch: React.Dispatch<PreviewAction>;
     isNewTemplateMode: boolean;
@@ -70,6 +72,15 @@ export function TransactionPreviewProvider({
     const canEdit = useMemo(
         () => baseTransaction.transactions.ApprovalStatus === 'PENDING',
         [baseTransaction]
+    );
+
+    // 4. isFieldReadOnly logic - check if field is in _readonly array from backend
+    const isFieldReadOnly = useCallback(
+        (fieldName: string): boolean => {
+            const readonlyFields = baseTransaction.transactions._readonly || [];
+            return readonlyFields.includes(fieldName);
+        },
+        [baseTransaction.transactions._readonly]
     );
 
     // FIX: Reset state when baseTransaction changes (e.g., after Excel upload)
@@ -192,6 +203,7 @@ export function TransactionPreviewProvider({
         view,
         baseTransaction,
         canEdit,
+        isFieldReadOnly,
         draftState,
         dispatch,
         isNewTemplateMode,

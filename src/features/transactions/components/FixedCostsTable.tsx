@@ -18,6 +18,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
     // 1. Get dispatch and draftState from the context
     const {
         canEdit,
+        isFieldReadOnly,
         draftState, // Get the draft state
         dispatch    // Get the dispatch function
     } = useTransactionPreview();
@@ -131,8 +132,8 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                                 <td className="px-3 py-2 align-middle">
                                     <TableActionIcons
                                         onView={() => handleViewDetails(index, item)}
-                                        onEdit={canEdit ? () => handleEditCost(index, item) : undefined}
-                                        onDelete={canEdit ? () => handleDeleteCost(index, item) : undefined}
+                                        onEdit={canEdit && !isFieldReadOnly('fixed_costs') ? () => handleEditCost(index, item) : undefined}
+                                        onDelete={canEdit && !isFieldReadOnly('fixed_costs') ? () => handleDeleteCost(index, item) : undefined}
                                     />
                                 </td>
                             </tr>

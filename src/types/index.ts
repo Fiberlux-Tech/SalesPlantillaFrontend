@@ -66,6 +66,9 @@ export interface Transaction {
 
   // Rejection note
   rejection_note?: string;
+
+  // Read-only field metadata from backend
+  _readonly?: string[];
 }
 
 export interface FixedCost {

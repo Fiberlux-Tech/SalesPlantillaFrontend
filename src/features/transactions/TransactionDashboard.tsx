@@ -22,6 +22,7 @@ import {
     submitFinalTransaction,
     updateTransaction,
     getSalesTransactionDetails,
+    fetchTransactionTemplate,
     type FormattedSalesTransaction
 } from './services/sales.service';
 
@@ -79,52 +80,11 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     const datePickerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null); // <-- ADD THIS LINE
 
-    const createEmptyTransactionData = (): TransactionDetailResponse['data'] => ({
-        transactions: {
-            id: 0,
-            clientName: '',
-            salesman: user.username || '',
-            submissionDate: new Date().toISOString(),
-            ApprovalStatus: 'PENDING' as any,  // Start as PENDING
-            MRC_original: 0,
-            MRC_currency: 'PEN',
-            MRC_pen: 0,
-            NRC_original: 0,
-            NRC_currency: 'PEN',
-            NRC_pen: 0,
-            plazoContrato: 12, // Default
-            tipoCambio: 0,
-            costoCapitalAnual: 0,
-            costoInstalacion: 0,
-            VAN: 0,
-            TIR: 0,
-            payback: 0,
-            totalRevenue: 0,
-            totalExpense: 0,
-            grossMargin: 0,
-            grossMarginRatio: 0,
-            costoInstalacionRatio: 0,
-            comisiones: 0,
-            unidadNegocio: '', // This will show "Selecciona obligatorio"
-            aplicaCartaFianza: false,
-            tasaCartaFianza: 0,
-            costoCartaFianza: 0,
-        } as Transaction, // Cast to satisfy the type
-        fixed_costs: [],
-        recurring_services: [],
-        timeline: {
-            periods: [],
-            revenues: { nrc: [], mrc: [] },
-            expenses: { comisiones: [], egreso: [], fixed_costs: [] },
-            net_cash_flow: []
-        },
-        fileName: UI_LABELS.NUEVA_PLANTILLA
-    });
-
     // --- 3. VIEW-SPECIFIC MODAL STATE ---
     // Sales Modal State
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
     const [uploadedData, setUploadedData] = useState<TransactionDetailResponse['data'] | null>(null);
+    const [isLoadingTemplate, setIsLoadingTemplate] = useState<boolean>(false);
 
     // Sales View-Only Modal State (for viewing existing transactions)
     const [selectedSalesTransaction, setSelectedSalesTransaction] = useState<TransactionDetailResponse['data'] | null>(null);
@@ -165,9 +125,30 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         if (view === 'SALES' && setSalesActions) {
             setSalesActions({
                 uploadLabel: UI_LABELS.CREATE_TEMPLATE,
-                onUpload: () => {
+                onUpload: async () => {
                     setUploadedData(null); // Clear any previous data
-                    setIsPreviewModalOpen(true); // Open the main modal
+                    setIsLoadingTemplate(true);
+
+                    const result = await fetchTransactionTemplate();
+
+                    if (result.success) {
+                        setUploadedData(result.data);
+                        setIsPreviewModalOpen(true);
+                    } else {
+                        // NO FALLBACK - Show error and block template creation
+                        const errorMessage = result.error || 'Unknown error occurred';
+
+                        if (errorMessage.includes('System rates') || errorMessage.includes('missing')) {
+                            alert('❌ Cannot create template\n\nMaster variables (Exchange Rate, Capital Cost, or Bond Rate) are missing from the system.\n\nPlease contact Finance or your administrator to configure these rates before creating proposals.');
+                        } else if (errorMessage.includes('Unauthorized') || errorMessage.includes('401')) {
+                            alert('⚠️ Session expired\n\nPlease log in again.');
+                            // Optionally trigger logout here
+                        } else {
+                            alert(`❌ Failed to load template\n\n${errorMessage}\n\nYou cannot create new proposals until the system is available.\n\nPlease try again or contact IT support.`);
+                        }
+                    }
+
+                    setIsLoadingTemplate(false);
                 },
             });
             // Cleanup function
@@ -462,21 +443,20 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                     />
                     {/* --- 2. REMOVED the <FileUploadModal> --- */}
 
-                    {/* The Preview Modal now opens if EITHER it's empty OR has data */}
-                    {isPreviewModalOpen && (
+                    {/* The Preview Modal only opens when uploadedData is available */}
+                    {isPreviewModalOpen && uploadedData && (
                         <TransactionPreviewProvider
-                            // IMPORTANT: Use the uploaded data OR the new empty template
-                            baseTransaction={uploadedData || createEmptyTransactionData()}
+                            baseTransaction={uploadedData}
                             view="SALES"
-                            isNewTemplateMode={!uploadedData}
+                            isNewTemplateMode={!uploadedData.transactions.id}
                         >
                             <DataPreviewModal
                                 isOpen={isPreviewModalOpen}
                                 // Title is dynamic
-                                title={uploadedData ? UI_LABELS.PREVIEW_LABEL.replace('{fileName}', uploadedData.fileName || '') : UI_LABELS.NUEVA_PLANTILLA}
+                                title={uploadedData.fileName ? UI_LABELS.PREVIEW_LABEL.replace('{fileName}', uploadedData.fileName) : UI_LABELS.NUEVA_PLANTILLA}
                                 onClose={handleCloseSalesModal}
-                                // Status is dynamic
-                                status={(uploadedData || createEmptyTransactionData()).transactions.ApprovalStatus}
+                                // Status from uploaded data
+                                status={uploadedData.transactions.ApprovalStatus}
                                 // --- 3. UPDATE THE BUTTON'S onClick ---
                                 headerActions={
                                     <button
@@ -489,7 +469,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                                 }
                                 footer={
                                     <SalesPreviewFooter
-                                        transaction={uploadedData || createEmptyTransactionData()}
+                                        transaction={uploadedData}
                                         onConfirm={handleConfirmSubmission}
                                         onClose={handleCloseSalesModal}
                                     />
@@ -563,6 +543,15 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
                         <TransactionPreviewContent isFinanceView={true} />
                     </DataPreviewModal>
                 </TransactionPreviewProvider>
+            )}
+
+            {/* Loading Modal for Template Fetch */}
+            {isLoadingTemplate && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 shadow-xl">
+                        <p className="text-gray-900 text-lg">Loading template...</p>
+                    </div>
+                </div>
             )}
         </>
     );

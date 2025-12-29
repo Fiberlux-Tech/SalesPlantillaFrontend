@@ -17,6 +17,7 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
     // 1. Get draftState and dispatch from the context
     const {
         canEdit,
+        isFieldReadOnly,
         draftState, // Get the draft state
         dispatch,   // Get the dispatch function
     } = useTransactionPreview();
@@ -113,8 +114,8 @@ const RecurringServicesTable = ({ EmptyStateComponent }: RecurringServicesTableP
                             <td className="px-3 py-2 align-middle">
                                 <TableActionIcons
                                     onView={() => handleViewDetails(index, item)}
-                                    onEdit={canEdit ? () => handleEditService(index, item) : undefined}
-                                    onDelete={canEdit ? () => handleDeleteService(index, item) : undefined}
+                                    onEdit={canEdit && !isFieldReadOnly('recurring_services') ? () => handleEditService(index, item) : undefined}
+                                    onDelete={canEdit && !isFieldReadOnly('recurring_services') ? () => handleDeleteService(index, item) : undefined}
                                 />
                             </td>
                         </tr>

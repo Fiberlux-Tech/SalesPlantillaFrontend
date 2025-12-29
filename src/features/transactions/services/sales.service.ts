@@ -143,3 +143,32 @@ export async function getSalesTransactionDetails(transactionId: number): Promise
         return { success: false, error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER };
     }
 }
+
+type FetchTransactionTemplateResult = {
+    success: true;
+    data: TransactionDetailResponse['data'];
+} | {
+    success: false;
+    error: string;
+}
+
+export async function fetchTransactionTemplate(): Promise<FetchTransactionTemplateResult> {
+    try {
+        const result = await api.get<TransactionDetailResponse>(
+            API_CONFIG.ENDPOINTS.TRANSACTION_TEMPLATE
+        );
+        if (result.success) {
+            return { success: true, data: result.data };
+        } else {
+            return {
+                success: false,
+                error: result.error || ERROR_MESSAGES.FAILED_FETCH_TRANSACTION_DETAILS
+            };
+        }
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.message || ERROR_MESSAGES.FAILED_CONNECT_SERVER
+        };
+    }
+}

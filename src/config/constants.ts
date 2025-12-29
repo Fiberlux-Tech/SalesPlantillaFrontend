@@ -90,6 +90,7 @@ export const API_CONFIG = {
     // Transaction endpoints
     TRANSACTIONS_LIST: '/api/transactions',
     TRANSACTION_DETAIL: '/api/transaction',
+    TRANSACTION_TEMPLATE: '/api/transactions/template',
     PROCESS_EXCEL: '/api/process-excel',
     SUBMIT_TRANSACTION: '/api/submit-transaction',
     CALCULATE_PREVIEW: '/api/calculate-preview',
