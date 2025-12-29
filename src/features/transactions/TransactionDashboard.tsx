@@ -1,6 +1,7 @@
 // src/features/transactions/TransactionDashboard.tsx
 import { useState, useMemo, useEffect, useRef, RefObject, useCallback } from 'react';
 import { UploadIcon } from '@/components/shared/Icons';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // --- Shared Imports ---
 import DataPreviewModal from '@/features/transactions/components/DataPreviewModal';
@@ -75,6 +76,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
     // --- 2. COMMON UI STATE ---
     // All filter/date state is now in one place
     const [filter, setFilter] = useState<string>('');
+    const debouncedFilter = useDebounce(filter, 250); // Debounce with 250ms delay
     const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const datePickerRef = useRef<HTMLDivElement>(null);
@@ -356,13 +358,13 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
         };
     }, [kpiData]);
 
-    // Generalized Filter Logic
+    // Generalized Filter Logic - Now uses debouncedFilter instead of filter
     const filteredTransactions = useMemo(() => {
         // Pre-compute selectedDate string if needed (outside the loop)
         const selectedDateString = selectedDate?.toDateString();
 
         return transactions.filter(t => {
-            const filterLower = filter.toLowerCase();
+            const filterLower = debouncedFilter.toLowerCase();
 
             // Handle different property names for client
             let clientMatch = false;
@@ -379,7 +381,7 @@ export default function TransactionDashboard({ view, setSalesActions }: Transact
             const transactionDate = new Date(t.submissionDate);
             return clientMatch && transactionDate.toDateString() === selectedDateString;
         });
-    }, [transactions, filter, selectedDate, view]); // Added 'view' to dependency array
+    }, [transactions, debouncedFilter, selectedDate, view]); // Now depends on debouncedFilter
 
 
     // --- 8. CONDITIONAL RENDER ---
