@@ -167,11 +167,11 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
             <div className="flex flex-col gap-y-5">
               {/* Cantidad and Costo Unitario Row */}
-              <div className="flex gap-4">
-                {/* Cantidad - narrower */}
-                <div className="w-24">
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
-                  {isEditMode ? (
+              {isEditMode ? (
+                <div className="flex gap-4">
+                  {/* Cantidad - narrower */}
+                  <div className="w-24">
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
                     <input
                       type="number"
                       value={getCurrentValue('cantidad') as number}
@@ -179,15 +179,11 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
                       className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       step="1"
                     />
-                  ) : (
-                    <p className="text-sm font-bold text-gray-800">{cost.cantidad || '-'}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Costo Unitario - takes remaining space */}
-                <div className="flex-1">
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
-                  {isEditMode ? (
+                  {/* Costo Unitario - takes remaining space */}
+                  <div className="flex-1">
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -205,16 +201,25 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
                         <option value="USD">USD</option>
                       </select>
                     </div>
-                  ) : (
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div>
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
+                    <p className="text-sm font-bold text-gray-800">{cost.cantidad || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
                     <p className="text-sm font-bold text-gray-800">
                       {formatCurrency(cost.costoUnitario_original) || '-'}
                       {cost.costoUnitario_original !== null && cost.costoUnitario_original !== undefined && cost.costoUnitario_original !== 0 && (
                         <span className="text-xs font-medium text-gray-600 ml-1">{cost.costoUnitario_currency || 'USD'}</span>
                       )}
                     </p>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Separator */}
               {isEditMode && <div className="border-t border-gray-200/60"></div>}

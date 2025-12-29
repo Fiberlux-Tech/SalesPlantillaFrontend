@@ -226,11 +226,11 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
             <div className="flex flex-col gap-y-5">
               {/* Cantidad and Precio Unitario Row */}
-              <div className="flex gap-4">
-                {/* Cantidad - narrower */}
-                <div className="w-24">
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
-                  {isEditMode ? (
+              {isEditMode ? (
+                <div className="flex gap-4">
+                  {/* Cantidad - narrower */}
+                  <div className="w-24">
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
                     <input
                       type="number"
                       value={getCurrentValue('Q') as number}
@@ -238,15 +238,11 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
                       className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       step="1"
                     />
-                  ) : (
-                    <p className="text-sm font-bold text-gray-800">{service.Q || '-'}</p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Precio Unitario - takes remaining space */}
-                <div className="flex-1">
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Precio Unitario</p>
-                  {isEditMode ? (
+                  {/* Precio Unitario - takes remaining space */}
+                  <div className="flex-1">
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Precio Unitario</p>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -264,26 +260,35 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
                         <option value="USD">USD</option>
                       </select>
                     </div>
-                  ) : (
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div>
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
+                    <p className="text-sm font-bold text-gray-800">{service.Q || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Precio Unitario</p>
                     <p className="text-sm font-bold text-gray-800">
                       {formatCurrency(service.P_original) || '-'}
                       {service.P_original !== null && service.P_original !== undefined && service.P_original !== 0 && (
                         <span className="text-xs font-medium text-gray-600 ml-1">{service.P_currency || 'PEN'}</span>
                       )}
                     </p>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Separator */}
               <div className="border-t border-gray-200/60"></div>
 
               {/* Cost Fields Row */}
-              <div className="flex gap-4">
-                {/* Costo Unitario */}
-                <div className="flex-1">
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
-                  {isEditMode ? (
+              {isEditMode ? (
+                <div className="flex gap-4">
+                  {/* Costo Unitario */}
+                  <div className="flex-1">
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
                     <input
                       type="number"
                       value={getCurrentValue('CU1_original') as number}
@@ -291,20 +296,11 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
                       className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       step="0.01"
                     />
-                  ) : (
-                    <p className="text-sm font-bold text-gray-800">
-                      {formatCurrency(service.CU1_original) || '-'}
-                      {service.CU1_original !== null && service.CU1_original !== undefined && service.CU1_original !== 0 && (
-                        <span className="text-xs font-medium text-gray-600 ml-1">{service.CU_currency || 'USD'}</span>
-                      )}
-                    </p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Costo Unit. (Transporte) */}
-                <div className="flex-1">
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unit. (Transporte)</p>
-                  {isEditMode ? (
+                  {/* Costo Unit. (Transporte) */}
+                  <div className="flex-1">
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unit. (Transporte)</p>
                     <input
                       type="number"
                       value={getCurrentValue('CU2_original') as number}
@@ -312,16 +308,30 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
                       className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       step="0.01"
                     />
-                  ) : (
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div>
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {formatCurrency(service.CU1_original) || '-'}
+                      {service.CU1_original !== null && service.CU1_original !== undefined && service.CU1_original !== 0 && (
+                        <span className="text-xs font-medium text-gray-600 ml-1">{service.CU_currency || 'USD'}</span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unit. (Transporte)</p>
                     <p className="text-sm font-bold text-gray-800">
                       {formatCurrency(service.CU2_original) || '-'}
                       {service.CU2_original !== null && service.CU2_original !== undefined && service.CU2_original !== 0 && (
                         <span className="text-xs font-medium text-gray-600 ml-1">{service.CU_currency || 'USD'}</span>
                       )}
                     </p>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Currency Selector for Costs (Edit Mode Only) */}
               {isEditMode && (
