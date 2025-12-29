@@ -538,7 +538,7 @@ curl -X POST http://localhost:5000/api/master-variables/update \
 ### Pending TODO Items (from README.md)
 
 **Current known issues to be addressed:**
-1. Fix transaction detail modal (live editing, currency conversion, real-time KPI updates)
+1. ~~Fix transaction detail modal (live editing, currency conversion, real-time KPI updates)~~ ✓ **COMPLETED** (2025-12-29)
 2. Carta Fianza multi-year handling (currently only calculates one year)
 3. Separate "Otros" line into "Carta Fianza" and "Comisiones"
 4. Add download option for finance team
@@ -562,7 +562,7 @@ curl -X POST http://localhost:5000/api/master-variables/update \
 
 **Location:** `/home/administrator/SalesPlantillaFrontend/`
 
-**Tech Stack:** React (assumed based on frontend repository structure)
+**Tech Stack:** React + TypeScript + Vite
 
 **Key Interactions:**
 - Excel upload via `POST /api/process-excel`
@@ -570,11 +570,75 @@ curl -X POST http://localhost:5000/api/master-variables/update \
 - KPI dashboard queries via `GET /api/kpi/*`
 - Transaction detail modal via `GET /api/transaction/{id}`
 
+### Frontend Architectural Patterns
+
+#### Modal State Management (Derived State Pattern)
+
+**Files:**
+- [src/features/transactions/components/RecurringServiceDetailModal.tsx](src/features/transactions/components/RecurringServiceDetailModal.tsx)
+- [src/features/transactions/components/FixedCostDetailModal.tsx](src/features/transactions/components/FixedCostDetailModal.tsx)
+- [src/lib/calculations.ts](src/lib/calculations.ts)
+
+**Pattern:** Calculate "effective PEN values" as derived state during render instead of using chained effects.
+
+**Data Flow:**
+```
+User Input (*_original, *_currency) → editedValues state
+    ↓
+Render calculates effective *_pen (derived state using convertToPEN)
+    ↓
+Single calculation effect (300ms debounce) → updates display totals
+    ↓
+UI re-renders with updated values
+```
+
+**Key Principles:**
+1. **No Chained Effects:** Currency conversion happens in render phase, not in a separate effect
+2. **Single Calculation Effect:** Only one debounced effect updates display totals
+3. **Explicit Save:** `handleSave()` calculates final PEN values before submitting
+4. **Pure Functions:** All calculation utilities in `src/lib/calculations.ts` have no side effects
+
+**Example:**
+```typescript
+// Derived state (calculated during render)
+const effectiveP_pen = convertToPEN(
+  editedValues.P_original ?? service?.P_original ?? 0,
+  editedValues.P_currency ?? service?.P_currency ?? "PEN",
+  tipoCambio
+);
+
+// Single calculation effect using derived values
+useEffect(() => {
+  const timer = setTimeout(() => {
+    const { ingreso_pen, egreso_pen } = calculateRecurringServiceTotals(
+      Q, effectiveP_pen, effectiveCU1_pen, effectiveCU2_pen
+    );
+    setCalculatedIngreso(ingreso_pen);
+    setCalculatedEgreso(egreso_pen);
+  }, 300);
+  return () => clearTimeout(timer);
+}, [editedValues.Q, editedValues.P_original, effectiveP_pen, tipoCambio, ...]);
+```
+
+**Benefits:**
+- Simpler mental model (no effect chains)
+- Fewer re-renders (no double setState)
+- No race conditions
+- Real-time updates for all fields (price, cost, currency, quantity)
+
+**Currency Handling:**
+- `tipoCambio` accessed from `TransactionPreviewContext`
+- All values stored as `*_original`, `*_currency`, `*_pen` triples (same pattern as backend)
+- Conversion happens client-side for instant UI feedback
+- Final values recalculated explicitly before save
+
 ---
 
 ## 8. Quick Reference
 
 ### Key Files Cheat Sheet
+
+#### Backend (PlantillaAPI)
 
 | What | Where |
 |------|-------|
@@ -586,6 +650,15 @@ curl -X POST http://localhost:5000/api/master-variables/update \
 | RBAC decorators | [PlantillaAPI/app/utils.py](../PlantillaAPI/app/utils.py) |
 | Master variables | [PlantillaAPI/app/services/variables.py](../PlantillaAPI/app/services/variables.py) |
 | KPI calculations | [PlantillaAPI/app/services/kpi.py](../PlantillaAPI/app/services/kpi.py) |
+
+#### Frontend (SalesPlantillaFrontend)
+
+| What | Where |
+|------|-------|
+| Currency/calculation utilities | [src/lib/calculations.ts](src/lib/calculations.ts) |
+| Recurring service detail modal | [src/features/transactions/components/RecurringServiceDetailModal.tsx](src/features/transactions/components/RecurringServiceDetailModal.tsx) |
+| Fixed cost detail modal | [src/features/transactions/components/FixedCostDetailModal.tsx](src/features/transactions/components/FixedCostDetailModal.tsx) |
+| Transaction preview context | [src/contexts/TransactionPreviewContext.tsx](src/contexts/TransactionPreviewContext.tsx) |
 
 ### Most Common Commands
 
