@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { RecurringService } from '@/types';
 import { formatCurrency } from '@/lib/formatters';
 import { NumberInput, TextInput, CurrencySelect } from './ModalInputs';
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
+import { convertToPEN, calculateRecurringServiceTotals } from '@/lib/calculations';
 
 interface RecurringServiceDetailModalProps {
   service: RecurringService | null;
@@ -23,6 +25,29 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
   const [calculatedIngreso, setCalculatedIngreso] = useState(0);
   const [calculatedEgreso, setCalculatedEgreso] = useState(0);
 
+  // Access tipoCambio from context
+  const { baseTransaction } = useTransactionPreview();
+  const tipoCambio = baseTransaction.transactions.tipoCambio;
+
+  // Derive effective PEN values from current state (no effect needed)
+  const effectiveP_pen = convertToPEN(
+    editedValues.P_original ?? service?.P_original ?? 0,
+    editedValues.P_currency ?? service?.P_currency ?? "PEN",
+    tipoCambio
+  );
+
+  const effectiveCU1_pen = convertToPEN(
+    editedValues.CU1_original ?? service?.CU1_original ?? 0,
+    editedValues.CU_currency ?? service?.CU_currency ?? "PEN",
+    tipoCambio
+  );
+
+  const effectiveCU2_pen = convertToPEN(
+    editedValues.CU2_original ?? service?.CU2_original ?? 0,
+    editedValues.CU_currency ?? service?.CU_currency ?? "PEN",
+    tipoCambio
+  );
+
   // Initialize edited values when service changes
   useEffect(() => {
     if (service && isEditMode) {
@@ -43,22 +68,39 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
     }
   }, [service, isEditMode]);
 
-  // Real-time calculation with 300ms debounce
+  // Real-time calculation with 300ms debounce using derived PEN values
   useEffect(() => {
     if (!isEditMode || !service) return;
 
     const timer = setTimeout(() => {
       const Q = editedValues.Q ?? service.Q ?? 0;
-      const P_pen = editedValues.P_pen ?? service.P_pen ?? 0;
-      const CU1_pen = editedValues.CU1_pen ?? service.CU1_pen ?? 0;
-      const CU2_pen = editedValues.CU2_pen ?? service.CU2_pen ?? 0;
 
-      setCalculatedIngreso(Q * P_pen);
-      setCalculatedEgreso(Q * (CU1_pen + CU2_pen));
+      const { ingreso_pen, egreso_pen } = calculateRecurringServiceTotals(
+        Q,
+        effectiveP_pen,
+        effectiveCU1_pen,
+        effectiveCU2_pen
+      );
+
+      setCalculatedIngreso(ingreso_pen);
+      setCalculatedEgreso(egreso_pen);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [editedValues, service, isEditMode]);
+  }, [
+    editedValues.Q,
+    editedValues.P_original,
+    editedValues.P_currency,
+    editedValues.CU1_original,
+    editedValues.CU2_original,
+    editedValues.CU_currency,
+    effectiveP_pen,
+    effectiveCU1_pen,
+    effectiveCU2_pen,
+    tipoCambio,
+    service,
+    isEditMode,
+  ]);
 
   // Helper functions
   const getCurrentValue = (field: keyof RecurringService) => {
@@ -75,9 +117,31 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
   const handleSave = () => {
     if (!service || !onSave) return;
 
+    // Calculate final PEN values explicitly before saving
+    const finalP_pen = convertToPEN(
+      editedValues.P_original ?? service.P_original ?? 0,
+      editedValues.P_currency ?? service.P_currency ?? "PEN",
+      tipoCambio
+    );
+
+    const finalCU1_pen = convertToPEN(
+      editedValues.CU1_original ?? service.CU1_original ?? 0,
+      editedValues.CU_currency ?? service.CU_currency ?? "PEN",
+      tipoCambio
+    );
+
+    const finalCU2_pen = convertToPEN(
+      editedValues.CU2_original ?? service.CU2_original ?? 0,
+      editedValues.CU_currency ?? service.CU_currency ?? "PEN",
+      tipoCambio
+    );
+
     const updatedService: RecurringService = {
       ...service,
       ...editedValues,
+      P_pen: finalP_pen,
+      CU1_pen: finalCU1_pen,
+      CU2_pen: finalCU2_pen,
       ingreso_pen: calculatedIngreso,
       egreso_pen: calculatedEgreso,
     };

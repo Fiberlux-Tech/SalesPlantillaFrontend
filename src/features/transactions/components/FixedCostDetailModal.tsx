@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { FixedCost } from '@/types';
 import { formatCurrency } from '@/lib/formatters';
 import { NumberInput, TextInput, CurrencySelect } from './ModalInputs';
+import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
+import { convertToPEN, calculateFixedCostTotal } from '@/lib/calculations';
 
 interface FixedCostDetailModalProps {
   cost: FixedCost | null;
@@ -22,6 +24,17 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
   const [editedValues, setEditedValues] = useState<Partial<FixedCost>>({});
   const [calculatedTotal, setCalculatedTotal] = useState(0);
 
+  // Access tipoCambio from context
+  const { baseTransaction } = useTransactionPreview();
+  const tipoCambio = baseTransaction.transactions.tipoCambio;
+
+  // Derive effective PEN value from current state
+  const effectiveCostoUnitario_pen = convertToPEN(
+    editedValues.costoUnitario_original ?? cost?.costoUnitario_original ?? 0,
+    editedValues.costoUnitario_currency ?? cost?.costoUnitario_currency ?? "PEN",
+    tipoCambio
+  );
+
   // Initialize edited values when cost changes
   useEffect(() => {
     if (cost && isEditMode) {
@@ -38,24 +51,27 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
     }
   }, [cost, isEditMode]);
 
-  // Real-time calculation
+  // Real-time calculation with 300ms debounce using derived PEN value
   useEffect(() => {
     if (!isEditMode || !cost) return;
 
     const timer = setTimeout(() => {
       const cantidad = editedValues.cantidad ?? cost.cantidad ?? 0;
-      const costoUnitarioPen = editedValues.costoUnitario_pen ?? cost.costoUnitario_pen ?? 0;
 
-      // Simple calculation: Costo Unitario (in PEN) × Cantidad
-      // Note: The actual total might depend on duration if it's a monthly cost,
-      // but for "Inversion" (Fixed Cost) usually it's a one-time or total project cost.
-      // However, the original code had `total` in the type.
-      // Let's assume Total = Cantidad * Costo Unitario for the display.
-      setCalculatedTotal(cantidad * costoUnitarioPen);
+      const total = calculateFixedCostTotal(cantidad, effectiveCostoUnitario_pen);
+      setCalculatedTotal(total);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [editedValues, cost, isEditMode]);
+  }, [
+    editedValues.cantidad,
+    editedValues.costoUnitario_original,
+    editedValues.costoUnitario_currency,
+    effectiveCostoUnitario_pen,
+    tipoCambio,
+    cost,
+    isEditMode,
+  ]);
 
   const getCurrentValue = (field: keyof FixedCost) => {
     if (isEditMode && editedValues[field] !== undefined) {
@@ -71,9 +87,17 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
   const handleSave = () => {
     if (!cost || !onSave) return;
 
+    // Calculate final PEN value explicitly before saving
+    const finalCostoUnitario_pen = convertToPEN(
+      editedValues.costoUnitario_original ?? cost.costoUnitario_original ?? 0,
+      editedValues.costoUnitario_currency ?? cost.costoUnitario_currency ?? "PEN",
+      tipoCambio
+    );
+
     const updatedCost: FixedCost = {
       ...cost,
       ...editedValues,
+      costoUnitario_pen: finalCostoUnitario_pen,
       total_pen: calculatedTotal,
     };
 
