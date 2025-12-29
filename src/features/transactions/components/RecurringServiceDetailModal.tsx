@@ -160,7 +160,7 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
       />
 
       {/* Modal Container */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header Section */}
         <div className="bg-gray-50/50 p-5 rounded-t-2xl">
           <div className="flex items-start justify-between">

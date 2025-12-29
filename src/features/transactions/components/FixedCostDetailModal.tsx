@@ -116,7 +116,7 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header Section */}
         <div className="bg-gray-50/50 p-5 rounded-t-2xl">
           <div className="flex items-start justify-between">
@@ -129,12 +129,22 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
               </h2>
               <p className="text-xs text-gray-500 mt-1">Ticket: {cost.ticket}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X size={20} />
-            </button>
+            <div className="flex items-start gap-4">
+              {cost.ubicacion && (
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                    UBICACIÓN
+                  </p>
+                  <p className="text-xs font-medium text-gray-600">{cost.ubicacion}</p>
+                </div>
+              )}
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -156,21 +166,6 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
           {/* Detail Grid Section */}
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
             <div className="grid grid-cols-2 gap-y-5 gap-x-6">
-              {/* Ubicación */}
-              <div>
-                <p className="text-[11px] font-medium text-gray-400 mb-1.5">Ubicación</p>
-                {isEditMode ? (
-                  <input
-                    type="text"
-                    value={getCurrentValue('ubicacion') as string}
-                    onChange={(e) => handleFieldChange('ubicacion', e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  />
-                ) : (
-                  <p className="text-sm font-bold text-gray-800">{cost.ubicacion || '-'}</p>
-                )}
-              </div>
-
               {/* Cantidad */}
               <div>
                 <p className="text-[11px] font-medium text-gray-400 mb-1.5">Cantidad</p>
@@ -187,11 +182,8 @@ export const FixedCostDetailModal: React.FC<FixedCostDetailModalProps> = ({
                 )}
               </div>
 
-              {/* Separator */}
-              <div className="col-span-2 border-t border-gray-200/60"></div>
-
               {/* Costo Unitario */}
-              <div className="col-span-2">
+              <div>
                 <p className="text-[11px] font-medium text-gray-400 mb-1.5">Costo Unitario</p>
                 {isEditMode ? (
                   <div className="flex gap-2">
