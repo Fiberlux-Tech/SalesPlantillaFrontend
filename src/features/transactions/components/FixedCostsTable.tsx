@@ -1,6 +1,5 @@
 // src/components/shared/FixedCostsTable.tsx
 import { useState } from 'react';
-import { EditableTableCell } from '@/features/transactions/components/EditableTableCell';
 import type { FixedCost } from '@/types';
 import type { ReactNode } from 'react';
 import { useTransactionPreview } from '@/contexts/TransactionPreviewContext';
@@ -60,15 +59,7 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
         });
     };
 
-    // 5. Inline edit handler (kept for quick edits in table)
-    const onCostChange = (index: number, field: keyof FixedCost, value: any) => {
-        dispatch({
-            type: 'UPDATE_FIXED_COST',
-            payload: { index, field, value }
-        });
-    }
-
-    // 6. Handler to delete fixed cost (index-based for trash icon)
+    // 5. Handler to delete fixed cost (index-based for trash icon)
     const handleDeleteCost = (index: number, cost: FixedCost) => {
         if (window.confirm(`¿Estás seguro de eliminar el costo "${cost.tipo_servicio}" (Ticket: ${cost.ticket})?`)) {
             dispatch({
@@ -113,20 +104,10 @@ const FixedCostsTable = ({ EmptyStateComponent }: FixedCostsTableProps) => {
                                     </div>
                                 </td>
                                 <td className="px-3 py-2 whitespace-nowrap text-gray-800 align-middle text-center">
-                                    <EditableTableCell
-                                        currentValue={item.periodo_inicio ?? 0}
-                                        onConfirm={(newValue) => onCostChange(index, 'periodo_inicio', newValue)}
-                                        canEdit={canEdit}
-                                        min={0}
-                                    />
+                                    {formatCellData(item.periodo_inicio ?? 0)}
                                 </td>
                                 <td className="px-3 py-2 whitespace-nowrap text-gray-800 align-middle text-center">
-                                    <EditableTableCell
-                                        currentValue={item.duracion_meses ?? 1}
-                                        onConfirm={(newValue) => onCostChange(index, 'duracion_meses', newValue)}
-                                        canEdit={canEdit}
-                                        min={1}
-                                    />
+                                    {formatCellData(item.duracion_meses ?? 1)}
                                 </td>
                                 <td className="px-3 py-2 whitespace-nowrap text-red-600 font-medium align-middle text-right">{formatCurrency(item.total_pen)}</td>
                                 <td className="px-3 py-2 align-middle">
