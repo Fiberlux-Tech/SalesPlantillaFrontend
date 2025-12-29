@@ -174,13 +174,11 @@ export const RecurringServiceDetailModal: React.FC<RecurringServiceDetailModalPr
             </div>
             <div className="flex items-start gap-4">
               {service.ubicacion && (
-                <div>
+                <div className="text-right">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
                     UBICACIÓN
                   </p>
-                  <div className="bg-white border border-gray-200 rounded-md px-2 py-1">
-                    <p className="text-sm font-medium text-gray-600">{service.ubicacion}</p>
-                  </div>
+                  <p className="text-xs font-medium text-gray-600">{service.ubicacion}</p>
                 </div>
               )}
               <button
